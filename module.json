@@ -1,0 +1,33 @@
+{
+  "id": "nd-companion",
+  "title": "N&D Companion",
+  "description": "DM Companion for Foundry VTT.",
+  "version": "0.1.0",
+  "authors": [
+    {
+      "name": "Mo0sel"
+    }
+  ],
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "relationships": {
+    "systems": []
+  },
+  "esmodules": [
+    "scripts/nd-companion.js"
+  ],
+  "styles": [
+    "styles/nd-companion.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "manifest": "https://raw.githubusercontent.com/Mo0sel/nd-companion/main/module.json",
+  "download": "https://github.com/Mo0sel/nd-companion/archive/refs/heads/main.zip"
+}
