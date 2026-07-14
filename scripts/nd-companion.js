@@ -7,19 +7,28 @@ Hooks.once("init", () => {
 
 Hooks.once("ready", () => {
   console.log("N&D Companion ready.");
+  console.log("game.user", game.user);
+  console.log("isGM", game.user?.isGM);
 
-  if (!game.user.isGM) return;
+  if (!game.user.isGM) {
+    console.log("Not GM, aborting.");
+    return;
+  }
+
+  console.log("Creating launcher");
 
   const launcher = document.createElement("button");
   launcher.id = "nd-companion-launcher";
   launcher.type = "button";
   launcher.dataset.tooltip = "N&D Companion";
   launcher.innerHTML = '<i class="fa-solid fa-brain"></i>';
+
   launcher.addEventListener("click", () => {
-    const existing = foundry.applications.instances.get("nd-companion-app");
-    if (existing) existing.bringToFront();
-    else new CompanionApp().render({ force: true });
+    console.log("Launcher clicked");
+    new CompanionApp().render({ force: true });
   });
 
   document.body.appendChild(launcher);
+
+  console.log("Launcher appended", launcher);
 });
