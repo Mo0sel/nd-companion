@@ -7,20 +7,19 @@ Hooks.once("init", () => {
 
 Hooks.once("ready", () => {
   console.log("N&D Companion ready.");
-});
 
-Hooks.on("getSceneControlButtons", (controls) => {
-  controls.tokens.tools["nd-companion"] = {
-    name: "nd-companion",
-    title: "N&D Companion",
-    icon: "fa-solid fa-robot",
-    order: Object.keys(controls.tokens.tools).length,
-    button: true,
-    visible: true,
-    onChange: () => {
-      const existing = foundry.applications.instances.get("nd-companion-app");
-      if (existing) existing.bringToFront();
-      else new CompanionApp().render({ force: true });
-    }
-  };
+  if (!game.user.isGM) return;
+
+  const launcher = document.createElement("button");
+  launcher.id = "nd-companion-launcher";
+  launcher.type = "button";
+  launcher.dataset.tooltip = "N&D Companion";
+  launcher.innerHTML = '<i class="fa-solid fa-brain"></i>';
+  launcher.addEventListener("click", () => {
+    const existing = foundry.applications.instances.get("nd-companion-app");
+    if (existing) existing.bringToFront();
+    else new CompanionApp().render({ force: true });
+  });
+
+  document.body.appendChild(launcher);
 });
