@@ -1,24 +1,29 @@
 import { CompanionApp } from "./companion-app.js";
 
+Hooks.once("init", () => {
+  console.log("%cN&D Companion", "color:#7dd3fc;font-size:16px;font-weight:bold;");
+  console.log("N&D Companion initialized.");
+});
+
 Hooks.once("ready", () => {
-  console.log("THIS IS VERSION 999");
+  console.log("N&D Companion ready.");
+});
 
-  alert("N&D Companion Loaded!");
+Hooks.on("getSceneControlButtons", (controls) => {
+  const group = controls.tokens;
+  if (!group?.tools) return;
 
-  const btn = document.createElement("button");
-  btn.textContent = "N&D";
-  btn.style.position = "fixed";
-  btn.style.top = "20px";
-  btn.style.right = "20px";
-  btn.style.zIndex = "999999";
-  btn.style.background = "red";
-  btn.style.color = "white";
-
-  btn.onclick = () => {
-    new CompanionApp().render(true);
+  group.tools["nd-companion"] = {
+    name: "nd-companion",
+    title: "N&D Companion",
+    icon: "fa-solid fa-brain",
+    order: Object.keys(group.tools).length,
+    button: true,
+    visible: game.user.isGM,
+    onChange: () => {
+      const existing = foundry.applications.instances.get("nd-companion-app");
+      if (existing) existing.bringToFront();
+      else new CompanionApp().render({ force: true });
+    }
   };
-
-  document.body.appendChild(btn);
-
-  console.log("N&D TEST END");
 });
