@@ -1,8 +1,9 @@
 {
   "id": "nd-companion",
+  "type": "module",
   "title": "N&D Companion",
   "description": "DM Companion for Foundry VTT",
-  "version": "0.1.0",
+  "version": "0.1.1",
 
   "authors": [
     {
@@ -10,10 +11,10 @@
     }
   ],
 
- "compatibility": {
-  "minimum": "14",
-  "verified": "14"
-},
+  "compatibility": {
+    "minimum": "14",
+    "verified": "14"
+  },
 
   "esmodules": [
     "scripts/nd-companion.js"
@@ -31,25 +32,7 @@
     }
   ],
 
-  "relationships": {
-    "systems": [
-      {
-        "id": "dnd5e",
-        "type": "system",
-        "compatibility": {
-          "minimum": "4.3"
-        }
-      }
-    ]
-  },
-
   "manifest": "https://raw.githubusercontent.com/Mo0sel/nd-companion/main/module.json",
-
   "download": "https://github.com/Mo0sel/nd-companion/archive/refs/heads/main.zip",
-
-  "url": "https://github.com/Mo0sel/nd-companion",
-
-  "license": "MIT",
-
-  "readme": "https://github.com/Mo0sel/nd-companion/blob/main/README.md"
+  "url": "https://github.com/Mo0sel/nd-companion"
 }
