@@ -1,3 +1,220 @@
 .nd-companion {
   padding: 1rem;
+
+  --nd-bg: #0d0d0f;
+  --nd-surface: #131316;
+  --nd-surface-inset: rgba(255, 255, 255, 0.03);
+  --nd-border: var(--color-stroke-subtle, #1e1e26);
+  --nd-text: var(--color-foreground-primary, #e4e4eb);
+  --nd-text-muted: var(--color-foreground-secondary, #6b6b7e);
+  --nd-radius: 12px;
+
+  --nd-primary: var(--color-foreground-accent, #5b8eff);
+  --nd-scene: #a78bfa;
+  --nd-warning: #f59e0b;
+  --nd-danger: var(--color-foreground-attention, #ef4444);
+  --nd-success: var(--color-foreground-confirmation, #22c55e);
+}
+
+.nd-companion__shell {
+  container-type: inline-size;
+  container-name: nd-companion;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: var(--nd-bg);
+  color: var(--nd-text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Top row: Current Beat + Next Scene */
+.nd-companion__row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@container nd-companion (min-width: 480px) {
+  .nd-companion__row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Card */
+.nd-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  background: var(--nd-surface);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius);
+}
+
+.nd-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nd-card__accent {
+  flex-shrink: 0;
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--nd-primary);
+}
+
+.nd-card--scene .nd-card__accent {
+  background: var(--nd-scene);
+}
+
+.nd-card--threads .nd-card__accent {
+  background: var(--nd-warning);
+}
+
+.nd-card__label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--nd-text-muted);
+}
+
+.nd-card__text {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--nd-text);
+}
+
+/* Tags */
+.nd-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nd-tag {
+  padding: 2px 8px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.nd-tag--primary {
+  color: var(--nd-primary);
+  background: rgba(91, 142, 255, 0.12);
+  border-color: rgba(91, 142, 255, 0.25);
+}
+
+.nd-tag--scene {
+  color: var(--nd-scene);
+  background: rgba(167, 139, 250, 0.12);
+  border-color: rgba(167, 139, 250, 0.25);
+}
+
+.nd-tag--warning {
+  color: var(--nd-warning);
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.nd-tag--danger {
+  color: var(--nd-danger);
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+/* Open Threads list */
+.nd-thread-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nd-thread-list__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.nd-thread-list__marker {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  border-radius: 4px;
+  border: 1.5px solid var(--nd-border);
+}
+
+.nd-thread-list__text {
+  color: var(--nd-text);
+}
+
+.nd-thread-list__item--done .nd-thread-list__marker {
+  position: relative;
+  border: none;
+  background: var(--nd-success);
+}
+
+.nd-thread-list__item--done .nd-thread-list__marker::after {
+  content: "\2713";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #fff;
+}
+
+.nd-thread-list__item--done .nd-thread-list__text {
+  color: var(--nd-text-muted);
+  text-decoration: line-through;
+}
+
+/* OH SHIT! button */
+.nd-companion__footer {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+}
+
+.nd-oh-shit-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 40px;
+  border-radius: var(--nd-radius);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--nd-danger);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.nd-oh-shit-button:hover,
+.nd-oh-shit-button:focus-visible {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.7);
+  transform: scale(1.02);
+}
+
+.nd-oh-shit-button__icon {
+  font-size: 18px;
 }
