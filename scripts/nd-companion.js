@@ -1,7 +1,7 @@
 import { CompanionApp } from "./companion-app.js";
 
 Hooks.once("ready", () => {
-  console.log("N&D TEST START");
+  console.log("THIS IS VERSION 999");
 
   alert("N&D Companion Loaded!");
 
