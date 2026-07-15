@@ -15,13 +15,9 @@ It is a live assistant that understands the current campaign.
 ## Product Principles
 
 - The DM should never think about saving.
-
 - Every feature must reduce friction during play.
-
 - Foundry is the source of truth.
-
 - AI assists the DM, never replaces them.
-
 - Build for real table use before architectural perfection.
 
 ## Long-term Vision
@@ -29,29 +25,22 @@ It is a live assistant that understands the current campaign.
 Engine
 
 - Campaign Memory
-
 - Live Notes
-
 - Timeline
-
 - NPC Brain
-
 - Session Summary
-
 - AI Assistant
 
 Knowledge Packs
 
 - Ravnica
-
 - Strixhaven
-
 - Curse of Strahd
-
 - Tomb of Annihilation
-
 - Homebrew
 
 Knowledge Packs extend the engine with setting-specific data, prompts, random tables and workflows.
 
 The engine must never depend on a specific campaign setting.
+
+The Companion complements Foundry. It never replaces Foundry's native sheets.

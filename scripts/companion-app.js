@@ -1,4 +1,5 @@
 import { CampaignAwareness, CampaignContext } from "./campaign-context.js";
+import { FocusPanel } from "./focus-panel.js";
 import { LiveNotes } from "./live-notes.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -35,8 +36,10 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
   async _onRender(_context, _options) {
     await super._onRender(_context, _options);
     CampaignAwareness.paint(this.element, CampaignContext.get());
+    FocusPanel.paint(this.element, FocusPanel.get());
     this.element.querySelectorAll("[data-storage]").forEach((el) => {
       LiveNotes.attach(el, el.dataset.storage);
     });
+
   }
 }

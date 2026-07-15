@@ -69,6 +69,71 @@
   max-width: 14em;
 }
 
+/* Focus Panel */
+.nd-focus-panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--nd-surface);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius);
+}
+
+.nd-focus-panel__portrait {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--nd-surface-inset);
+  border: 1px solid var(--nd-border);
+}
+
+.nd-focus-panel__portrait[hidden] {
+  display: none;
+}
+
+.nd-focus-panel__meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nd-focus-panel__name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--nd-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nd-focus-panel__type {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.nd-focus-panel__type[hidden] {
+  display: none;
+}
+
+.nd-focus-panel__type-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--nd-text-muted);
+}
+
+.nd-focus-panel__type-value {
+  font-size: 12px;
+  color: var(--nd-text-muted);
+}
+
 /* Top row: Current Beat + Next Scene */
 .nd-companion__row {
   display: grid;
