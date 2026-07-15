@@ -12,10 +12,20 @@ Hooks.once("init", () => {
 
 Hooks.once("ready", () => {
   console.log("🚨 N&D Companion READY - BUILD 2026-07-15");
+  console.log("1");
   EntityRegistry.ready();
+
+  console.log("2");
   EntityRegistry.registerHooks();
+
+  console.log("3");
   window.nd = window.nd ?? {};
+
+  console.log("4");
   window.nd.EntityRegistry = EntityRegistry;
+
+  console.log("5");
+  console.log(window.nd);
   console.log("Entity Registry ready", EntityRegistry);
   CampaignAwareness.registerHooks();
   FocusPanel.registerHooks();
