@@ -1,7 +1,8 @@
 import { CompanionApp } from "./companion-app.js";
 import { CampaignAwareness } from "./campaign-context.js";
 import { EntityRegistry } from "./entity-registry.js";
-import { FocusPanel } from "./focus-panel.js";
+import { FocusManager } from "./focus-manager.js";
+import { Navigation } from "./navigation.js";
 import { CompanionStorage } from "./storage.js";
 
 Hooks.once("init", () => {
@@ -11,24 +12,16 @@ Hooks.once("init", () => {
 });
 
 Hooks.once("ready", () => {
-  console.log("🚨 N&D Companion READY - BUILD 2026-07-15");
-  console.log("1");
+  console.log("N&D Companion ready.");
   EntityRegistry.ready();
-
-  console.log("2");
   EntityRegistry.registerHooks();
-
-  console.log("3");
-  window.nd = window.nd ?? {};
-
-  console.log("4");
+  window.nd ??= {};
   window.nd.EntityRegistry = EntityRegistry;
-
-  console.log("5");
-  console.log(window.nd);
+  window.nd.FocusManager = FocusManager;
+  window.nd.Navigation = Navigation;
   console.log("Entity Registry ready", EntityRegistry);
   CampaignAwareness.registerHooks();
-  FocusPanel.registerHooks();
+  FocusManager.registerHooks();
 });
 
 Hooks.on("getSceneControlButtons", (controls) => {

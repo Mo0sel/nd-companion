@@ -1,3 +1,5 @@
+import { FocusManager } from "./focus-manager.js";
+
 /**
  * Read-only snapshot of live Foundry world state for the Companion.
  */
@@ -13,12 +15,8 @@ export class CampaignContext {
     const sceneDoc = canvas?.scene ?? game.scenes?.viewed ?? null;
     const scene = sceneDoc?.name || null;
 
-    const controlled = canvas?.tokens?.controlled ?? [];
-    let focus = "Party";
-    if (controlled.length === 1) {
-      const actor = controlled[0].actor;
-      if (actor?.name) focus = actor.name;
-    }
+    const focusModel = FocusManager.get();
+    const focus = focusModel.kind === "actor" ? focusModel.name : "Party";
 
     const combatDoc = game.combat;
     let combat = null;

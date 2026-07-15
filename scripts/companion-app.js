@@ -1,4 +1,5 @@
 import { CampaignAwareness, CampaignContext } from "./campaign-context.js";
+import { FocusManager } from "./focus-manager.js";
 import { FocusPanel } from "./focus-panel.js";
 import { LiveNotes } from "./live-notes.js";
 
@@ -78,7 +79,7 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     await super._onRender(_context, _options);
     this.#applyWorkspace();
     CampaignAwareness.paint(this.element, CampaignContext.get());
-    FocusPanel.paint(this.element, FocusPanel.get());
+    FocusPanel.paint(this.element, FocusManager.get());
     this.element.querySelectorAll("[data-storage]:not([data-memory-editor])").forEach((el) => {
       LiveNotes.attach(el, el.dataset.storage);
     });
