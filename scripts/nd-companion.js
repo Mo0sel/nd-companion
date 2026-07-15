@@ -1,5 +1,6 @@
 import { CompanionApp } from "./companion-app.js";
 import { CampaignAwareness } from "./campaign-context.js";
+import { EntityRegistry } from "./entity-registry.js";
 import { FocusPanel } from "./focus-panel.js";
 import { CompanionStorage } from "./storage.js";
 
@@ -11,6 +12,11 @@ Hooks.once("init", () => {
 
 Hooks.once("ready", () => {
   console.log("N&D Companion ready.");
+  EntityRegistry.ready();
+  EntityRegistry.registerHooks();
+  window.nd = window.nd ?? {};
+  window.nd.EntityRegistry = EntityRegistry;
+  console.log("Entity Registry ready", EntityRegistry);
   CampaignAwareness.registerHooks();
   FocusPanel.registerHooks();
 });
