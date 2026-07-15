@@ -30,6 +30,45 @@
   line-height: 1.5;
 }
 
+/* Campaign Context */
+.nd-campaign-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding-bottom: 14px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--nd-border);
+}
+
+.nd-campaign-context__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nd-campaign-context__item[hidden] {
+  display: none;
+}
+
+.nd-campaign-context__label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--nd-text-muted);
+}
+
+.nd-campaign-context__value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--nd-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 14em;
+}
+
 /* Top row: Current Beat + Next Scene */
 .nd-companion__row {
   display: grid;
@@ -90,6 +129,34 @@
   font-size: 14.5px;
   line-height: 1.65;
   color: var(--nd-text);
+}
+
+.nd-card__header .nd-live-notes__status {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--nd-text-muted);
+}
+
+.nd-live-notes {
+  min-height: 4.5em;
+  outline: none;
+  border-radius: 6px;
+  cursor: text;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.nd-live-notes:focus-visible {
+  box-shadow: 0 0 0 1px rgba(91, 142, 255, 0.45);
+}
+
+.nd-live-notes:empty::before {
+  content: attr(data-placeholder);
+  color: var(--nd-text-muted);
+  pointer-events: none;
 }
 
 /* Tags */

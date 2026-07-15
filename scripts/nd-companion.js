@@ -1,12 +1,16 @@
 import { CompanionApp } from "./companion-app.js";
+import { CampaignAwareness } from "./campaign-context.js";
+import { CompanionStorage } from "./storage.js";
 
 Hooks.once("init", () => {
   console.log("%cN&D Companion", "color:#7dd3fc;font-size:16px;font-weight:bold;");
   console.log("N&D Companion initialized.");
+  CompanionStorage.register();
 });
 
 Hooks.once("ready", () => {
   console.log("N&D Companion ready.");
+  CampaignAwareness.registerHooks();
 });
 
 Hooks.on("getSceneControlButtons", (controls) => {

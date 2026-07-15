@@ -1,3 +1,6 @@
+import { CampaignAwareness, CampaignContext } from "./campaign-context.js";
+import { LiveNotes } from "./live-notes.js";
+
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 /**
@@ -24,4 +27,16 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       template: "modules/nd-companion/templates/companion.hbs"
     }
   };
+
+  /**
+   * @param {ApplicationRenderContext} _context
+   * @param {ApplicationRenderOptions} _options
+   */
+  async _onRender(_context, _options) {
+    await super._onRender(_context, _options);
+    CampaignAwareness.paint(this.element, CampaignContext.get());
+    this.element.querySelectorAll("[data-storage]").forEach((el) => {
+      LiveNotes.attach(el, el.dataset.storage);
+    });
+  }
 }

@@ -1,21 +1,43 @@
 <div class="nd-companion__shell">
 
+  <section class="nd-campaign-context" aria-label="Campaign Context">
+    <div class="nd-campaign-context__item" data-context="scene" hidden>
+      <span class="nd-campaign-context__label">Scene</span>
+      <span class="nd-campaign-context__value" data-context-value></span>
+    </div>
+    <div class="nd-campaign-context__item" data-context="focus">
+      <span class="nd-campaign-context__label">Focus</span>
+      <span class="nd-campaign-context__value" data-context-value>Party</span>
+    </div>
+    <div class="nd-campaign-context__item" data-context="combat" hidden>
+      <span class="nd-campaign-context__label">Combat</span>
+      <span class="nd-campaign-context__value" data-context-value></span>
+    </div>
+    <div class="nd-campaign-context__item" data-context="round" hidden>
+      <span class="nd-campaign-context__label">Round</span>
+      <span class="nd-campaign-context__value" data-context-value></span>
+    </div>
+    <div class="nd-campaign-context__item" data-context="turn" hidden>
+      <span class="nd-campaign-context__label">Turn</span>
+      <span class="nd-campaign-context__value" data-context-value></span>
+    </div>
+  </section>
+
   <section class="nd-companion__row">
 
     <article class="nd-card nd-card--beat">
       <header class="nd-card__header">
         <span class="nd-card__accent" aria-hidden="true"></span>
         <h2 class="nd-card__label">Current Beat</h2>
+        <span class="nd-live-notes__status" data-live-notes-status hidden></span>
       </header>
-      <p class="nd-card__text">
-        The party has just discovered that the Pale Merchant's ledger implicates three city
-        councilors in a grain-price conspiracy. Edric Suun knows they have it and sent enforcers
-        to retrieve it. The players are cornered in the Archivist's back office.
-      </p>
-      <ul class="nd-tag-list">
-        <li class="nd-tag nd-tag--primary">Investigation</li>
-        <li class="nd-tag nd-tag--warning">Tension high</li>
-      </ul>
+      <div
+        class="nd-card__text nd-live-notes"
+        data-storage="currentBeat"
+        data-placeholder="Click here to start typing..."
+        role="textbox"
+        aria-label="Current Beat"
+      ></div>
     </article>
 
     <article class="nd-card nd-card--scene">
