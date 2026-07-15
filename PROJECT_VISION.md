@@ -44,3 +44,6 @@ Knowledge Packs extend the engine with setting-specific data, prompts, random ta
 The engine must never depend on a specific campaign setting.
 
 The Companion complements Foundry. It never replaces Foundry's native sheets.
+
+  
+The Companion should never interrupt the DM's flow.

@@ -18,6 +18,14 @@ export class CompanionStorage {
       default: ""
     });
 
+    game.settings.register(MODULE_ID, "sessionNotes", {
+      name: "sessionNotes",
+      scope: "world",
+      config: false,
+      type: String,
+      default: ""
+    });
+
     game.settings.register(MODULE_ID, MEMORY_SETTING, {
       name: MEMORY_SETTING,
       scope: "world",

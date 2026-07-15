@@ -34,94 +34,151 @@
     </div>
   </section>
 
-  <section class="nd-companion-memory nd-card" data-companion-memory data-live-notes-root aria-label="Companion Memory">
-    <header class="nd-card__header">
-      <span class="nd-card__accent" aria-hidden="true"></span>
-      <h2 class="nd-card__label">Companion Memory</h2>
-      <span class="nd-live-notes__status" data-live-notes-status hidden></span>
-    </header>
-    <p class="nd-companion-memory__empty" data-memory-empty>
-      Select an Actor to view Companion Memory.
-    </p>
-    <div
-      class="nd-card__text nd-live-notes"
-      data-memory-editor
-      data-placeholder="Click here to start typing..."
-      role="textbox"
-      aria-label="Companion Memory"
-      hidden
-    ></div>
-  </section>
+  <nav class="nd-workspace-switcher" aria-label="Workspaces">
+    <button
+      type="button"
+      class="nd-workspace-switcher__button"
+      data-action="setWorkspace"
+      data-workspace="play"
+      aria-pressed="true"
+    >Play</button>
+    <button
+      type="button"
+      class="nd-workspace-switcher__button"
+      data-action="setWorkspace"
+      data-workspace="notes"
+      aria-pressed="false"
+    >Notes</button>
+    <button
+      type="button"
+      class="nd-workspace-switcher__button"
+      data-action="setWorkspace"
+      data-workspace="prepare"
+      aria-pressed="false"
+    >Prepare</button>
+  </nav>
 
-  <section class="nd-companion__row">
+  <div class="nd-workspace-region">
 
-    <article class="nd-card nd-card--beat">
-      <header class="nd-card__header">
-        <span class="nd-card__accent" aria-hidden="true"></span>
-        <h2 class="nd-card__label">Current Beat</h2>
-        <span class="nd-live-notes__status" data-live-notes-status hidden></span>
-      </header>
-      <div
-        class="nd-card__text nd-live-notes"
-        data-storage="currentBeat"
-        data-placeholder="Click here to start typing..."
-        role="textbox"
-        aria-label="Current Beat"
-      ></div>
-    </article>
+    <section class="nd-workspace" data-workspace-panel="play" aria-label="Play workspace">
+      <section class="nd-companion-memory nd-card" data-companion-memory data-live-notes-root aria-label="Companion Memory">
+        <header class="nd-card__header">
+          <span class="nd-card__accent" aria-hidden="true"></span>
+          <h2 class="nd-card__label">Companion Memory</h2>
+          <span class="nd-live-notes__status" data-live-notes-status hidden></span>
+        </header>
+        <p class="nd-companion-memory__empty" data-memory-empty>
+          Select an Actor to view Companion Memory.
+        </p>
+        <div
+          class="nd-card__text nd-live-notes"
+          data-memory-editor
+          data-placeholder="Click here to start typing..."
+          role="textbox"
+          aria-label="Companion Memory"
+          hidden
+        ></div>
+      </section>
 
-    <article class="nd-card nd-card--scene">
-      <header class="nd-card__header">
-        <span class="nd-card__accent" aria-hidden="true"></span>
-        <h2 class="nd-card__label">Next Scene</h2>
-      </header>
-      <p class="nd-card__text">
-        Edric's enforcers breach the archive front door — the party must choose: fight their way
-        out, negotiate, or use the secret passage Maren hinted at (DC 14 Investigation to find it
-        in time).
-      </p>
-      <ul class="nd-tag-list">
-        <li class="nd-tag nd-tag--scene">Encounter</li>
-        <li class="nd-tag nd-tag--danger">Combat possible</li>
-      </ul>
-    </article>
+      <article class="nd-card nd-card--threads">
+        <header class="nd-card__header">
+          <span class="nd-card__accent" aria-hidden="true"></span>
+          <h2 class="nd-card__label">Open Threads</h2>
+        </header>
+        <ul class="nd-thread-list">
+          <li class="nd-thread-list__item">
+            <span class="nd-thread-list__marker" aria-hidden="true"></span>
+            <span class="nd-thread-list__text">Investigate who burned the Millhaven granary</span>
+          </li>
+          <li class="nd-thread-list__item">
+            <span class="nd-thread-list__marker" aria-hidden="true"></span>
+            <span class="nd-thread-list__text">Track down the Pale Merchant's ledger</span>
+          </li>
+          <li class="nd-thread-list__item nd-thread-list__item--done">
+            <span class="nd-thread-list__marker" aria-hidden="true"></span>
+            <span class="nd-thread-list__text">Return the stolen sextant to Captain Voss</span>
+          </li>
+          <li class="nd-thread-list__item">
+            <span class="nd-thread-list__marker" aria-hidden="true"></span>
+            <span class="nd-thread-list__text">Discover why the Thornwood has gone silent</span>
+          </li>
+          <li class="nd-thread-list__item">
+            <span class="nd-thread-list__marker" aria-hidden="true"></span>
+            <span class="nd-thread-list__text">Deliver the letter to Sister Elara in Ashfeld</span>
+          </li>
+        </ul>
+      </article>
 
-  </section>
+      <footer class="nd-companion__footer">
+        <button type="button" class="nd-oh-shit-button">
+          <span class="nd-oh-shit-button__icon" aria-hidden="true">⚠</span>
+          OH SHIT!
+        </button>
+      </footer>
+    </section>
 
-  <article class="nd-card nd-card--threads">
-    <header class="nd-card__header">
-      <span class="nd-card__accent" aria-hidden="true"></span>
-      <h2 class="nd-card__label">Open Threads</h2>
-    </header>
-    <ul class="nd-thread-list">
-      <li class="nd-thread-list__item">
-        <span class="nd-thread-list__marker" aria-hidden="true"></span>
-        <span class="nd-thread-list__text">Investigate who burned the Millhaven granary</span>
-      </li>
-      <li class="nd-thread-list__item">
-        <span class="nd-thread-list__marker" aria-hidden="true"></span>
-        <span class="nd-thread-list__text">Track down the Pale Merchant's ledger</span>
-      </li>
-      <li class="nd-thread-list__item nd-thread-list__item--done">
-        <span class="nd-thread-list__marker" aria-hidden="true"></span>
-        <span class="nd-thread-list__text">Return the stolen sextant to Captain Voss</span>
-      </li>
-      <li class="nd-thread-list__item">
-        <span class="nd-thread-list__marker" aria-hidden="true"></span>
-        <span class="nd-thread-list__text">Discover why the Thornwood has gone silent</span>
-      </li>
-      <li class="nd-thread-list__item">
-        <span class="nd-thread-list__marker" aria-hidden="true"></span>
-        <span class="nd-thread-list__text">Deliver the letter to Sister Elara in Ashfeld</span>
-      </li>
-    </ul>
-  </article>
+    <section class="nd-workspace" data-workspace-panel="notes" aria-label="Notes workspace" hidden>
+      <article class="nd-card nd-card--session-notes" data-live-notes-root aria-label="Session Notes">
+        <header class="nd-card__header">
+          <span class="nd-card__accent" aria-hidden="true"></span>
+          <h2 class="nd-card__label">Session Notes</h2>
+          <span class="nd-live-notes__status" data-live-notes-status hidden></span>
+        </header>
+        <div
+          class="nd-card__text nd-live-notes nd-live-notes--session"
+          data-storage="sessionNotes"
+          data-placeholder="Session Notes..."
+          role="textbox"
+          aria-label="Session Notes"
+        ></div>
+      </article>
 
-  <footer class="nd-companion__footer">
-    <button type="button" class="nd-oh-shit-button">
-      <span class="nd-oh-shit-button__icon" aria-hidden="true">⚠</span>
-      OH SHIT!
-    </button>
-  </footer>
+      <section class="nd-companion__row">
+        <article class="nd-card nd-card--beat">
+          <header class="nd-card__header">
+            <span class="nd-card__accent" aria-hidden="true"></span>
+            <h2 class="nd-card__label">Current Beat</h2>
+            <span class="nd-live-notes__status" data-live-notes-status hidden></span>
+          </header>
+          <div
+            class="nd-card__text nd-live-notes"
+            data-storage="currentBeat"
+            data-placeholder="Click here to start typing..."
+            role="textbox"
+            aria-label="Current Beat"
+          ></div>
+        </article>
+
+        <article class="nd-card nd-card--scene">
+          <header class="nd-card__header">
+            <span class="nd-card__accent" aria-hidden="true"></span>
+            <h2 class="nd-card__label">Next Scene</h2>
+          </header>
+          <p class="nd-card__text">
+            Edric's enforcers breach the archive front door — the party must choose: fight their way
+            out, negotiate, or use the secret passage Maren hinted at (DC 14 Investigation to find it
+            in time).
+          </p>
+          <ul class="nd-tag-list">
+            <li class="nd-tag nd-tag--scene">Encounter</li>
+            <li class="nd-tag nd-tag--danger">Combat possible</li>
+          </ul>
+        </article>
+      </section>
+    </section>
+
+    <section class="nd-workspace" data-workspace-panel="prepare" aria-label="Prepare workspace" hidden>
+      <article class="nd-card">
+        <header class="nd-card__header">
+          <span class="nd-card__accent" aria-hidden="true"></span>
+          <h2 class="nd-card__label">Prepare</h2>
+        </header>
+        <p class="nd-card__text nd-workspace__placeholder">
+          Prep tools will land here.
+        </p>
+      </article>
+    </section>
+
+  </div>
 
 </div>
