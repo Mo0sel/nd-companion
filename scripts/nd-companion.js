@@ -11,7 +11,7 @@ Hooks.once("init", () => {
 });
 
 Hooks.once("ready", () => {
-  console.log("N&D Companion ready.");
+  console.log("🚨 N&D Companion READY - BUILD 2026-07-15");
   EntityRegistry.ready();
   EntityRegistry.registerHooks();
   window.nd = window.nd ?? {};
