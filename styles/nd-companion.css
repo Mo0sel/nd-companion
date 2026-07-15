@@ -202,19 +202,6 @@
   display: none;
 }
 
-/* Top row: Current Beat + Next Scene */
-.nd-companion__row {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-}
-
-@container nd-companion (min-width: 480px) {
-  .nd-companion__row {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
 /* Card */
 .nd-card {
   display: flex;
@@ -240,7 +227,7 @@
   background: var(--nd-primary);
 }
 
-.nd-card--scene .nd-card__accent {
+.nd-card--playbook .nd-card__accent {
   background: var(--nd-scene);
 }
 
@@ -302,6 +289,113 @@
 
 .nd-card--session-notes .nd-card__accent {
   background: var(--nd-primary);
+}
+
+/* Playbook */
+.nd-playbook__header {
+  flex-wrap: wrap;
+}
+
+.nd-playbook__nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.nd-playbook__nav-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--nd-border);
+  border-radius: 6px;
+  background: var(--nd-surface-inset);
+  color: var(--nd-text);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.nd-playbook__nav-button:hover:not(:disabled) {
+  border-color: rgba(91, 142, 255, 0.45);
+  color: var(--nd-primary);
+}
+
+.nd-playbook__nav-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.nd-playbook__counter {
+  min-width: 3.5em;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--nd-text-muted);
+}
+
+.nd-playbook__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--nd-text);
+}
+
+.nd-playbook__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nd-playbook__field[hidden] {
+  display: none;
+}
+
+.nd-playbook__field-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--nd-text-muted);
+}
+
+.nd-playbook__related {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nd-playbook__entity {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 5px;
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  background: rgba(167, 139, 250, 0.12);
+  color: var(--nd-scene);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+}
+
+.nd-playbook__entity--navigable {
+  cursor: pointer;
+}
+
+.nd-playbook__entity--navigable:hover {
+  border-color: rgba(167, 139, 250, 0.5);
+}
+
+.nd-playbook__entity--disabled {
+  opacity: 0.55;
+  cursor: default;
+  border-color: var(--nd-border);
+  background: var(--nd-surface-inset);
+  color: var(--nd-text-muted);
 }
 
 /* Tags */
