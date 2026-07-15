@@ -1,6 +1,8 @@
+import { LiveNotes } from "./live-notes.js";
+
 /**
  * Focus detection model for the Companion Focus Panel.
- * Sprint 6A: identity only (portrait, name, type). Extensible via kind.
+ * Sprint 6A/7: identity + Companion Memory wiring via Live Notes.
  */
 export class FocusPanel {
   /**
@@ -9,6 +11,7 @@ export class FocusPanel {
    *   name: string
    * } | {
    *   kind: "actor",
+   *   uuid: string,
    *   name: string,
    *   img: string,
    *   type: string
@@ -21,7 +24,7 @@ export class FocusPanel {
     }
 
     const actor = controlled[0].actor;
-    if (!actor) {
+    if (!actor?.uuid) {
       return { kind: "party", name: "Party" };
     }
 
@@ -30,10 +33,21 @@ export class FocusPanel {
 
     return {
       kind: "actor",
+      uuid: actor.uuid,
       name: actor.name || "Unnamed",
       img: actor.img || Actor.DEFAULT_ICON,
       type: game.i18n.localize(typeLabel)
     };
+  }
+
+  /**
+   * Build a storage key for document-scoped Companion Memory.
+   * @param {"actor"|"scene"|"journal"|"item"} kind
+   * @param {string} uuid
+   * @returns {string}
+   */
+  static memoryKey(kind, uuid) {
+    return `${kind}:${uuid}`;
   }
 
   /**
@@ -72,6 +86,33 @@ export class FocusPanel {
       if (typeRow) typeRow.hidden = true;
       if (typeEl) typeEl.textContent = "";
     }
+
+    FocusPanel.#paintMemory(root, model);
+  }
+
+  /**
+   * @param {HTMLElement} root
+   * @param {ReturnType<typeof FocusPanel.get>} model
+   */
+  static #paintMemory(root, model) {
+    const section = root.querySelector("[data-companion-memory]");
+    if (!section) return;
+
+    const emptyEl = section.querySelector("[data-memory-empty]");
+    const editorEl = section.querySelector("[data-memory-editor]");
+    if (!emptyEl || !editorEl) return;
+
+    if (model.kind === "actor" && model.uuid) {
+      emptyEl.hidden = true;
+      editorEl.hidden = false;
+      LiveNotes.attach(editorEl, FocusPanel.memoryKey("actor", model.uuid), { memory: true });
+      return;
+    }
+
+    LiveNotes.detach(editorEl);
+    editorEl.hidden = true;
+    editorEl.textContent = "";
+    emptyEl.hidden = false;
   }
 
   static #refreshOpen() {

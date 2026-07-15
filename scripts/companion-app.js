@@ -18,7 +18,7 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       resizable: true
     },
     position: {
-      width: 320,
+      width: 700,
       height: "auto"
     }
   };
@@ -37,9 +37,9 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     await super._onRender(_context, _options);
     CampaignAwareness.paint(this.element, CampaignContext.get());
     FocusPanel.paint(this.element, FocusPanel.get());
-    this.element.querySelectorAll("[data-storage]").forEach((el) => {
+    this.element.querySelectorAll("[data-storage]:not([data-memory-editor])").forEach((el) => {
       LiveNotes.attach(el, el.dataset.storage);
     });
-
   }
 }
+

@@ -74,7 +74,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 14px;
+  padding: 6px 12px;
   background: var(--nd-surface);
   border: 1px solid var(--nd-border);
   border-radius: var(--nd-radius);
@@ -132,6 +132,19 @@
 .nd-focus-panel__type-value {
   font-size: 12px;
   color: var(--nd-text-muted);
+}
+
+/* Companion Memory */
+.nd-companion-memory__empty {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--nd-text-muted);
+}
+
+.nd-companion-memory__empty[hidden],
+.nd-companion-memory [data-memory-editor][hidden] {
+  display: none;
 }
 
 /* Top row: Current Beat + Next Scene */
