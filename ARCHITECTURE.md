@@ -134,6 +134,8 @@ Each entry: `{ uuid, id, kind, name, img, document, ambiguous }`.
 
 Built on `ready`; per-kind rebuild on create/update/delete hooks. Exact name / prefix search (case-sensitive); same-kind name collisions → `ambiguous: true`.
 
+Scene `img` uses official V14 `Scene.thumbnail` (fallback `thumb`) — not deprecated `Scene.background`.
+
 ### CompanionApp (`companion-app.js`)
 
 ApplicationV2 + HandlebarsApplicationMixin window (`id: nd-companion-app`).
@@ -291,9 +293,15 @@ Examples:
 
 ```js
 nd.EntityRegistry.all("actor")
-nd.Navigation.canNavigate(entity)
-await nd.Navigation.navigate(entity)
 nd.FocusManager.get()
+
+// Prefer a real Actor name from this world (not a placeholder like "NPC NAME")
+const name = nd.EntityRegistry.all("actor")[0]?.name;
+const found = nd.EntityRegistry.findByName(name, "actor");
+if (found.status === "ok") {
+  nd.Navigation.canNavigate(found.entity);
+  await nd.Navigation.navigate(found.entity);
+}
 ```
 
 ---

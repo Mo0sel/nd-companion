@@ -95,7 +95,7 @@ Exact UI labels can change; the goal is always: **Forge serves the latest GitHub
 3. Find **N&D Companion** → **Update** / **Check for updates** / reinstall from manifest if Forge still shows an old version.
 4. Confirm the listed version matches `module.json`.
 5. Hard refresh the Foundry client (next section).
-6. In Console, confirm bootstrap logs (`N&D Companion ready.`, `Entity Registry ready`).
+6. In Console, confirm bootstrap log (`N&D Companion ready.`).
 
 If DevTools still shows old logs after update, the browser is caching the previous ESM bundle — hard refresh again or disable cache while DevTools is open.
 
@@ -140,6 +140,8 @@ On `ready`, bootstrap exposes:
 ```js
 window.nd ??= {};
 window.nd.EntityRegistry = EntityRegistry;
+window.nd.FocusManager = FocusManager;
+window.nd.Navigation = Navigation;
 ```
 
 In the DevTools Console (after the world is ready):
@@ -148,9 +150,33 @@ In the DevTools Console (after the world is ready):
 nd.EntityRegistry
 nd.EntityRegistry.all("actor")
 nd.EntityRegistry.all("scene")
-nd.EntityRegistry.findByName("Exact Actor Name", "actor")
 nd.EntityRegistry.findByUUID("Actor.xxxxxxx")
 nd.EntityRegistry.search("The")
+nd.FocusManager.get()
+```
+
+### Navigation with a real actor name
+
+Do **not** use placeholders like `"NPC NAME"`. Resolve a name that exists in this world, then navigate:
+
+```js
+const actors = nd.EntityRegistry.all("actor");
+const name = actors[0]?.name; // real name from THIS world
+const found = nd.EntityRegistry.findByName(name, "actor");
+
+if (found.status === "ok") {
+  console.log(nd.Navigation.canNavigate(found.entity)); // true
+  await nd.Navigation.navigate(found.entity);
+  // → "token_controlled" if token on current scene, else "logical_focus"
+  nd.FocusManager.get(); // should match that actor when focus applied
+}
+```
+
+Or look up by an exact known world name:
+
+```js
+const found = nd.EntityRegistry.findByName("Your Actual Actor Name Here", "actor");
+if (found.status === "ok") await nd.Navigation.navigate(found.entity);
 ```
 
 Useful checks:
@@ -161,8 +187,9 @@ Useful checks:
 | `all("actor").length` | Matches world Actors sidebar count (roughly) |
 | Rename an Actor, call `all` again | Name updates (hooks rebuild that kind) |
 | Two Actors same name | Both `ambiguous: true`; `findByName` → `status: "ambiguous"` |
+| `nd.FocusManager` / `nd.Navigation` missing | Stale module cache — hard refresh |
 
-Do not rely on `window.nd` in production UI code — it is a **development namespace**. Feature code should `import { EntityRegistry } from "./entity-registry.js"`.
+Do not rely on `window.nd` in production UI code — it is a **development namespace**. Feature code should `import` the engines directly.
 
 ---
 
@@ -181,11 +208,12 @@ Run as GM in a world with a loaded Scene.
 | Area | Smoke test |
 |------|------------|
 | **Campaign Context** | Switch Scene → bar Scene updates. Select one token → Focus name. Start combat → Combat/Round/Turn appear; end combat → they hide. |
-| **Focus Panel** | No token → Party, no portrait. One token → portrait, name, type. |
+| **Focus Manager / Panel** | No token → Party, no portrait. One token → portrait, name, type. Off-scene `navigate` → logical focus shows actor without changing scene. Select any token → canvas wins over logical focus. |
 | **Companion Memory** | Select actor → type note → wait for Saved → reselect / reload → note persists. No token → empty state message. |
 | **Live Notes (Beat / Session)** | Notes workspace → edit Current Beat / Session Notes → Saved → reload → text persists. |
 | **Workspaces** | Play / Notes / Prepare switch instantly. Type in Session Notes, switch to Play and back — text still there (show/hide, not remount). |
-| **Entity Registry** | `nd.EntityRegistry.all("actor")` works. Create/rename/delete Actor → list changes without reload. |
+| **Entity Registry** | `nd.EntityRegistry.all("actor")` works. Create/rename/delete Actor → list changes without reload. Scene `img` uses `Scene.thumbnail` (no `Scene.background`). |
+| **Navigation** | Resolve a **real** actor name via `all("actor")[0].name` → `findByName` → `canNavigate` / `navigate`. Also navigate a scene and open a journal / roll table sheet. Do not use placeholder names like `"NPC NAME"`. |
 | **Storage** | Confirm you did not introduce a second save path; UI still goes through `CompanionStorage` / `LiveNotes`. |
 
 Record surprising UX in `UX_NOTES.md` after real sessions.
@@ -200,7 +228,7 @@ These prevent the failures we have already paid for.
    Documents, tokens, combat, and canvas state live in Foundry. Companion stores only DM notes / settings (`CompanionStorage`).
 
 2. **Engines before UI**  
-   Put logic in small modules (`EntityRegistry`, `LiveNotes`, storage, context). UI paints and attaches; it does not own persistence or indexing.
+   Put logic in small modules (`EntityRegistry`, `Navigation`, `FocusManager`, `LiveNotes`, storage, context). UI paints and attaches; it does not own persistence, indexing, focus resolution, or navigation.
 
 3. **Hooks instead of polling**  
    No `setInterval` for world awareness. Use official V14 hooks (`controlToken`, `canvasReady`, combat hooks, document create/update/delete).
@@ -235,6 +263,8 @@ These prevent the failures we have already paid for.
 | Edit code | This repo (or Linked `Data/modules/nd-companion`) |
 | Ship to Forge | Commit → push `main` → Forge update module → hard refresh |
 | Inspect registry | `nd.EntityRegistry.all("actor")` |
+| Navigate by real name | `findByName(all("actor")[0].name, "actor")` → `Navigation.navigate` |
+| Inspect focus | `nd.FocusManager.get()` |
 | Architecture | `ARCHITECTURE.md` |
 | Product direction | `PROJECT_VISION.md` |
 | What’s next | `ROADMAP.md` |

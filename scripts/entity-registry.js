@@ -208,7 +208,7 @@ export class EntityRegistry {
       "icons/svg/mystery-man.svg";
 
     if (kind === "scene") {
-      return document.thumb || document.background?.src || document.img || fallback;
+      return document.thumbnail || document.thumb || fallback;
     }
 
     return document.img || fallback;

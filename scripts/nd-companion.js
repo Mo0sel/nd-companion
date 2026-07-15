@@ -19,7 +19,6 @@ Hooks.once("ready", () => {
   window.nd.EntityRegistry = EntityRegistry;
   window.nd.FocusManager = FocusManager;
   window.nd.Navigation = Navigation;
-  console.log("Entity Registry ready", EntityRegistry);
   CampaignAwareness.registerHooks();
   FocusManager.registerHooks();
 });
