@@ -33,6 +33,14 @@ export class CompanionStorage {
       type: Object,
       default: {}
     });
+
+    game.settings.register(MODULE_ID, "playbook", {
+      name: "playbook",
+      scope: "world",
+      config: false,
+      type: Object,
+      default: { currentIndex: 0, beats: [] }
+    });
   }
 
   /**
@@ -73,5 +81,25 @@ export class CompanionStorage {
     const bag = foundry.utils.duplicate(game.settings.get(MODULE_ID, MEMORY_SETTING) ?? {});
     bag[key] = value ?? "";
     return game.settings.set(MODULE_ID, MEMORY_SETTING, bag);
+  }
+
+  /**
+   * @returns {{ currentIndex: number, beats: object[] }}
+   */
+  static getPlaybook() {
+    const doc = game.settings.get(MODULE_ID, "playbook");
+    return foundry.utils.duplicate(doc ?? { currentIndex: 0, beats: [] });
+  }
+
+  /**
+   * @param {{ currentIndex: number, beats: object[] }} value
+   * @returns {Promise<object>}
+   */
+  static async setPlaybook(value) {
+    return game.settings.set(
+      MODULE_ID,
+      "playbook",
+      foundry.utils.duplicate(value ?? { currentIndex: 0, beats: [] })
+    );
   }
 }

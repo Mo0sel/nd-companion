@@ -3,6 +3,7 @@ import { CampaignAwareness } from "./campaign-context.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { FocusManager } from "./focus-manager.js";
 import { Navigation } from "./navigation.js";
+import { PlaybookService } from "./playbook-service.js";
 import { CompanionStorage } from "./storage.js";
 
 Hooks.once("init", () => {
@@ -15,6 +16,7 @@ Hooks.once("ready", () => {
   console.log("N&D Companion ready.");
   EntityRegistry.ready();
   EntityRegistry.registerHooks();
+  PlaybookService.ready();
   window.nd ??= {};
   window.nd.EntityRegistry = EntityRegistry;
   window.nd.FocusManager = FocusManager;

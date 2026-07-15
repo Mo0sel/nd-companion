@@ -3,6 +3,7 @@ import { FocusManager } from "./focus-manager.js";
 import { FocusPanel } from "./focus-panel.js";
 import { LiveNotes } from "./live-notes.js";
 import { Playbook } from "./playbook.js";
+import { PlaybookPrepare } from "./playbook-prepare.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -83,6 +84,8 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     FocusPanel.paint(this.element, FocusManager.get());
     Playbook.paint(this.element, Playbook.get());
     Playbook.attach(this.element);
+    PlaybookPrepare.paint(this.element);
+    PlaybookPrepare.attach(this.element);
     this.element.querySelectorAll("[data-storage]:not([data-memory-editor])").forEach((el) => {
       LiveNotes.attach(el, el.dataset.storage);
     });

@@ -398,6 +398,127 @@
   color: var(--nd-text-muted);
 }
 
+/* Playbook Prepare */
+.nd-card--playbook-prepare .nd-card__accent {
+  background: var(--nd-scene);
+}
+
+.nd-playbook-prepare {
+  display: grid;
+  grid-template-columns: minmax(140px, 34%) 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.nd-playbook-prepare__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.nd-playbook-prepare__beat {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--nd-border);
+  border-radius: 6px;
+  background: var(--nd-surface-inset);
+  color: var(--nd-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.nd-playbook-prepare__beat:hover {
+  border-color: rgba(167, 139, 250, 0.45);
+}
+
+.nd-playbook-prepare__beat.is-selected {
+  border-color: rgba(91, 142, 255, 0.55);
+  background: rgba(91, 142, 255, 0.1);
+}
+
+.nd-playbook-prepare__beat.is-current .nd-playbook-prepare__beat-index {
+  color: var(--nd-scene);
+}
+
+.nd-playbook-prepare__beat-index {
+  flex-shrink: 0;
+  min-width: 1.25em;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nd-text-muted);
+}
+
+.nd-playbook-prepare__beat-title {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.nd-playbook-prepare__main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.nd-playbook-prepare__editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nd-playbook-prepare__editor[hidden],
+.nd-playbook-prepare [data-playbook-prepare-empty][hidden] {
+  display: none;
+}
+
+.nd-playbook-prepare__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.nd-playbook-prepare__current-button {
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  border-radius: 6px;
+  background: rgba(167, 139, 250, 0.12);
+  color: var(--nd-scene);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nd-playbook-prepare__current-button:hover:not(:disabled) {
+  border-color: rgba(167, 139, 250, 0.55);
+}
+
+.nd-playbook-prepare__current-button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.nd-playbook-prepare__field {
+  min-height: 2.5em;
+}
+
+.nd-playbook-prepare__field--notes {
+  min-height: 6em;
+}
+
+@container nd-companion (max-width: 520px) {
+  .nd-playbook-prepare {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Tags */
 .nd-tag-list {
   display: flex;

@@ -1,0 +1,315 @@
+import { CompanionStorage } from "./storage.js";
+
+/**
+ * @typedef {object} PlaybookRelatedRef
+ * @property {string} name
+ * @property {"actor"|"scene"|"journal"|"rollTable"} [kind]
+ */
+
+/**
+ * @typedef {object} PlaybookBeat
+ * @property {string} title
+ * @property {string} objective
+ * @property {string} gmNotes
+ * @property {PlaybookRelatedRef[]} related
+ */
+
+/**
+ * @typedef {object} PlaybookDocument
+ * @property {number} currentIndex
+ * @property {PlaybookBeat[]} beats
+ */
+
+/**
+ * One-time seed only. Written to an empty world during ready(); never read again at runtime.
+ * @type {readonly PlaybookBeat[]}
+ */
+const SAMPLE_BEATS = Object.freeze([
+  {
+    title: "Arrive at Millhaven",
+    objective: "Establish the grain shortage and meet Sister Elara.",
+    gmNotes:
+      "Let the party hear rumors at the inn before any combat. Elara is earnest, not mysterious.",
+    related: [
+      { name: "Sister Elara", kind: "actor" },
+      { name: "Millhaven Square", kind: "scene" }
+    ]
+  },
+  {
+    title: "The Burned Granary",
+    objective: "Inspect the ruins and find the scorched ledger fragment.",
+    gmNotes:
+      "Investigation DC 13 finds boot prints leading toward the docks. Do not rush the Pale Merchant reveal.",
+    related: [
+      { name: "Millhaven Granary", kind: "scene" },
+      { name: "Scorched Ledger", kind: "journal" }
+    ]
+  },
+  {
+    title: "Dockside Threats",
+    objective: "Confront Edric's enforcers without losing the ledger fragment.",
+    gmNotes:
+      "Offer fight, talk, or flight. Maren's secret passage is DC 14 Investigation if they stall.",
+    related: [
+      { name: "Edric", kind: "actor" },
+      { name: "Maren", kind: "actor" },
+      { name: "Harbor Docks", kind: "scene" },
+      { name: "Missing World NPC", kind: "actor" }
+    ]
+  },
+  {
+    title: "The Pale Merchant",
+    objective: "Learn why the merchant is buying ruined grain at a premium.",
+    gmNotes:
+      "He never admits sabotage. He will sell information about the Thornwood silence for a favor.",
+    related: [
+      { name: "Pale Merchant", kind: "actor" },
+      { name: "Merchant Ledger", kind: "journal" }
+    ]
+  },
+  {
+    title: "Captain Voss's Sextant",
+    objective: "Return or recover the stolen navigational sextant.",
+    gmNotes:
+      "If already returned, skip to Voss's tip about night landings near Ashfeld.",
+    related: [
+      { name: "Captain Voss", kind: "actor" },
+      { name: "Random Encounters", kind: "rollTable" }
+    ]
+  },
+  {
+    title: "Thornwood Silence",
+    objective: "Discover what silenced the forest scouts.",
+    gmNotes:
+      "Ambient dread only — no full reveal yet. One strange nest is enough for this beat.",
+    related: [
+      { name: "Thornwood Edge", kind: "scene" },
+      { name: "Scout Report", kind: "journal" }
+    ]
+  },
+  {
+    title: "Letter to Ashfeld",
+    objective: "Deliver Sister Elara's letter to Ashfeld without interception.",
+    gmNotes:
+      "Road encounter optional. If the party open the letter, note the seal is genuine.",
+    related: [
+      { name: "Sister Elara", kind: "actor" },
+      { name: "Ashfeld Road", kind: "scene" }
+    ]
+  }
+]);
+
+/**
+ * Single source of Playbook data. Persists via CompanionStorage.
+ * Sample beats seed empty worlds once; runtime reads only the stored document.
+ */
+export class PlaybookService {
+  /** @type {PlaybookDocument} */
+  static #doc = { currentIndex: 0, beats: [] };
+
+  /**
+   * Load from world storage. Seed sample beats only when beats are empty.
+   * After that, SAMPLE_BEATS is never read again.
+   */
+  static ready() {
+    const stored = CompanionStorage.getPlaybook();
+    const beats = Array.isArray(stored?.beats) ? stored.beats : [];
+
+    if (beats.length === 0) {
+      PlaybookService.#doc = {
+        currentIndex: 2,
+        beats: SAMPLE_BEATS.map((beat) => PlaybookService.#cloneBeat(beat))
+      };
+      void CompanionStorage.setPlaybook(PlaybookService.#doc);
+      return;
+    }
+
+    PlaybookService.#doc = PlaybookService.#normalize(stored);
+  }
+
+  /**
+   * @returns {PlaybookDocument}
+   */
+  static getDocument() {
+    return {
+      currentIndex: PlaybookService.#doc.currentIndex,
+      beats: PlaybookService.#doc.beats.map((beat) => PlaybookService.#cloneBeat(beat))
+    };
+  }
+
+  /**
+   * @returns {{
+   *   index: number,
+   *   total: number,
+   *   canPrevious: boolean,
+   *   canNext: boolean,
+   *   beat: PlaybookBeat
+   * }}
+   */
+  static getCurrent() {
+    const total = PlaybookService.#doc.beats.length;
+    const index = PlaybookService.#clampIndex(PlaybookService.#doc.currentIndex);
+    PlaybookService.#doc.currentIndex = index;
+    return {
+      index,
+      total,
+      canPrevious: index > 0,
+      canNext: index < total - 1,
+      beat: PlaybookService.#cloneBeat(PlaybookService.#doc.beats[index] ?? PlaybookService.#emptyBeat())
+    };
+  }
+
+  /**
+   * @param {number} [index]
+   * @returns {PlaybookBeat|null}
+   */
+  static getBeat(index) {
+    const i = index === undefined ? PlaybookService.#doc.currentIndex : index;
+    const beat = PlaybookService.#doc.beats[i];
+    return beat ? PlaybookService.#cloneBeat(beat) : null;
+  }
+
+  /** @returns {number} */
+  static getIndex() {
+    return PlaybookService.#clampIndex(PlaybookService.#doc.currentIndex);
+  }
+
+  /** @returns {number} */
+  static getTotal() {
+    return PlaybookService.#doc.beats.length;
+  }
+
+  /**
+   * @returns {{ index: number, title: string, isCurrent: boolean }[]}
+   */
+  static listBeats() {
+    const current = PlaybookService.getIndex();
+    return PlaybookService.#doc.beats.map((beat, index) => ({
+      index,
+      title: beat.title?.trim() ? beat.title : "Untitled beat",
+      isCurrent: index === current
+    }));
+  }
+
+  /**
+   * @returns {Promise<boolean>}
+   */
+  static async previous() {
+    const index = PlaybookService.getIndex();
+    if (index <= 0) return false;
+    return PlaybookService.setCurrentIndex(index - 1);
+  }
+
+  /**
+   * @returns {Promise<boolean>}
+   */
+  static async next() {
+    const index = PlaybookService.getIndex();
+    if (index >= PlaybookService.getTotal() - 1) return false;
+    return PlaybookService.setCurrentIndex(index + 1);
+  }
+
+  /**
+   * Updates Viewer currentIndex. Does not change Prepare edit selection.
+   * @param {number} index
+   * @returns {Promise<boolean>}
+   */
+  static async setCurrentIndex(index) {
+    if (!Number.isInteger(index)) return false;
+    if (index < 0 || index >= PlaybookService.#doc.beats.length) return false;
+    if (PlaybookService.#doc.currentIndex === index) return true;
+    PlaybookService.#doc.currentIndex = index;
+    await PlaybookService.#persist();
+    return true;
+  }
+
+  /**
+   * @param {number} index
+   * @param {{ title?: string, objective?: string, gmNotes?: string }} patch
+   * @returns {Promise<boolean>}
+   */
+  static async updateBeat(index, patch) {
+    const beat = PlaybookService.#doc.beats[index];
+    if (!beat || !patch) return false;
+
+    if (typeof patch.title === "string") beat.title = patch.title;
+    if (typeof patch.objective === "string") beat.objective = patch.objective;
+    if (typeof patch.gmNotes === "string") beat.gmNotes = patch.gmNotes;
+
+    await PlaybookService.#persist();
+    return true;
+  }
+
+  static async #persist() {
+    await CompanionStorage.setPlaybook({
+      currentIndex: PlaybookService.#doc.currentIndex,
+      beats: PlaybookService.#doc.beats.map((beat) => PlaybookService.#cloneBeat(beat))
+    });
+  }
+
+  /**
+   * @param {unknown} stored
+   * @returns {PlaybookDocument}
+   */
+  static #normalize(stored) {
+    const beats = Array.isArray(stored?.beats)
+      ? stored.beats.map((beat) => PlaybookService.#normalizeBeat(beat))
+      : [];
+    const currentIndex = PlaybookService.#clampIndex(Number(stored?.currentIndex) || 0, beats.length);
+    return { currentIndex, beats };
+  }
+
+  /**
+   * @param {unknown} beat
+   * @returns {PlaybookBeat}
+   */
+  static #normalizeBeat(beat) {
+    const related = Array.isArray(beat?.related)
+      ? beat.related
+          .filter((ref) => ref && typeof ref.name === "string")
+          .map((ref) => ({
+            name: ref.name,
+            ...(ref.kind ? { kind: ref.kind } : {})
+          }))
+      : [];
+
+    return {
+      title: typeof beat?.title === "string" ? beat.title : "",
+      objective: typeof beat?.objective === "string" ? beat.objective : "",
+      gmNotes: typeof beat?.gmNotes === "string" ? beat.gmNotes : "",
+      related
+    };
+  }
+
+  /**
+   * @param {PlaybookBeat} beat
+   * @returns {PlaybookBeat}
+   */
+  static #cloneBeat(beat) {
+    return {
+      title: beat.title ?? "",
+      objective: beat.objective ?? "",
+      gmNotes: beat.gmNotes ?? "",
+      related: (beat.related ?? []).map((ref) => ({
+        name: ref.name,
+        ...(ref.kind ? { kind: ref.kind } : {})
+      }))
+    };
+  }
+
+  /** @returns {PlaybookBeat} */
+  static #emptyBeat() {
+    return { title: "", objective: "", gmNotes: "", related: [] };
+  }
+
+  /**
+   * @param {number} index
+   * @param {number} [total]
+   * @returns {number}
+   */
+  static #clampIndex(index, total = PlaybookService.#doc.beats.length) {
+    if (total <= 0) return 0;
+    if (!Number.isFinite(index)) return 0;
+    return Math.min(Math.max(Math.trunc(index), 0), total - 1);
+  }
+}

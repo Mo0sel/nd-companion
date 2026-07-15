@@ -1,18 +1,9 @@
 import { EntityRegistry } from "./entity-registry.js";
 import { Navigation } from "./navigation.js";
+import { PlaybookService } from "./playbook-service.js";
 
 /**
- * @typedef {object} PlaybookRelatedRef
- * @property {string} name
- * @property {"actor"|"scene"|"journal"|"rollTable"} [kind]
- */
-
-/**
- * @typedef {object} PlaybookBeat
- * @property {string} title
- * @property {string} objective
- * @property {string} gmNotes
- * @property {PlaybookRelatedRef[]} related
+ * @typedef {import("./playbook-service.js").PlaybookBeat} PlaybookBeat
  */
 
 /**
@@ -24,89 +15,9 @@ import { Navigation } from "./navigation.js";
  */
 
 /**
- * Read-only Playbook viewer for UX validation.
- * Sample data and beat index live in memory only — no persistence.
+ * Notes workspace Playbook viewer. Data comes only from PlaybookService.
  */
 export class Playbook {
-  /** @type {PlaybookBeat[]} */
-  static #beats = [
-    {
-      title: "Arrive at Millhaven",
-      objective: "Establish the grain shortage and meet Sister Elara.",
-      gmNotes:
-        "Let the party hear rumors at the inn before any combat. Elara is earnest, not mysterious.",
-      related: [
-        { name: "Sister Elara", kind: "actor" },
-        { name: "Millhaven Square", kind: "scene" }
-      ]
-    },
-    {
-      title: "The Burned Granary",
-      objective: "Inspect the ruins and find the scorched ledger fragment.",
-      gmNotes:
-        "Investigation DC 13 finds boot prints leading toward the docks. Do not rush the Pale Merchant reveal.",
-      related: [
-        { name: "Millhaven Granary", kind: "scene" },
-        { name: "Scorched Ledger", kind: "journal" }
-      ]
-    },
-    {
-      title: "Dockside Threats",
-      objective: "Confront Edric's enforcers without losing the ledger fragment.",
-      gmNotes:
-        "Offer fight, talk, or flight. Maren's secret passage is DC 14 Investigation if they stall.",
-      related: [
-        { name: "Edric", kind: "actor" },
-        { name: "Maren", kind: "actor" },
-        { name: "Harbor Docks", kind: "scene" },
-        { name: "Missing World NPC", kind: "actor" }
-      ]
-    },
-    {
-      title: "The Pale Merchant",
-      objective: "Learn why the merchant is buying ruined grain at a premium.",
-      gmNotes:
-        "He never admits sabotage. He will sell information about the Thornwood silence for a favor.",
-      related: [
-        { name: "Pale Merchant", kind: "actor" },
-        { name: "Merchant Ledger", kind: "journal" }
-      ]
-    },
-    {
-      title: "Captain Voss's Sextant",
-      objective: "Return or recover the stolen navigational sextant.",
-      gmNotes:
-        "If already returned, skip to Voss's tip about night landings near Ashfeld.",
-      related: [
-        { name: "Captain Voss", kind: "actor" },
-        { name: "Random Encounters", kind: "rollTable" }
-      ]
-    },
-    {
-      title: "Thornwood Silence",
-      objective: "Discover what silenced the forest scouts.",
-      gmNotes:
-        "Ambient dread only — no full reveal yet. One strange nest is enough for this beat.",
-      related: [
-        { name: "Thornwood Edge", kind: "scene" },
-        { name: "Scout Report", kind: "journal" }
-      ]
-    },
-    {
-      title: "Letter to Ashfeld",
-      objective: "Deliver Sister Elara's letter to Ashfeld without interception.",
-      gmNotes:
-        "Road encounter optional. If the party open the letter, note the seal is genuine.",
-      related: [
-        { name: "Sister Elara", kind: "actor" },
-        { name: "Ashfeld Road", kind: "scene" }
-      ]
-    }
-  ];
-
-  /** @type {number} */
-  static #index = 2;
-
   /** @type {WeakMap<HTMLElement, AbortController>} */
   static #listeners = new WeakMap();
 
@@ -121,36 +32,25 @@ export class Playbook {
    * }}
    */
   static get() {
-    const total = Playbook.#beats.length;
-    const index = Math.min(Math.max(Playbook.#index, 0), Math.max(total - 1, 0));
-    Playbook.#index = index;
-    const beat = Playbook.#beats[index] ?? {
-      title: "",
-      objective: "",
-      gmNotes: "",
-      related: []
-    };
-
+    const current = PlaybookService.getCurrent();
     return {
-      index,
-      total,
-      canPrev: index > 0,
-      canNext: index < total - 1,
-      beat,
-      related: Playbook.#resolveRelated(beat.related ?? [])
+      index: current.index,
+      total: current.total,
+      canPrev: current.canPrevious,
+      canNext: current.canNext,
+      beat: current.beat,
+      related: Playbook.#resolveRelated(current.beat.related ?? [])
     };
   }
 
-  static prev() {
-    if (Playbook.#index <= 0) return;
-    Playbook.#index -= 1;
-    Playbook.refreshOpen();
+  static async prev() {
+    const moved = await PlaybookService.previous();
+    if (moved) Playbook.refreshOpen();
   }
 
-  static next() {
-    if (Playbook.#index >= Playbook.#beats.length - 1) return;
-    Playbook.#index += 1;
-    Playbook.refreshOpen();
+  static async next() {
+    const moved = await PlaybookService.next();
+    if (moved) Playbook.refreshOpen();
   }
 
   static refreshOpen() {
@@ -213,7 +113,6 @@ export class Playbook {
   }
 
   /**
-   * Bind prev/next and related-entity clicks. Safe to call on each render.
    * @param {HTMLElement} root
    */
   static attach(root) {
@@ -236,8 +135,8 @@ export class Playbook {
         const nav = target.closest("[data-playbook-nav]");
         if (nav) {
           const direction = nav.getAttribute("data-playbook-nav");
-          if (direction === "prev") Playbook.prev();
-          else if (direction === "next") Playbook.next();
+          if (direction === "prev") void Playbook.prev();
+          else if (direction === "next") void Playbook.next();
           return;
         }
 
@@ -255,7 +154,7 @@ export class Playbook {
   }
 
   /**
-   * @param {PlaybookRelatedRef[]} refs
+   * @param {import("./playbook-service.js").PlaybookRelatedRef[]} refs
    * @returns {ResolvedRelated[]}
    */
   static #resolveRelated(refs) {

@@ -168,14 +168,63 @@
     </section>
 
     <section class="nd-workspace" data-workspace-panel="prepare" aria-label="Prepare workspace" hidden>
-      <article class="nd-card">
+      <article class="nd-card nd-card--playbook-prepare" data-playbook-prepare data-live-notes-root aria-label="Playbook prepare">
         <header class="nd-card__header">
           <span class="nd-card__accent" aria-hidden="true"></span>
-          <h2 class="nd-card__label">Prepare</h2>
+          <h2 class="nd-card__label">Playbook</h2>
+          <span class="nd-live-notes__status" data-live-notes-status hidden></span>
         </header>
-        <p class="nd-card__text nd-workspace__placeholder">
-          Prep tools will land here.
-        </p>
+
+        <div class="nd-playbook-prepare">
+          <div class="nd-playbook-prepare__list" data-playbook-prepare-list role="list"></div>
+
+          <div class="nd-playbook-prepare__main">
+            <p class="nd-card__text nd-workspace__placeholder" data-playbook-prepare-empty hidden>
+              No beats in this Playbook.
+            </p>
+
+            <div class="nd-playbook-prepare__editor" data-playbook-prepare-editor>
+              <div class="nd-playbook-prepare__actions">
+                <button type="button" class="nd-playbook-prepare__current-button" data-playbook-set-current>
+                  Set as Current Beat
+                </button>
+              </div>
+
+              <div class="nd-playbook__field">
+                <span class="nd-playbook__field-label">Title</span>
+                <div
+                  class="nd-card__text nd-live-notes nd-playbook-prepare__field"
+                  data-playbook-field="title"
+                  data-placeholder="Beat title..."
+                  role="textbox"
+                  aria-label="Beat title"
+                ></div>
+              </div>
+
+              <div class="nd-playbook__field">
+                <span class="nd-playbook__field-label">Objective</span>
+                <div
+                  class="nd-card__text nd-live-notes nd-playbook-prepare__field"
+                  data-playbook-field="objective"
+                  data-placeholder="Objective..."
+                  role="textbox"
+                  aria-label="Beat objective"
+                ></div>
+              </div>
+
+              <div class="nd-playbook__field">
+                <span class="nd-playbook__field-label">GM Notes</span>
+                <div
+                  class="nd-card__text nd-live-notes nd-playbook-prepare__field nd-playbook-prepare__field--notes"
+                  data-playbook-field="gmNotes"
+                  data-placeholder="GM notes..."
+                  role="textbox"
+                  aria-label="GM notes"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </article>
     </section>
 

@@ -4,19 +4,35 @@ const DEBOUNCE_MS = 500;
 const SAVED_VISIBLE_MS = 1000;
 
 /**
- * Click-to-edit, autosaving note regions driven by storage keys.
+ * Click-to-edit, autosaving regions.
+ * Supports CompanionStorage keys or custom load/save callbacks (same debounce + status UX).
  */
 export class LiveNotes {
   /**
-   * Load persisted text and attach autosave behavior to a contenteditable element.
-   * Safe to call again when the storage key changes (replaces prior listeners).
+   * Load text and attach autosave behavior to a contenteditable element.
+   * Safe to call again when the binding changes (replaces prior listeners).
+   *
+   * Storage-key mode:
+   *   LiveNotes.attach(el, "sessionNotes")
+   *   LiveNotes.attach(el, "actor:…", { memory: true })
+   *
+   * Callback mode (no storage key required):
+   *   LiveNotes.attach(el, null, { load: () => "…", save: async (v) => { … } })
    *
    * @param {HTMLElement} element
-   * @param {string} key Storage key (e.g. "currentBeat" or "actor:Actor.xxx")
-   * @param {{ memory?: boolean }} [options]
+   * @param {string|null} key Storage key, or null in callback mode
+   * @param {{
+   *   memory?: boolean,
+   *   load?: () => string,
+   *   save?: (value: string) => Promise<unknown>|unknown
+   * }} [options]
    */
   static attach(element, key, options = {}) {
-    if (!(element instanceof HTMLElement) || !key) return;
+    if (!(element instanceof HTMLElement)) return;
+
+    const callbackMode =
+      typeof options.load === "function" && typeof options.save === "function";
+    if (!callbackMode && !key) return;
 
     if (typeof element._ndLiveNotesCleanup === "function") {
       element._ndLiveNotesCleanup();
@@ -24,12 +40,19 @@ export class LiveNotes {
     }
 
     const useMemory = Boolean(options.memory);
-    const read = (k) => (useMemory ? CompanionStorage.getMemory(k) : CompanionStorage.get(k));
-    const write = (k, v) => (useMemory ? CompanionStorage.setMemory(k, v) : CompanionStorage.set(k, v));
+    const read = () => {
+      if (callbackMode) return options.load() ?? "";
+      return useMemory ? CompanionStorage.getMemory(key) : CompanionStorage.get(key);
+    };
+    const write = (value) => {
+      if (callbackMode) return options.save(value);
+      return useMemory ? CompanionStorage.setMemory(key, value) : CompanionStorage.set(key, value);
+    };
 
     element.setAttribute("contenteditable", "true");
-    element.dataset.storage = key;
-    element.textContent = read(key);
+    if (key) element.dataset.storage = key;
+    else delete element.dataset.storage;
+    element.textContent = read();
 
     let debounceId = null;
     let statusClearId = null;
@@ -46,7 +69,7 @@ export class LiveNotes {
     const save = async () => {
       const value = element.textContent ?? "";
       setStatus("Saving...");
-      await write(key, value);
+      await write(value);
       setStatus("Saved");
       clearTimeout(statusClearId);
       statusClearId = setTimeout(() => setStatus(""), SAVED_VISIBLE_MS);
@@ -56,7 +79,7 @@ export class LiveNotes {
       clearTimeout(debounceId);
       debounceId = setTimeout(() => {
         save().catch((err) => {
-          console.error("N&D Companion: failed to save live note", key, err);
+          console.error("N&D Companion: failed to save live note", key ?? "callback", err);
           setStatus("");
         });
       }, DEBOUNCE_MS);
