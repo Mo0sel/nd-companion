@@ -1,39 +1,5 @@
 <div class="nd-companion__shell">
 
-  <section class="nd-campaign-context" aria-label="Campaign Context">
-    <div class="nd-campaign-context__item" data-context="scene" hidden>
-      <span class="nd-campaign-context__label">Scene</span>
-      <span class="nd-campaign-context__value" data-context-value></span>
-    </div>
-    <div class="nd-campaign-context__item" data-context="focus">
-      <span class="nd-campaign-context__label">Focus</span>
-      <span class="nd-campaign-context__value" data-context-value>Party</span>
-    </div>
-    <div class="nd-campaign-context__item" data-context="combat" hidden>
-      <span class="nd-campaign-context__label">Combat</span>
-      <span class="nd-campaign-context__value" data-context-value></span>
-    </div>
-    <div class="nd-campaign-context__item" data-context="round" hidden>
-      <span class="nd-campaign-context__label">Round</span>
-      <span class="nd-campaign-context__value" data-context-value></span>
-    </div>
-    <div class="nd-campaign-context__item" data-context="turn" hidden>
-      <span class="nd-campaign-context__label">Turn</span>
-      <span class="nd-campaign-context__value" data-context-value></span>
-    </div>
-  </section>
-
-  <section class="nd-focus-panel" data-focus-panel data-focus-kind="party" aria-label="Focus">
-    <img class="nd-focus-panel__portrait" data-focus="portrait" alt="" hidden>
-    <div class="nd-focus-panel__meta">
-      <div class="nd-focus-panel__name" data-focus="name">Party</div>
-      <div class="nd-focus-panel__type" data-focus-row="type" hidden>
-        <span class="nd-focus-panel__type-label">Type</span>
-        <span class="nd-focus-panel__type-value" data-focus="type"></span>
-      </div>
-    </div>
-  </section>
-
   <nav class="nd-workspace-switcher" aria-label="Workspaces">
     <button
       type="button"
@@ -60,121 +26,175 @@
 
   <div class="nd-workspace-region">
 
-    <section class="nd-workspace" data-workspace-panel="play" aria-label="Play workspace">
-      <section class="nd-companion-memory nd-card" data-companion-memory data-live-notes-root aria-label="Companion Memory">
-        <header class="nd-card__header">
-          <span class="nd-card__accent" aria-hidden="true"></span>
-          <h2 class="nd-card__label">Companion Memory</h2>
-          <span class="nd-live-notes__status" data-live-notes-status hidden></span>
-        </header>
-        <p class="nd-companion-memory__empty" data-memory-empty>
-          Select an Actor to view Companion Memory.
-        </p>
-        <div
-          class="nd-card__text nd-live-notes"
-          data-memory-editor
-          data-placeholder="Click here to start typing..."
-          role="textbox"
-          aria-label="Companion Memory"
-          hidden
-        ></div>
-      </section>
+    {{!-- PLAY — approved Figma PlayWorkspace layout --}}
+    <section class="nd-workspace nd-play" data-workspace-panel="play" aria-label="Play workspace">
 
-      <article class="nd-card nd-card--threads">
-        <header class="nd-card__header">
-          <span class="nd-card__accent" aria-hidden="true"></span>
-          <h2 class="nd-card__label">Open Threads</h2>
-        </header>
-        <ul class="nd-thread-list">
-          <li class="nd-thread-list__item">
-            <span class="nd-thread-list__marker" aria-hidden="true"></span>
-            <span class="nd-thread-list__text">Investigate who burned the Millhaven granary</span>
-          </li>
-          <li class="nd-thread-list__item">
-            <span class="nd-thread-list__marker" aria-hidden="true"></span>
-            <span class="nd-thread-list__text">Track down the Pale Merchant's ledger</span>
-          </li>
-          <li class="nd-thread-list__item nd-thread-list__item--done">
-            <span class="nd-thread-list__marker" aria-hidden="true"></span>
-            <span class="nd-thread-list__text">Return the stolen sextant to Captain Voss</span>
-          </li>
-          <li class="nd-thread-list__item">
-            <span class="nd-thread-list__marker" aria-hidden="true"></span>
-            <span class="nd-thread-list__text">Discover why the Thornwood has gone silent</span>
-          </li>
-          <li class="nd-thread-list__item">
-            <span class="nd-thread-list__marker" aria-hidden="true"></span>
-            <span class="nd-thread-list__text">Deliver the letter to Sister Elara in Ashfeld</span>
-          </li>
-        </ul>
-      </article>
+      {{!-- Row 1: Campaign Context + Beat Focus (Now / Next / Done) --}}
+      <div class="nd-play__row nd-play__row--top">
 
-      <footer class="nd-companion__footer">
-        <button type="button" class="nd-oh-shit-button">
-          <span class="nd-oh-shit-button__icon" aria-hidden="true">⚠</span>
-          OH SHIT!
-        </button>
-      </footer>
+        <section class="nd-play-campaign" data-play-campaign aria-label="Campaign Context">
+          <div class="nd-play-campaign__main">
+            <div class="nd-play-campaign__title" data-context="campaign-title"></div>
+            <div class="nd-play-campaign__meta">
+              <span class="nd-play-campaign__meta-item" data-context="scene" hidden>
+                <span data-context-value></span>
+              </span>
+              <span class="nd-play-campaign__meta-sep" data-context-sep="scene" hidden>·</span>
+              <span class="nd-play-campaign__meta-item" data-context="combat" hidden>
+                Combat <span class="nd-play-campaign__meta-strong" data-context-value></span>
+              </span>
+              <span class="nd-play-campaign__meta-sep" data-context-sep="combat" hidden>·</span>
+              <span class="nd-play-campaign__meta-item nd-mono" data-context="round" hidden>
+                R<span data-context-value></span>
+              </span>
+              <span class="nd-play-campaign__meta-sep" data-context-sep="round" hidden>·</span>
+              <span class="nd-play-campaign__meta-item" data-context="turn" hidden>
+                <span data-context-value></span>
+              </span>
+            </div>
+          </div>
+          <div class="nd-play-campaign__stats">
+            <div class="nd-play-stat" data-context="focus">
+              <div class="nd-play-stat__value" data-context-value data-focus="name">Party</div>
+              <div class="nd-play-stat__label">Focus</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="nd-play-beat-focus" data-beat-focus aria-label="Beat focus">
+          <div class="nd-play-beat-focus__col">
+            <div class="nd-play-beat-focus__label">Now</div>
+            <div class="nd-play-beat-focus__title" data-beat-focus="now-title">—</div>
+            <div class="nd-play-beat-focus__subtitle" data-beat-focus="now-objective"></div>
+          </div>
+          <div class="nd-play-beat-focus__divider" aria-hidden="true"></div>
+          <div class="nd-play-beat-focus__col nd-play-beat-focus__col--muted">
+            <div class="nd-play-beat-focus__label">Next</div>
+            <div class="nd-play-beat-focus__title" data-beat-focus="next-title">—</div>
+            <div class="nd-play-beat-focus__subtitle" data-beat-focus="next-objective"></div>
+          </div>
+          <div class="nd-play-beat-focus__divider" aria-hidden="true"></div>
+          <div class="nd-play-beat-focus__done">
+            <div class="nd-play-beat-focus__done-value">
+              <span data-beat-focus="done-pct">0</span><span class="nd-play-beat-focus__done-unit">%</span>
+            </div>
+            <div class="nd-play-beat-focus__done-label">Done</div>
+            <div class="nd-play-beat-focus__bar" aria-hidden="true">
+              <div class="nd-play-beat-focus__bar-fill" data-beat-focus="done-bar"></div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      {{!-- Row 2: Playbook hero --}}
+      <div class="nd-play__row nd-play__row--hero">
+        <article class="nd-playbook-card" data-playbook aria-label="Playbook">
+          <div class="nd-playbook-card__accent" data-playbook="accent" aria-hidden="true"></div>
+          <div class="nd-playbook-card__body">
+            <header class="nd-playbook-card__header">
+              <button type="button" class="nd-playbook-card__nav" data-playbook-nav="prev" aria-label="Previous beat">←</button>
+              <div class="nd-playbook-card__counter nd-mono" data-playbook="counter" aria-label="Beat position">
+                <span class="nd-playbook-card__counter-current" data-playbook-counter="current">0</span>
+                <span class="nd-playbook-card__counter-sep">/</span>
+                <span class="nd-playbook-card__counter-total" data-playbook-counter="total">0</span>
+              </div>
+              <div class="nd-playbook-card__title-block">
+                <div class="nd-playbook-card__eyebrow">Playbook · Current Beat</div>
+                <h2 class="nd-playbook-card__title" data-playbook="title"></h2>
+              </div>
+              <div class="nd-playbook-card__statuses" role="group" aria-label="Beat status">
+                <span class="nd-playbook-status" data-playbook-status="planned" aria-pressed="false">Planned</span>
+                <span class="nd-playbook-status" data-playbook-status="active" aria-pressed="false">Active</span>
+                <span class="nd-playbook-status" data-playbook-status="done" aria-pressed="false">Done</span>
+              </div>
+              <button type="button" class="nd-playbook-card__nav" data-playbook-nav="next" aria-label="Next beat">→</button>
+            </header>
+
+            <div class="nd-playbook-card__panels">
+              <div class="nd-playbook-panel nd-playbook-panel--objective" data-playbook-field-block="objective">
+                <div class="nd-playbook-panel__label">Objective</div>
+                <p class="nd-playbook-panel__text" data-playbook="objective"></p>
+              </div>
+              <div class="nd-playbook-panel nd-playbook-panel--gm-notes" data-playbook-field-block="gmNotes">
+                <div class="nd-playbook-panel__label">GM Notes</div>
+                <p class="nd-playbook-panel__text" data-playbook="gmNotes"></p>
+              </div>
+            </div>
+
+            <div class="nd-playbook-card__related" data-playbook-field-block="entities">
+              <div class="nd-playbook-card__related-label">Related</div>
+              <div class="nd-playbook-card__chips" data-playbook="entities"></div>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      {{!-- Row 3: Companion Memory + Session Notes --}}
+      <div class="nd-play__row nd-play__row--bottom">
+
+        <section class="nd-play-memory" data-companion-memory data-live-notes-root aria-label="Companion Memory">
+          <header class="nd-play-memory__header">
+            <span class="nd-play-memory__title">Companion Memory</span>
+            <span class="nd-play-memory__meta nd-mono">0 open</span>
+          </header>
+          <div class="nd-play-memory__body">
+            <div class="nd-play-memory__section">
+              <div class="nd-play-memory__section-label">Open Threads</div>
+              <p class="nd-play-memory__empty">No open threads yet.</p>
+            </div>
+
+            <div class="nd-play-memory__section">
+              <div class="nd-play-memory__section-label">Session NPCs</div>
+              <div class="nd-play-npc-list" data-play-npcs></div>
+              <p class="nd-play-memory__empty" data-play-npcs-empty hidden>
+                No characters linked to this beat.
+              </p>
+            </div>
+
+            <div class="nd-play-memory__section nd-play-memory__section--focus">
+              <div class="nd-play-memory__section-label">Focus Notes</div>
+              <span class="nd-live-notes__status" data-live-notes-status hidden></span>
+              <p class="nd-companion-memory__empty" data-memory-empty>
+                Select an Actor to view Focus Notes.
+              </p>
+              <div
+                class="nd-live-notes nd-play-memory__editor"
+                data-memory-editor
+                data-placeholder="Click here to start typing..."
+                role="textbox"
+                aria-label="Focus Notes"
+                hidden
+              ></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="nd-play-notes" data-live-notes-root aria-label="Session Notes">
+          <header class="nd-play-notes__header">
+            <span class="nd-play-notes__title">Session Notes</span>
+            <div class="nd-play-notes__saved">
+              <span class="nd-play-notes__dot" aria-hidden="true"></span>
+              <span>auto-saved</span>
+              <span class="nd-live-notes__status" data-live-notes-status hidden></span>
+            </div>
+          </header>
+          <div
+            class="nd-live-notes nd-play-notes__editor"
+            data-storage="sessionNotes"
+            data-placeholder="Session Notes..."
+            role="textbox"
+            aria-label="Session Notes"
+          ></div>
+        </section>
+
+      </div>
     </section>
 
     <section class="nd-workspace" data-workspace-panel="notes" aria-label="Notes workspace" hidden>
-      <article class="nd-card nd-card--session-notes" data-live-notes-root aria-label="Session Notes">
-        <header class="nd-card__header">
-          <span class="nd-card__accent" aria-hidden="true"></span>
-          <h2 class="nd-card__label">Session Notes</h2>
-          <span class="nd-live-notes__status" data-live-notes-status hidden></span>
-        </header>
-        <div
-          class="nd-card__text nd-live-notes nd-live-notes--session"
-          data-storage="sessionNotes"
-          data-placeholder="Session Notes..."
-          role="textbox"
-          aria-label="Session Notes"
-        ></div>
-      </article>
-
-      <article class="nd-card nd-card--playbook" data-playbook aria-label="Playbook">
-        <header class="nd-card__header nd-playbook__header">
-          <span class="nd-card__accent" aria-hidden="true"></span>
-          <h2 class="nd-card__label">Playbook</h2>
-          <div class="nd-playbook__nav" aria-label="Beat navigation">
-            <button type="button" class="nd-playbook__nav-button" data-playbook-nav="prev" aria-label="Previous beat">
-              ◀
-            </button>
-            <span class="nd-playbook__counter" data-playbook="counter">3 / 7</span>
-            <button type="button" class="nd-playbook__nav-button" data-playbook-nav="next" aria-label="Next beat">
-              ▶
-            </button>
-          </div>
-        </header>
-
-        <h3 class="nd-playbook__title" data-playbook="title"></h3>
-
-        <div class="nd-playbook__field" data-playbook-field-block="objective">
-          <span class="nd-playbook__field-label">Objective</span>
-          <p class="nd-card__text" data-playbook="objective"></p>
-        </div>
-
-        <div class="nd-playbook__field" data-playbook-field-block="scene">
-          <span class="nd-playbook__field-label">Scene</span>
-          <div class="nd-playbook__related" data-playbook="scene"></div>
-        </div>
-
-        <div class="nd-playbook__field" data-playbook-field-block="characters">
-          <span class="nd-playbook__field-label">Characters</span>
-          <div class="nd-playbook__related" data-playbook="characters"></div>
-        </div>
-
-        <div class="nd-playbook__field" data-playbook-field-block="gmNotes">
-          <span class="nd-playbook__field-label">GM Notes</span>
-          <p class="nd-card__text" data-playbook="gmNotes"></p>
-        </div>
-
-        <div class="nd-playbook__field" data-playbook-related hidden>
-          <span class="nd-playbook__field-label">Related</span>
-          <div class="nd-playbook__related" data-playbook="related"></div>
-        </div>
-      </article>
+      <p class="nd-workspace__placeholder">
+        Session Notes and the Playbook live in Play. This workspace is reserved for Sprint 16D.
+      </p>
     </section>
 
     <section class="nd-workspace" data-workspace-panel="prepare" aria-label="Prepare workspace" hidden>

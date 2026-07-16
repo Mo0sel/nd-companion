@@ -1,7 +1,8 @@
 import { LiveNotes } from "./live-notes.js";
 
 /**
- * Renders the Companion Focus Panel from a focus model supplied by FocusManager.
+ * Renders focus-driven Companion Memory (Focus Notes) from FocusManager.
+ * Portrait chrome was removed in Sprint 16B; FocusManager behavior is unchanged.
  */
 export class FocusPanel {
   /**
@@ -21,34 +22,31 @@ export class FocusPanel {
   static paint(root, model) {
     if (!(root instanceof HTMLElement) || !model) return;
 
-    const panel = root.querySelector("[data-focus-panel]");
-    if (!panel) return;
-
-    panel.dataset.focusKind = model.kind;
-
-    const nameEl = panel.querySelector("[data-focus=\"name\"]");
+    const nameEl = root.querySelector("[data-focus=\"name\"]");
     if (nameEl) nameEl.textContent = model.name;
 
-    const portraitEl = panel.querySelector("[data-focus=\"portrait\"]");
-    const typeEl = panel.querySelector("[data-focus=\"type\"]");
-    const typeRow = panel.querySelector("[data-focus-row=\"type\"]");
+    const portraitEl = root.querySelector("[data-focus=\"portrait\"]");
+    const typeEl = root.querySelector("[data-focus=\"type\"]");
+    const typeRow = root.querySelector("[data-focus-row=\"type\"]");
 
-    if (model.kind === "actor") {
-      if (portraitEl) {
-        portraitEl.hidden = false;
-        portraitEl.src = model.img;
-        portraitEl.alt = model.name;
+    if (portraitEl || typeRow || typeEl) {
+      if (model.kind === "actor") {
+        if (portraitEl) {
+          portraitEl.hidden = false;
+          portraitEl.src = model.img;
+          portraitEl.alt = model.name;
+        }
+        if (typeRow) typeRow.hidden = false;
+        if (typeEl) typeEl.textContent = model.type;
+      } else {
+        if (portraitEl) {
+          portraitEl.hidden = true;
+          portraitEl.removeAttribute("src");
+          portraitEl.alt = "";
+        }
+        if (typeRow) typeRow.hidden = true;
+        if (typeEl) typeEl.textContent = "";
       }
-      if (typeRow) typeRow.hidden = false;
-      if (typeEl) typeEl.textContent = model.type;
-    } else {
-      if (portraitEl) {
-        portraitEl.hidden = true;
-        portraitEl.removeAttribute("src");
-        portraitEl.alt = "";
-      }
-      if (typeRow) typeRow.hidden = true;
-      if (typeEl) typeEl.textContent = "";
     }
 
     FocusPanel.#paintMemory(root, model);

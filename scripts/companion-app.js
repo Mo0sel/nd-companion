@@ -26,8 +26,8 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       resizable: true
     },
     position: {
-      width: 700,
-      height: "auto"
+      width: 960,
+      height: 720
     },
     actions: {
       setWorkspace: CompanionApp.#onSetWorkspace

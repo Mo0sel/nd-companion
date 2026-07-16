@@ -1,4 +1,798 @@
 /**
- * Play workspace styles — Sprint 16B.
- * Layout for [data-workspace-panel="play"] lives here.
+ * Play workspace — Sprint 16B
+ * Visual target: design/figma-source PlayWorkspace + PlaybookCard + CompanionMemory + LiveNotes
  */
+
+/* ── Play root / rows (exact Figma padding rhythm) ────────────────────────── */
+
+.nd-play {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--nd-bg);
+  box-sizing: border-box;
+}
+
+.nd-play__row {
+  display: grid;
+  gap: var(--nd-card-gap);
+  flex-shrink: 0;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.nd-play__row--top {
+  grid-template-columns: 1fr 1fr;
+  padding: 16px var(--nd-page-x, 28px) 0;
+}
+
+.nd-play__row--hero {
+  padding: 12px var(--nd-page-x, 28px) 0;
+}
+
+.nd-play__row--bottom {
+  grid-template-columns: 1fr 1fr;
+  padding: 12px var(--nd-page-x, 28px) 16px;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+
+/* ── Campaign Context ─────────────────────────────────────────────────────── */
+
+.nd-play-campaign {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 16px;
+  background: var(--nd-surface);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-xl);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.nd-play-campaign__main {
+  min-width: 0;
+}
+
+.nd-play-campaign__title {
+  font-size: var(--nd-text-h2);
+  font-weight: var(--nd-weight-bold);
+  letter-spacing: -0.02em;
+  color: var(--nd-text-1);
+  margin: 0 0 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.nd-play-campaign__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--nd-text-caption);
+  color: var(--nd-text-3);
+  line-height: 1.3;
+}
+
+.nd-play-campaign__meta-item[hidden],
+.nd-play-campaign__meta-sep[hidden] {
+  display: none !important;
+}
+
+.nd-play-campaign__meta-sep {
+  color: var(--nd-border);
+  user-select: none;
+}
+
+.nd-play-campaign__meta-strong,
+.nd-play-campaign__meta-item [data-context-value] {
+  color: var(--nd-text-1);
+  font-weight: var(--nd-weight-semibold);
+}
+
+.nd-play-campaign__meta-item.nd-mono [data-context-value],
+.nd-play-campaign__meta-item.nd-mono {
+  font-family: var(--nd-font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--nd-text-3);
+}
+
+.nd-play-campaign__stats {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.nd-play-stat {
+  text-align: center;
+  padding: 5px 12px;
+  background: var(--nd-surface-2);
+  border-radius: var(--nd-radius-md);
+  border: 1px solid var(--nd-border);
+  min-width: 52px;
+  box-sizing: border-box;
+}
+
+.nd-play-stat__value {
+  font-size: 15px;
+  font-weight: var(--nd-weight-bold);
+  color: var(--nd-text-1);
+  line-height: 1.1;
+  max-width: 9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nd-play-stat__label {
+  font-size: var(--nd-text-micro);
+  color: var(--nd-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 2px;
+}
+
+/* ── Beat Focus (Now / Next / Done) ───────────────────────────────────────── */
+
+.nd-play-beat-focus {
+  display: flex;
+  gap: 14px;
+  align-items: stretch;
+  padding: 11px 16px;
+  background: var(--nd-surface);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-xl);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.nd-play-beat-focus__col {
+  flex: 1;
+  min-width: 0;
+}
+
+.nd-play-beat-focus__col--muted .nd-play-beat-focus__title {
+  font-weight: var(--nd-weight-medium);
+  opacity: 0.55;
+}
+
+.nd-play-beat-focus__col--muted .nd-play-beat-focus__subtitle {
+  opacity: 0.6;
+}
+
+.nd-play-beat-focus__label {
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--nd-purple);
+  margin-bottom: 4px;
+}
+
+.nd-play-beat-focus__title {
+  font-size: var(--nd-text-body-sm);
+  font-weight: var(--nd-weight-semibold);
+  color: var(--nd-text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: var(--nd-leading-snug);
+}
+
+.nd-play-beat-focus__subtitle {
+  font-size: var(--nd-text-caption);
+  color: var(--nd-text-3);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: var(--nd-leading-snug);
+}
+
+.nd-play-beat-focus__subtitle:empty,
+.nd-play-beat-focus__subtitle[hidden] {
+  display: none;
+}
+
+.nd-play-beat-focus__divider {
+  width: 1px;
+  background: var(--nd-border);
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+.nd-play-beat-focus__done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  flex-shrink: 0;
+  min-width: 44px;
+}
+
+.nd-play-beat-focus__done-value {
+  font-size: 18px;
+  font-weight: var(--nd-weight-bold);
+  color: var(--nd-text-1);
+  line-height: 1;
+}
+
+.nd-play-beat-focus__done-unit {
+  font-size: 11px;
+  font-weight: var(--nd-weight-medium);
+  color: var(--nd-text-3);
+}
+
+.nd-play-beat-focus__done-label {
+  font-size: var(--nd-text-micro);
+  color: var(--nd-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.nd-play-beat-focus__bar {
+  width: 32px;
+  height: 3px;
+  border-radius: 99px;
+  background: var(--nd-surface-2);
+  margin-top: 2px;
+  overflow: hidden;
+}
+
+.nd-play-beat-focus__bar-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 99px;
+  background: var(--nd-success);
+  transition: width 0.3s ease;
+}
+
+/* ── Playbook hero card ───────────────────────────────────────────────────── */
+
+.nd-playbook-card {
+  background: var(--nd-surface);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-2xl);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.nd-playbook-card__accent {
+  height: 2px;
+  background: var(--nd-status-planned-color);
+  opacity: 0.65;
+}
+
+.nd-playbook-card__accent[data-status="active"] {
+  background: var(--nd-status-active-color);
+}
+
+.nd-playbook-card__accent[data-status="done"] {
+  background: var(--nd-status-done-color);
+}
+
+.nd-playbook-card__body {
+  padding: 14px 18px 16px;
+}
+
+.nd-playbook-card__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.nd-playbook-card__nav {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  margin: 0;
+  padding: 0;
+  border-radius: var(--nd-radius-sm);
+  border: 1px solid var(--nd-border);
+  background: var(--nd-surface-2);
+  color: var(--nd-text-1);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: var(--nd-transition-fast);
+  box-shadow: none;
+}
+
+.nd-playbook-card__nav:hover:not(:disabled) {
+  border-color: var(--nd-blue);
+}
+
+.nd-playbook-card__nav:disabled {
+  background: transparent;
+  color: var(--nd-border);
+  opacity: 0.3;
+  cursor: default;
+}
+
+.nd-playbook-card__counter {
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-mono);
+  color: var(--nd-text-3);
+  flex-shrink: 0;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.nd-playbook-card__counter-current {
+  color: var(--nd-text-1);
+  font-weight: var(--nd-weight-semibold);
+  font-size: 13px;
+}
+
+.nd-playbook-card__counter-sep {
+  margin: 0 3px;
+}
+
+.nd-playbook-card__title-block {
+  flex: 1;
+  min-width: 0;
+}
+
+.nd-playbook-card__eyebrow {
+  font-size: var(--nd-text-micro);
+  font-family: var(--nd-font-mono);
+  font-weight: var(--nd-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--nd-purple);
+  margin-bottom: 3px;
+}
+
+.nd-playbook-card__title {
+  margin: 0;
+  font-size: var(--nd-text-h1);
+  font-weight: var(--nd-weight-bold);
+  letter-spacing: -0.02em;
+  line-height: var(--nd-leading-tight);
+  color: var(--nd-text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nd-playbook-card__statuses {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.nd-playbook-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--nd-radius-sm);
+  border: 1px solid var(--nd-border);
+  background: transparent;
+  color: var(--nd-text-3);
+  font-size: 11px;
+  font-weight: var(--nd-weight-semibold);
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.nd-playbook-status[data-playbook-status="planned"].is-active,
+.nd-playbook-status[data-playbook-status="planned"][aria-pressed="true"] {
+  border-color: var(--nd-status-planned-color);
+  background: var(--nd-status-planned-bg);
+  color: var(--nd-status-planned-color);
+}
+
+.nd-playbook-status[data-playbook-status="active"].is-active,
+.nd-playbook-status[data-playbook-status="active"][aria-pressed="true"] {
+  border-color: var(--nd-status-active-color);
+  background: var(--nd-status-active-bg);
+  color: var(--nd-status-active-color);
+}
+
+.nd-playbook-status[data-playbook-status="done"].is-active,
+.nd-playbook-status[data-playbook-status="done"][aria-pressed="true"] {
+  border-color: var(--nd-status-done-color);
+  background: var(--nd-status-done-bg);
+  color: var(--nd-status-done-color);
+}
+
+.nd-playbook-card__panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.nd-playbook-card__panels--single {
+  grid-template-columns: 1fr;
+}
+
+.nd-playbook-card__related:not([hidden]) {
+  margin-top: 12px;
+}
+
+.nd-playbook-card__related[hidden],
+.nd-playbook-panel[hidden] {
+  display: none !important;
+}
+
+.nd-playbook-panel {
+  padding: 11px 14px;
+  border-radius: var(--nd-radius-lg);
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.nd-playbook-panel--objective {
+  background: var(--nd-blue-tint);
+  border: 1px solid var(--nd-blue-border);
+}
+
+.nd-playbook-panel--objective .nd-playbook-panel__label {
+  color: var(--nd-blue);
+}
+
+.nd-playbook-panel--gm-notes {
+  background: rgba(245, 158, 11, 0.04);
+  border: 1px solid rgba(245, 158, 11, 0.14);
+}
+
+.nd-playbook-panel--gm-notes .nd-playbook-panel__label {
+  color: var(--nd-warning);
+}
+
+.nd-playbook-panel__label {
+  font-size: var(--nd-text-micro);
+  font-family: var(--nd-font-mono);
+  font-weight: var(--nd-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 7px;
+}
+
+.nd-playbook-panel__text {
+  margin: 0;
+  font-size: var(--nd-text-body);
+  line-height: var(--nd-leading-normal);
+  color: var(--nd-text-1);
+}
+
+.nd-playbook-panel--gm-notes .nd-playbook-panel__text {
+  font-size: var(--nd-text-body-sm);
+}
+
+.nd-playbook-card__related-label {
+  font-size: var(--nd-text-micro);
+  font-family: var(--nd-font-mono);
+  font-weight: var(--nd-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--nd-purple);
+  margin-bottom: 8px;
+}
+
+.nd-playbook-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+/* Figma EntityChip: 4px 10px (shared .nd-chip defaults are slightly taller) */
+.nd-playbook-card__chips .nd-chip,
+.nd-playbook-card__chips .nd-playbook__entity {
+  padding: 4px 10px;
+  font-size: var(--nd-text-caption);
+  font-weight: var(--nd-weight-medium);
+  line-height: 1.25;
+  margin: 0;
+  box-shadow: none;
+}
+
+.nd-playbook-card__chips .nd-chip--navigable:hover,
+.nd-playbook-card__chips .nd-playbook__entity--navigable:hover {
+  opacity: 0.72;
+}
+
+/* ── Companion Memory + Session Notes ─────────────────────────────────────── */
+
+.nd-play-memory,
+.nd-play-notes {
+  background: var(--nd-surface);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-xl);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.nd-play-memory__header,
+.nd-play-notes__header {
+  padding: 9px var(--nd-card-pad);
+  border-bottom: 1px solid var(--nd-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.nd-play-memory__title,
+.nd-play-notes__title {
+  font-size: var(--nd-text-label);
+  font-weight: var(--nd-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--nd-purple);
+}
+
+.nd-play-memory__meta {
+  font-size: var(--nd-text-mono);
+  font-family: var(--nd-font-mono);
+  color: var(--nd-text-3);
+}
+
+.nd-play-notes__saved {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-family: var(--nd-font-mono);
+  color: var(--nd-text-3);
+}
+
+.nd-play-notes__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--nd-radius-full);
+  background: var(--nd-success);
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.nd-play-memory__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px var(--nd-card-pad);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+.nd-play-memory__section-label {
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--nd-text-3);
+  margin-bottom: 7px;
+}
+
+.nd-play-memory__empty,
+.nd-companion-memory__empty {
+  margin: 0;
+  padding: 2px 0 0;
+  font-size: var(--nd-text-caption);
+  line-height: var(--nd-leading-snug);
+  color: var(--nd-text-3);
+  opacity: 0.85;
+}
+
+.nd-play-memory__empty[hidden],
+.nd-companion-memory__empty[hidden],
+.nd-play-memory [data-memory-editor][hidden] {
+  display: none !important;
+}
+
+.nd-play-memory__section--focus {
+  position: relative;
+  padding-top: 2px;
+  border-top: 1px solid var(--nd-border);
+  margin-top: 0;
+}
+
+.nd-play-memory__section--focus .nd-play-memory__section-label {
+  color: var(--nd-text-3);
+}
+
+.nd-play-memory__section--focus .nd-live-notes__status {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--nd-text-3);
+}
+
+.nd-play-memory__editor {
+  min-height: 3.5em;
+  padding: 2px 0 0;
+  border-radius: 0;
+  box-shadow: none;
+  font-size: var(--nd-text-body-sm);
+  line-height: var(--nd-leading-snug);
+}
+
+.nd-play-memory__editor:focus-visible {
+  box-shadow: none;
+  outline: none;
+}
+
+.nd-play-npc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.nd-play-npc {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  padding: 4px 6px;
+  margin: 0 -6px;
+  border: none;
+  border-radius: var(--nd-radius-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  width: calc(100% + 12px);
+  cursor: default;
+  transition: background var(--nd-transition-fast);
+  box-shadow: none;
+}
+
+.nd-play-npc--navigable {
+  cursor: pointer;
+}
+
+.nd-play-npc--navigable:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.nd-play-npc:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.nd-play-npc__avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--nd-radius-full);
+  background: var(--nd-npc-avatar, #3d5a8a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: var(--nd-weight-bold);
+  color: rgba(255, 255, 255, 0.88);
+  flex-shrink: 0;
+  margin-top: 1px;
+  letter-spacing: 0.03em;
+}
+
+.nd-play-npc__meta {
+  min-width: 0;
+}
+
+.nd-play-npc__name {
+  font-size: var(--nd-text-caption);
+  font-weight: var(--nd-weight-semibold);
+  color: var(--nd-text-1);
+  line-height: var(--nd-leading-snug);
+}
+
+.nd-play-npc__role {
+  font-size: inherit;
+  font-weight: 400;
+  color: var(--nd-text-3);
+  margin-left: 6px;
+}
+
+/* Session notes — Figma LiveNotes textarea treatment */
+.nd-play-notes__editor.nd-live-notes {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 11px var(--nd-card-pad);
+  overflow-y: auto;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: var(--nd-text-body-sm);
+  line-height: var(--nd-leading-relaxed);
+  color: var(--nd-text-1);
+}
+
+.nd-play-notes__editor.nd-live-notes:focus-visible {
+  box-shadow: none;
+  outline: none;
+}
+
+.nd-play-notes__editor.nd-live-notes:empty::before {
+  color: var(--nd-text-3);
+  opacity: 0.7;
+}
+
+/* ── Responsive (Foundry window) ──────────────────────────────────────────── */
+
+@container nd-companion (max-width: 860px) {
+  .nd-play__row--top,
+  .nd-play__row--bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .nd-playbook-card__header {
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+
+  .nd-playbook-card__statuses {
+    order: 5;
+    width: 100%;
+    justify-content: flex-start;
+    padding-left: 44px; /* align under title after nav */
+  }
+
+  .nd-playbook-card__panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+@container nd-companion (max-width: 560px) {
+  .nd-play__row--top,
+  .nd-play__row--hero,
+  .nd-play__row--bottom {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .nd-workspace-switcher {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+
+  .nd-playbook-card__statuses {
+    padding-left: 0;
+  }
+
+  .nd-playbook-card__nav {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+  }
+
+  .nd-play-campaign,
+  .nd-play-beat-focus {
+    padding: 10px 12px;
+  }
+
+  .nd-playbook-card__body {
+    padding: 12px 14px 14px;
+  }
+}

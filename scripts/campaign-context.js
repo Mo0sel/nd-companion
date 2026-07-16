@@ -6,12 +6,15 @@ import { FocusManager } from "./focus-manager.js";
 export class CampaignContext {
   /**
    * @returns {{
+   *   campaignTitle: string,
    *   scene: string|null,
    *   focus: string,
    *   combat: null|{ round: number, turn: string|null }
    * }}
    */
   static get() {
+    const campaignTitle = game.world?.title?.trim() || game.world?.id || "Campaign";
+
     const sceneDoc = canvas?.scene ?? game.scenes?.viewed ?? null;
     const scene = sceneDoc?.name || null;
 
@@ -27,7 +30,7 @@ export class CampaignContext {
       };
     }
 
-    return { scene, focus, combat };
+    return { campaignTitle, scene, focus, combat };
   }
 }
 
@@ -42,11 +45,16 @@ export class CampaignAwareness {
   static paint(root, context) {
     if (!(root instanceof HTMLElement) || !context) return;
 
+    const titleEl = root.querySelector("[data-context=\"campaign-title\"]");
+    if (titleEl) titleEl.textContent = context.campaignTitle;
+
     const setItem = (key, value) => {
       const el = root.querySelector(`[data-context="${key}"]`);
       if (!el) return;
       const visible = value !== null && value !== undefined && value !== "";
       el.hidden = !visible;
+      const sep = root.querySelector(`[data-context-sep="${key}"]`);
+      if (sep) sep.hidden = !visible;
       if (visible) {
         const valueEl = el.querySelector("[data-context-value]");
         if (valueEl) valueEl.textContent = String(value);
