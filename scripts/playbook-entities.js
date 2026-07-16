@@ -38,7 +38,7 @@ export class PlaybookEntities {
 
   /**
    * @param {string|null|undefined} uuid
-   * @returns {{ uuid: string, name: string, context: string, navigable: boolean, missing: boolean }|null}
+   * @returns {{ uuid: string, name: string, kind: string|null, context: string, navigable: boolean, missing: boolean }|null}
    */
   static resolveChip(uuid) {
     if (!uuid) return null;
@@ -47,6 +47,7 @@ export class PlaybookEntities {
       return {
         uuid,
         name: "Missing entity",
+        kind: null,
         context: "",
         navigable: false,
         missing: true
@@ -56,6 +57,7 @@ export class PlaybookEntities {
     return {
       uuid: entity.uuid,
       name: entity.name,
+      kind: entity.kind,
       context: PlaybookEntities.secondaryContext(entity),
       navigable: Navigation.canNavigate(entity),
       missing: false
@@ -115,17 +117,18 @@ export class PlaybookEntities {
    * @returns {HTMLElement}
    */
   static #createChip(chip, options) {
+    const kindClass = chip.kind ? `nd-chip--${chip.kind}` : "nd-chip--actor";
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "nd-playbook__entity";
+    button.className = `nd-playbook__entity nd-chip ${kindClass}`;
     button.textContent = chip.name;
     if (chip.context) button.title = chip.context;
 
     if (chip.navigable && !chip.missing) {
-      button.classList.add("nd-playbook__entity--navigable");
+      button.classList.add("nd-playbook__entity--navigable", "nd-chip--navigable");
       button.dataset.playbookEntity = chip.uuid;
     } else {
-      button.classList.add("nd-playbook__entity--disabled");
+      button.classList.add("nd-playbook__entity--disabled", "nd-chip--disabled");
       button.setAttribute("aria-disabled", "true");
       button.title = chip.missing ? "Missing from this world" : chip.context || "Cannot navigate";
     }

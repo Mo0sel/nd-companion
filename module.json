@@ -21,6 +21,12 @@
   ],
 
   "styles": [
+    "styles/nd-tokens.css",
+    "styles/nd-components.css",
+    "styles/nd-layout.css",
+    "styles/play.css",
+    "styles/prepare.css",
+    "styles/notes.css",
     "styles/nd-companion.css"
   ],
 

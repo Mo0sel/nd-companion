@@ -1,0 +1,143 @@
+/**
+ * N&D Companion — Design tokens
+ * Source: design/figma-source/src/index.css (approved Figma)
+ * Scoped to .nd-companion so Foundry chrome is not restyled globally.
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+.nd-companion {
+  /* ── Color: surfaces ───────────────────────────────────────────────────── */
+  --nd-bg: #0d0d0f;
+  --nd-surface: #131316;
+  --nd-surface-2: #1a1a20;
+  --nd-surface-3: #18181e;
+  --nd-surface-inset: rgba(255, 255, 255, 0.03);
+
+  /* ── Color: text ───────────────────────────────────────────────────────── */
+  --nd-text-1: #e4e4eb;
+  --nd-text-2: #a0a0b0;
+  --nd-text-3: #6b6b7e;
+
+  /* ── Color: accent ─────────────────────────────────────────────────────── */
+  --nd-blue: #5b8eff;
+  --nd-purple: #a78bfa;
+  --nd-blue-dim: rgba(91, 142, 255, 0.08);
+  --nd-blue-tint: rgba(91, 142, 255, 0.05);
+  --nd-blue-border: rgba(91, 142, 255, 0.15);
+  --nd-blue-hover: rgba(91, 142, 255, 0.5);
+
+  /* ── Color: semantic ───────────────────────────────────────────────────── */
+  --nd-danger: #ef4444;
+  --nd-danger-bg: rgba(239, 68, 68, 0.1);
+  --nd-danger-border: rgba(239, 68, 68, 0.25);
+  --nd-success: #22c55e;
+  --nd-success-bg: rgba(34, 197, 94, 0.1);
+  --nd-warning: #f59e0b;
+  --nd-warning-bg: rgba(245, 158, 11, 0.1);
+
+  /* ── Color: borders ────────────────────────────────────────────────────── */
+  --nd-border: #1e1e26;
+  --nd-border-2: rgba(255, 255, 255, 0.06);
+
+  /* ── Color: status pills ───────────────────────────────────────────────── */
+  --nd-status-planned-color: #6b6b7e;
+  --nd-status-planned-bg: rgba(107, 107, 126, 0.1);
+  --nd-status-planned-border: rgba(107, 107, 126, 0.25);
+  --nd-status-active-color: #5b8eff;
+  --nd-status-active-bg: rgba(91, 142, 255, 0.12);
+  --nd-status-active-border: rgba(91, 142, 255, 0.3);
+  --nd-status-done-color: #22c55e;
+  --nd-status-done-bg: rgba(34, 197, 94, 0.1);
+  --nd-status-done-border: rgba(34, 197, 94, 0.25);
+  --nd-status-skipped-color: #f59e0b;
+  --nd-status-skipped-bg: rgba(245, 158, 11, 0.1);
+  --nd-status-skipped-border: rgba(245, 158, 11, 0.25);
+
+  /* ── Color: entity chips ───────────────────────────────────────────────── */
+  --nd-actor-color: #5b8eff;
+  --nd-actor-bg: rgba(91, 142, 255, 0.08);
+  --nd-actor-border: rgba(91, 142, 255, 0.2);
+  --nd-scene-color: #f97316;
+  --nd-scene-bg: rgba(249, 115, 22, 0.08);
+  --nd-scene-border: rgba(249, 115, 22, 0.2);
+  --nd-journal-color: #a78bfa;
+  --nd-journal-bg: rgba(167, 139, 250, 0.08);
+  --nd-journal-border: rgba(167, 139, 250, 0.2);
+  --nd-rolltable-color: #22c55e;
+  --nd-rolltable-bg: rgba(34, 197, 94, 0.08);
+  --nd-rolltable-border: rgba(34, 197, 94, 0.2);
+
+  /* ── Spacing: 4 / 8 pt grid ────────────────────────────────────────────── */
+  --nd-space-1: 4px;
+  --nd-space-2: 8px;
+  --nd-space-3: 12px;
+  --nd-space-3h: 14px;
+  --nd-space-4: 16px;
+  --nd-space-5: 20px;
+  --nd-space-6: 24px;
+  --nd-space-7: 28px;
+  --nd-space-8: 32px;
+
+  /* ── Border radius ─────────────────────────────────────────────────────── */
+  --nd-radius-sm: 6px;
+  --nd-radius-md: 7px;
+  --nd-radius-lg: 9px;
+  --nd-radius-xl: 10px;
+  --nd-radius-2xl: 12px;
+  --nd-radius-full: 9999px;
+
+  /* ── Typography ────────────────────────────────────────────────────────── */
+  --nd-font-sans: "Inter", system-ui, sans-serif;
+  --nd-font-mono: "JetBrains Mono", monospace;
+
+  --nd-text-display: 22px;
+  --nd-text-h1: 18px;
+  --nd-text-h2: 16px;
+  --nd-text-h3: 15px;
+  --nd-text-body: 13.5px;
+  --nd-text-body-sm: 13px;
+  --nd-text-caption: 12px;
+  --nd-text-label: 11px;
+  --nd-text-micro: 10px;
+  --nd-text-mono: 11px;
+
+  --nd-leading-tight: 1.2;
+  --nd-leading-snug: 1.45;
+  --nd-leading-normal: 1.6;
+  --nd-leading-relaxed: 1.7;
+
+  --nd-tracking-label: 0.08em;
+  --nd-weight-medium: 500;
+  --nd-weight-semibold: 600;
+  --nd-weight-bold: 700;
+
+  /* ── Elevation / shadow ────────────────────────────────────────────────── */
+  --nd-shadow-none: none;
+  --nd-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --nd-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --nd-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --nd-shadow-focus: 0 0 0 1px rgba(91, 142, 255, 0.45);
+
+  /* ── Transitions ───────────────────────────────────────────────────────── */
+  --nd-transition-fast: all 0.1s ease;
+  --nd-transition-base: all 0.15s ease;
+
+  /* ── Layout constants (reference; workspace CSS opts in) ────────────────── */
+  --nd-header-h: 48px;
+  --nd-sidebar-w: 260px;
+  --nd-page-x: 28px;
+  --nd-card-gap: 16px;
+  --nd-card-pad: 14px;
+
+  /* ── Legacy aliases (existing Foundry CSS) ─────────────────────────────── */
+  --nd-text: var(--nd-text-1);
+  --nd-text-muted: var(--nd-text-3);
+  --nd-primary: var(--nd-blue);
+  --nd-scene: var(--nd-purple);
+  --nd-radius: var(--nd-radius-xl);
+  --nd-color-focus-ring: rgba(91, 142, 255, 0.45);
+
+  font-family: var(--nd-font-sans);
+  -webkit-font-smoothing: antialiased;
+}

@@ -1,0 +1,192 @@
+/**
+ * N&D Companion — App chrome layout
+ * Campaign context, focus panel, workspace switcher, shell.
+ * Workspace-specific layout lives in play.css / prepare.css / notes.css (later sprints).
+ */
+
+.nd-companion {
+  padding: 1rem;
+}
+
+.nd-companion .nd-companion__shell {
+  container-type: inline-size;
+  container-name: nd-companion;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--nd-space-4);
+  padding: var(--nd-space-5);
+  background: var(--nd-bg);
+  color: var(--nd-text-1);
+  font-size: var(--nd-text-body-sm);
+  line-height: var(--nd-leading-normal);
+}
+
+/* Campaign Context */
+.nd-companion .nd-campaign-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px var(--nd-space-4);
+  padding-bottom: var(--nd-space-3h);
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--nd-border);
+}
+
+.nd-companion .nd-campaign-context__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nd-companion .nd-campaign-context__item[hidden] {
+  display: none;
+}
+
+.nd-companion .nd-campaign-context__label {
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-semibold);
+  letter-spacing: var(--nd-tracking-label);
+  text-transform: uppercase;
+  color: var(--nd-text-3);
+}
+
+.nd-companion .nd-campaign-context__value {
+  font-size: var(--nd-text-body-sm);
+  font-weight: var(--nd-weight-semibold);
+  color: var(--nd-text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 14em;
+}
+
+/* Focus Panel */
+.nd-companion .nd-focus-panel {
+  display: flex;
+  align-items: center;
+  gap: var(--nd-space-3);
+  padding: 6px var(--nd-space-3);
+  background: var(--nd-surface);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-xl);
+}
+
+.nd-companion .nd-focus-panel__portrait {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--nd-radius-lg);
+  object-fit: cover;
+  background: var(--nd-surface-inset);
+  border: 1px solid var(--nd-border);
+}
+
+.nd-companion .nd-focus-panel__portrait[hidden] {
+  display: none;
+}
+
+.nd-companion .nd-focus-panel__meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--nd-space-1);
+}
+
+.nd-companion .nd-focus-panel__name {
+  font-size: var(--nd-text-h3);
+  font-weight: var(--nd-weight-bold);
+  letter-spacing: -0.01em;
+  color: var(--nd-text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nd-companion .nd-focus-panel__type {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.nd-companion .nd-focus-panel__type[hidden] {
+  display: none;
+}
+
+.nd-companion .nd-focus-panel__type-label {
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-semibold);
+  letter-spacing: var(--nd-tracking-label);
+  text-transform: uppercase;
+  color: var(--nd-text-3);
+}
+
+.nd-companion .nd-focus-panel__type-value {
+  font-size: var(--nd-text-caption);
+  color: var(--nd-text-3);
+}
+
+/* Workspace switcher — layout + tab look */
+.nd-companion .nd-workspace-switcher {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  padding-bottom: 3px;
+  margin-bottom: 0;
+  border-bottom: none;
+  background: var(--nd-surface-2);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-md);
+}
+
+.nd-companion .nd-workspace-switcher__button {
+  flex: 1;
+  padding: 5px 20px;
+  border-radius: var(--nd-radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--nd-text-3);
+  font-family: var(--nd-font-sans);
+  font-size: var(--nd-text-label);
+  font-weight: var(--nd-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--nd-transition-fast);
+}
+
+.nd-companion .nd-workspace-switcher__button:hover {
+  color: var(--nd-text-1);
+  background: transparent;
+}
+
+.nd-companion .nd-workspace-switcher__button.is-active,
+.nd-companion .nd-workspace-switcher__button[aria-pressed="true"] {
+  color: var(--nd-text-1);
+  background: var(--nd-bg);
+  border-color: transparent;
+  box-shadow: var(--nd-shadow-sm);
+}
+
+.nd-companion .nd-workspace-region {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nd-card-gap);
+  min-height: 0;
+}
+
+.nd-companion .nd-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nd-card-gap);
+}
+
+.nd-companion .nd-workspace[hidden] {
+  display: none;
+}
+
+.nd-companion .nd-workspace__placeholder {
+  color: var(--nd-text-3);
+}
