@@ -1,11 +1,14 @@
 /**
  * N&D Companion — Shared components
  * Recipes from design/figma-source/src/ds.ts (CSS only; no React port).
+ *
+ * Uses module-prefixed class names (same as pre-16A) so rules apply without
+ * requiring an extra .nd-companion ancestor match.
  */
 
 /* ── Card ─────────────────────────────────────────────────────────────────── */
 
-.nd-companion .nd-card {
+.nd-card {
   display: flex;
   flex-direction: column;
   gap: var(--nd-space-3);
@@ -16,18 +19,18 @@
   box-sizing: border-box;
 }
 
-.nd-companion .nd-card--hero {
+.nd-card--hero {
   border-radius: var(--nd-radius-2xl);
   overflow: hidden;
 }
 
-.nd-companion .nd-card__header {
+.nd-card__header {
   display: flex;
   align-items: center;
   gap: var(--nd-space-2);
 }
 
-.nd-companion .nd-card__accent {
+.nd-card__accent {
   flex-shrink: 0;
   width: 3px;
   height: 14px;
@@ -35,20 +38,20 @@
   background: var(--nd-blue);
 }
 
-.nd-companion .nd-card--playbook .nd-card__accent,
-.nd-companion .nd-card--playbook-prepare .nd-card__accent {
+.nd-card--playbook .nd-card__accent,
+.nd-card--playbook-prepare .nd-card__accent {
   background: var(--nd-purple);
 }
 
-.nd-companion .nd-card--threads .nd-card__accent {
+.nd-card--threads .nd-card__accent {
   background: var(--nd-warning);
 }
 
-.nd-companion .nd-card--session-notes .nd-card__accent {
+.nd-card--session-notes .nd-card__accent {
   background: var(--nd-blue);
 }
 
-.nd-companion .nd-card__label {
+.nd-card__label {
   margin: 0;
   font-family: var(--nd-font-sans);
   font-size: var(--nd-text-label);
@@ -58,7 +61,7 @@
   color: var(--nd-text-3);
 }
 
-.nd-companion .nd-card__text {
+.nd-card__text {
   margin: 0;
   font-family: var(--nd-font-sans);
   font-size: var(--nd-text-body);
@@ -66,8 +69,8 @@
   color: var(--nd-text-1);
 }
 
-.nd-companion .nd-card__header .nd-live-notes__status,
-.nd-companion .nd-status {
+.nd-card__header .nd-live-notes__status,
+.nd-status {
   margin-left: auto;
   font-family: var(--nd-font-mono);
   font-size: var(--nd-text-micro);
@@ -79,7 +82,7 @@
 
 /* ── Button ───────────────────────────────────────────────────────────────── */
 
-.nd-companion .nd-button {
+.nd-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -91,13 +94,13 @@
   box-sizing: border-box;
 }
 
-.nd-companion .nd-button:disabled {
+.nd-button:disabled {
   opacity: 0.35;
   cursor: default;
   pointer-events: none;
 }
 
-.nd-companion .nd-button--ghost {
+.nd-button--ghost {
   padding: 5px 10px;
   border-radius: var(--nd-radius-sm);
   font-size: 11.5px;
@@ -106,12 +109,12 @@
   color: var(--nd-text-3);
 }
 
-.nd-companion .nd-button--ghost:hover:not(:disabled) {
+.nd-button--ghost:hover:not(:disabled) {
   color: var(--nd-text-1);
   background: rgba(255, 255, 255, 0.03);
 }
 
-.nd-companion .nd-button--secondary {
+.nd-button--secondary {
   padding: 7px 16px;
   border-radius: var(--nd-radius-md);
   font-size: 12.5px;
@@ -120,7 +123,7 @@
   color: var(--nd-text-1);
 }
 
-.nd-companion .nd-button--primary {
+.nd-button--primary {
   padding: 7px 16px;
   border-radius: var(--nd-radius-md);
   font-size: 12.5px;
@@ -129,7 +132,7 @@
   color: #ffffff;
 }
 
-.nd-companion .nd-button--danger {
+.nd-button--danger {
   padding: 7px 16px;
   border-radius: var(--nd-radius-md);
   font-size: 12.5px;
@@ -138,7 +141,7 @@
   color: var(--nd-danger);
 }
 
-.nd-companion .nd-button--nav {
+.nd-button--nav {
   width: 34px;
   height: 34px;
   padding: 0;
@@ -150,11 +153,11 @@
   flex-shrink: 0;
 }
 
-.nd-companion .nd-button--nav:hover:not(:disabled) {
+.nd-button--nav:hover:not(:disabled) {
   border-color: var(--nd-blue);
 }
 
-.nd-companion .nd-button--add-dashed {
+.nd-button--add-dashed {
   width: 100%;
   padding: 9px;
   border-radius: var(--nd-radius-md);
@@ -164,14 +167,14 @@
   color: var(--nd-blue);
 }
 
-.nd-companion .nd-button--add-dashed:hover:not(:disabled) {
+.nd-button--add-dashed:hover:not(:disabled) {
   border-color: rgba(91, 142, 255, 0.6);
 }
 
 /* ── Entity chips ─────────────────────────────────────────────────────────── */
 
-.nd-companion .nd-chip,
-.nd-companion .nd-playbook__entity {
+.nd-chip,
+.nd-playbook__entity {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -185,51 +188,51 @@
   box-sizing: border-box;
 }
 
-.nd-companion .nd-chip--actor,
-.nd-companion .nd-playbook__entity.nd-chip--actor {
+.nd-chip--actor,
+.nd-playbook__entity.nd-chip--actor {
   color: var(--nd-actor-color);
   background: var(--nd-actor-bg);
   border: 1px solid var(--nd-actor-border);
 }
 
-.nd-companion .nd-chip--scene,
-.nd-companion .nd-playbook__entity.nd-chip--scene {
+.nd-chip--scene,
+.nd-playbook__entity.nd-chip--scene {
   color: var(--nd-scene-color);
   background: var(--nd-scene-bg);
   border: 1px solid var(--nd-scene-border);
 }
 
-.nd-companion .nd-chip--journal,
-.nd-companion .nd-playbook__entity.nd-chip--journal {
+.nd-chip--journal,
+.nd-playbook__entity.nd-chip--journal {
   color: var(--nd-journal-color);
   background: var(--nd-journal-bg);
   border: 1px solid var(--nd-journal-border);
 }
 
-.nd-companion .nd-chip--rollTable,
-.nd-companion .nd-playbook__entity.nd-chip--rollTable {
+.nd-chip--rollTable,
+.nd-playbook__entity.nd-chip--rollTable {
   color: var(--nd-rolltable-color);
   background: var(--nd-rolltable-bg);
   border: 1px solid var(--nd-rolltable-border);
 }
 
-.nd-companion .nd-chip--navigable,
-.nd-companion .nd-playbook__entity--navigable {
+.nd-chip--navigable,
+.nd-playbook__entity--navigable {
   cursor: pointer;
 }
 
-.nd-companion .nd-chip--actor.nd-chip--navigable:hover,
-.nd-companion .nd-playbook__entity.nd-chip--actor.nd-playbook__entity--navigable:hover {
+.nd-chip--actor.nd-chip--navigable:hover,
+.nd-playbook__entity.nd-chip--actor.nd-playbook__entity--navigable:hover {
   border-color: rgba(91, 142, 255, 0.5);
 }
 
-.nd-companion .nd-chip--scene.nd-chip--navigable:hover,
-.nd-companion .nd-playbook__entity.nd-chip--scene.nd-playbook__entity--navigable:hover {
+.nd-chip--scene.nd-chip--navigable:hover,
+.nd-playbook__entity.nd-chip--scene.nd-playbook__entity--navigable:hover {
   border-color: rgba(249, 115, 22, 0.5);
 }
 
-.nd-companion .nd-chip--disabled,
-.nd-companion .nd-playbook__entity--disabled {
+.nd-chip--disabled,
+.nd-playbook__entity--disabled {
   opacity: 0.55;
   cursor: default;
   color: var(--nd-text-3);
@@ -237,18 +240,18 @@
   border: 1px solid var(--nd-border);
 }
 
-.nd-companion .nd-playbook__entity-wrap {
+.nd-playbook__entity-wrap {
   display: inline-flex;
   align-items: stretch;
   gap: 0;
 }
 
-.nd-companion .nd-playbook__entity-wrap .nd-playbook__entity--with-remove {
+.nd-playbook__entity-wrap .nd-playbook__entity--with-remove {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
 }
 
-.nd-companion .nd-playbook__entity-remove {
+.nd-playbook__entity-remove {
   margin: 0;
   padding: 0 8px;
   border: 1px solid var(--nd-actor-border);
@@ -262,21 +265,21 @@
   cursor: pointer;
 }
 
-.nd-companion .nd-playbook__entity-wrap:has(.nd-chip--scene) .nd-playbook__entity-remove,
-.nd-companion .nd-playbook__entity-wrap:has(.nd-chip--scene) .nd-playbook__entity--with-remove {
+.nd-playbook__entity-wrap:has(.nd-chip--scene) .nd-playbook__entity-remove,
+.nd-playbook__entity-wrap:has(.nd-chip--scene) .nd-playbook__entity--with-remove {
   border-color: var(--nd-scene-border);
 }
 
-.nd-companion .nd-playbook__entity-remove:hover {
+.nd-playbook__entity-remove:hover {
   color: var(--nd-danger);
   background: var(--nd-danger-bg);
 }
 
 /* ── Input / select / textarea ────────────────────────────────────────────── */
 
-.nd-companion .nd-input,
-.nd-companion .nd-select,
-.nd-companion select.nd-playbook-prepare__select {
+.nd-input,
+.nd-select,
+select.nd-playbook-prepare__select {
   width: 100%;
   margin: 0;
   padding: 7px 12px;
@@ -291,15 +294,15 @@
   box-sizing: border-box;
 }
 
-.nd-companion .nd-input:focus-visible,
-.nd-companion .nd-select:focus-visible,
-.nd-companion select.nd-playbook-prepare__select:focus-visible {
+.nd-input:focus-visible,
+.nd-select:focus-visible,
+select.nd-playbook-prepare__select:focus-visible {
   border-color: var(--nd-blue);
   box-shadow: var(--nd-shadow-focus);
 }
 
-.nd-companion .nd-textarea,
-.nd-companion .nd-live-notes {
+.nd-textarea,
+.nd-live-notes {
   min-height: 4.5em;
   outline: none;
   border-radius: var(--nd-radius-md);
@@ -312,11 +315,11 @@
   color: var(--nd-text-1);
 }
 
-.nd-companion .nd-live-notes:focus-visible {
+.nd-live-notes:focus-visible {
   box-shadow: var(--nd-shadow-focus);
 }
 
-.nd-companion .nd-live-notes:empty::before {
+.nd-live-notes:empty::before {
   content: attr(data-placeholder);
   color: var(--nd-text-3);
   pointer-events: none;
@@ -324,7 +327,7 @@
 
 /* ── Tabs (workspace switcher appearance) ─────────────────────────────────── */
 
-.nd-companion .nd-tabs {
+.nd-tabs {
   display: flex;
   gap: var(--nd-space-1);
   padding: 3px;
@@ -333,7 +336,7 @@
   border-radius: var(--nd-radius-md);
 }
 
-.nd-companion .nd-tabs__button {
+.nd-tabs__button {
   flex: 1;
   padding: 5px 20px;
   border-radius: var(--nd-radius-sm);
@@ -349,31 +352,31 @@
   transition: var(--nd-transition-fast);
 }
 
-.nd-companion .nd-tabs__button:hover {
+.nd-tabs__button:hover {
   color: var(--nd-text-1);
 }
 
-.nd-companion .nd-tabs__button.is-active,
-.nd-companion .nd-tabs__button[aria-pressed="true"] {
+.nd-tabs__button.is-active,
+.nd-tabs__button[aria-pressed="true"] {
   background: var(--nd-bg);
   color: var(--nd-text-1);
   box-shadow: var(--nd-shadow-sm);
 }
 
 /* Status pill variants (for future / Saving indicator) */
-.nd-companion .nd-status--active {
+.nd-status--active {
   color: var(--nd-status-active-color);
 }
 
-.nd-companion .nd-status--done {
+.nd-status--done {
   color: var(--nd-status-done-color);
 }
 
-.nd-companion .nd-mono {
+.nd-mono {
   font-family: var(--nd-font-mono);
 }
 
-.nd-companion .nd-label {
+.nd-label {
   font-family: var(--nd-font-sans);
   font-size: var(--nd-text-label);
   font-weight: var(--nd-weight-semibold);
@@ -382,7 +385,7 @@
   color: var(--nd-text-3);
 }
 
-.nd-companion .nd-micro {
+.nd-micro {
   font-family: var(--nd-font-mono);
   font-size: var(--nd-text-micro);
   font-weight: var(--nd-weight-semibold);

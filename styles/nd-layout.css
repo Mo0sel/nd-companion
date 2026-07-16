@@ -2,13 +2,17 @@
  * N&D Companion — App chrome layout
  * Campaign context, focus panel, workspace switcher, shell.
  * Workspace-specific layout lives in play.css / prepare.css / notes.css (later sprints).
+ *
+ * Selectors match the pre-16A baseline (module-prefixed class names, not
+ * double-nested under .nd-companion) so chrome paints even if app-root class
+ * placement differs slightly across ApplicationV2 frames.
  */
 
 .nd-companion {
   padding: 1rem;
 }
 
-.nd-companion .nd-companion__shell {
+.nd-companion__shell {
   container-type: inline-size;
   container-name: nd-companion;
 
@@ -23,7 +27,7 @@
 }
 
 /* Campaign Context */
-.nd-companion .nd-campaign-context {
+.nd-campaign-context {
   display: flex;
   flex-wrap: wrap;
   gap: 10px var(--nd-space-4);
@@ -32,18 +36,18 @@
   border-bottom: 1px solid var(--nd-border);
 }
 
-.nd-companion .nd-campaign-context__item {
+.nd-campaign-context__item {
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
 }
 
-.nd-companion .nd-campaign-context__item[hidden] {
+.nd-campaign-context__item[hidden] {
   display: none;
 }
 
-.nd-companion .nd-campaign-context__label {
+.nd-campaign-context__label {
   font-family: var(--nd-font-mono);
   font-size: var(--nd-text-micro);
   font-weight: var(--nd-weight-semibold);
@@ -52,7 +56,7 @@
   color: var(--nd-text-3);
 }
 
-.nd-companion .nd-campaign-context__value {
+.nd-campaign-context__value {
   font-size: var(--nd-text-body-sm);
   font-weight: var(--nd-weight-semibold);
   color: var(--nd-text-1);
@@ -63,7 +67,7 @@
 }
 
 /* Focus Panel */
-.nd-companion .nd-focus-panel {
+.nd-focus-panel {
   display: flex;
   align-items: center;
   gap: var(--nd-space-3);
@@ -73,7 +77,7 @@
   border-radius: var(--nd-radius-xl);
 }
 
-.nd-companion .nd-focus-panel__portrait {
+.nd-focus-panel__portrait {
   flex-shrink: 0;
   width: 48px;
   height: 48px;
@@ -83,18 +87,18 @@
   border: 1px solid var(--nd-border);
 }
 
-.nd-companion .nd-focus-panel__portrait[hidden] {
+.nd-focus-panel__portrait[hidden] {
   display: none;
 }
 
-.nd-companion .nd-focus-panel__meta {
+.nd-focus-panel__meta {
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: var(--nd-space-1);
 }
 
-.nd-companion .nd-focus-panel__name {
+.nd-focus-panel__name {
   font-size: var(--nd-text-h3);
   font-weight: var(--nd-weight-bold);
   letter-spacing: -0.01em;
@@ -104,17 +108,17 @@
   white-space: nowrap;
 }
 
-.nd-companion .nd-focus-panel__type {
+.nd-focus-panel__type {
   display: flex;
   align-items: baseline;
   gap: 6px;
 }
 
-.nd-companion .nd-focus-panel__type[hidden] {
+.nd-focus-panel__type[hidden] {
   display: none;
 }
 
-.nd-companion .nd-focus-panel__type-label {
+.nd-focus-panel__type-label {
   font-family: var(--nd-font-mono);
   font-size: var(--nd-text-micro);
   font-weight: var(--nd-weight-semibold);
@@ -123,13 +127,13 @@
   color: var(--nd-text-3);
 }
 
-.nd-companion .nd-focus-panel__type-value {
+.nd-focus-panel__type-value {
   font-size: var(--nd-text-caption);
   color: var(--nd-text-3);
 }
 
 /* Workspace switcher — layout + tab look */
-.nd-companion .nd-workspace-switcher {
+.nd-workspace-switcher {
   display: flex;
   gap: 2px;
   padding: 3px;
@@ -141,7 +145,7 @@
   border-radius: var(--nd-radius-md);
 }
 
-.nd-companion .nd-workspace-switcher__button {
+.nd-workspace-switcher__button {
   flex: 1;
   padding: 5px 20px;
   border-radius: var(--nd-radius-sm);
@@ -157,36 +161,36 @@
   transition: var(--nd-transition-fast);
 }
 
-.nd-companion .nd-workspace-switcher__button:hover {
+.nd-workspace-switcher__button:hover {
   color: var(--nd-text-1);
   background: transparent;
 }
 
-.nd-companion .nd-workspace-switcher__button.is-active,
-.nd-companion .nd-workspace-switcher__button[aria-pressed="true"] {
+.nd-workspace-switcher__button.is-active,
+.nd-workspace-switcher__button[aria-pressed="true"] {
   color: var(--nd-text-1);
   background: var(--nd-bg);
   border-color: transparent;
   box-shadow: var(--nd-shadow-sm);
 }
 
-.nd-companion .nd-workspace-region {
+.nd-workspace-region {
   display: flex;
   flex-direction: column;
   gap: var(--nd-card-gap);
   min-height: 0;
 }
 
-.nd-companion .nd-workspace {
+.nd-workspace {
   display: flex;
   flex-direction: column;
   gap: var(--nd-card-gap);
 }
 
-.nd-companion .nd-workspace[hidden] {
+.nd-workspace[hidden] {
   display: none;
 }
 
-.nd-companion .nd-workspace__placeholder {
+.nd-workspace__placeholder {
   color: var(--nd-text-3);
 }

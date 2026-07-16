@@ -1,12 +1,16 @@
 /**
  * N&D Companion — Design tokens
  * Source: design/figma-source/src/index.css (approved Figma)
- * Scoped to .nd-companion so Foundry chrome is not restyled globally.
+ * Scoped to the Companion app root so Foundry chrome is not restyled globally.
+ *
+ * Foundry loads module CSS as constructable stylesheets.
+ * Do not use @import here (e.g. Google Fonts) — the entire sheet fails to apply.
+ * Fonts must be provided through system stacks or another loading mechanism.
  */
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
-
-.nd-companion {
+.nd-companion,
+#nd-companion-app,
+.nd-companion__shell {
   /* ── Color: surfaces ───────────────────────────────────────────────────── */
   --nd-bg: #0d0d0f;
   --nd-surface: #131316;
@@ -87,9 +91,9 @@
   --nd-radius-2xl: 12px;
   --nd-radius-full: 9999px;
 
-  /* ── Typography ────────────────────────────────────────────────────────── */
-  --nd-font-sans: "Inter", system-ui, sans-serif;
-  --nd-font-mono: "JetBrains Mono", monospace;
+  /* ── Typography (system stack; no remote @font-face / @import) ─────────── */
+  --nd-font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
+  --nd-font-mono: ui-monospace, "Cascadia Code", "Consolas", monospace;
 
   --nd-text-display: 22px;
   --nd-text-h1: 18px;
