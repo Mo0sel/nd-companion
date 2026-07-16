@@ -1,4 +1,5 @@
 import { CompanionStorage } from "./storage.js";
+import { EntityRegistry } from "./entity-registry.js";
 
 /**
  * @typedef {object} PlaybookRelatedRef
@@ -10,8 +11,10 @@ import { CompanionStorage } from "./storage.js";
  * @typedef {object} PlaybookBeat
  * @property {string} title
  * @property {string} objective
+ * @property {string|null} sceneUuid
+ * @property {string[]} keyNpcUuids
  * @property {string} gmNotes
- * @property {PlaybookRelatedRef[]} related
+ * @property {PlaybookRelatedRef[]} related  Reserved for future relationship system — do not migrate/transform
  */
 
 /**
@@ -22,7 +25,7 @@ import { CompanionStorage } from "./storage.js";
 
 /**
  * One-time seed only. Written to an empty world during ready(); never read again at runtime.
- * @type {readonly PlaybookBeat[]}
+ * @type {readonly object[]}
  */
 const SAMPLE_BEATS = Object.freeze([
   {
@@ -118,13 +121,14 @@ export class PlaybookService {
     if (beats.length === 0) {
       PlaybookService.#doc = {
         currentIndex: 2,
-        beats: SAMPLE_BEATS.map((beat) => PlaybookService.#cloneBeat(beat))
+        beats: SAMPLE_BEATS.map((beat) => PlaybookService.#normalizeBeat(beat))
       };
       void CompanionStorage.setPlaybook(PlaybookService.#doc);
       return;
     }
 
     PlaybookService.#doc = PlaybookService.#normalize(stored);
+    void CompanionStorage.setPlaybook(PlaybookService.#doc);
   }
 
   /**
@@ -186,7 +190,7 @@ export class PlaybookService {
     const current = PlaybookService.getIndex();
     return PlaybookService.#doc.beats.map((beat, index) => ({
       index,
-      title: beat.title?.trim() ? beat.title : "Untitled beat",
+      title: beat.title?.trim() ? beat.title : "Untitled Beat",
       isCurrent: index === current
     }));
   }
@@ -225,7 +229,13 @@ export class PlaybookService {
 
   /**
    * @param {number} index
-   * @param {{ title?: string, objective?: string, gmNotes?: string }} patch
+   * @param {{
+   *   title?: string,
+   *   objective?: string,
+   *   sceneUuid?: string|null,
+   *   keyNpcUuids?: string[],
+   *   gmNotes?: string
+   * }} patch
    * @returns {Promise<boolean>}
    */
   static async updateBeat(index, patch) {
@@ -235,9 +245,57 @@ export class PlaybookService {
     if (typeof patch.title === "string") beat.title = patch.title;
     if (typeof patch.objective === "string") beat.objective = patch.objective;
     if (typeof patch.gmNotes === "string") beat.gmNotes = patch.gmNotes;
+    if ("sceneUuid" in patch) {
+      beat.sceneUuid = PlaybookService.#normalizeSceneUuid(patch.sceneUuid);
+    }
+    if (Array.isArray(patch.keyNpcUuids)) {
+      beat.keyNpcUuids = PlaybookService.#normalizeActorUuids(patch.keyNpcUuids);
+    }
 
     await PlaybookService.#persist();
     return true;
+  }
+
+  /**
+   * Append an empty beat and persist.
+   * @returns {Promise<number>} New beat index
+   */
+  static async addBeat() {
+    PlaybookService.#doc.beats.push(PlaybookService.#emptyBeat());
+    const index = PlaybookService.#doc.beats.length - 1;
+    await PlaybookService.#persist();
+    return index;
+  }
+
+  /**
+   * Remove a beat and clamp currentIndex.
+   * @param {number} index
+   * @returns {Promise<{ ok: boolean, nextEditIndex: number|null }>}
+   */
+  static async deleteBeat(index) {
+    if (!Number.isInteger(index) || index < 0 || index >= PlaybookService.#doc.beats.length) {
+      return { ok: false, nextEditIndex: PlaybookService.getTotal() ? PlaybookService.getIndex() : null };
+    }
+
+    PlaybookService.#doc.beats.splice(index, 1);
+
+    if (PlaybookService.#doc.beats.length === 0) {
+      PlaybookService.#doc.currentIndex = 0;
+      await PlaybookService.#persist();
+      return { ok: true, nextEditIndex: null };
+    }
+
+    if (PlaybookService.#doc.currentIndex > index) {
+      PlaybookService.#doc.currentIndex -= 1;
+    } else if (PlaybookService.#doc.currentIndex >= PlaybookService.#doc.beats.length) {
+      PlaybookService.#doc.currentIndex = PlaybookService.#doc.beats.length - 1;
+    }
+
+    await PlaybookService.#persist();
+    return {
+      ok: true,
+      nextEditIndex: Math.min(index, PlaybookService.#doc.beats.length - 1)
+    };
   }
 
   static async #persist() {
@@ -264,6 +322,7 @@ export class PlaybookService {
    * @returns {PlaybookBeat}
    */
   static #normalizeBeat(beat) {
+    // related[] is reserved — copy only, never migrate into scene/characters
     const related = Array.isArray(beat?.related)
       ? beat.related
           .filter((ref) => ref && typeof ref.name === "string")
@@ -273,9 +332,24 @@ export class PlaybookService {
           }))
       : [];
 
+    let sceneUuid = PlaybookService.#normalizeSceneUuid(beat?.sceneUuid);
+    if (!sceneUuid && typeof beat?.scene === "string" && beat.scene.trim()) {
+      sceneUuid = PlaybookService.#migrateNameToUuid(beat.scene.trim(), "scene");
+    }
+
+    let keyNpcUuids = Array.isArray(beat?.keyNpcUuids)
+      ? PlaybookService.#normalizeActorUuids(beat.keyNpcUuids)
+      : [];
+
+    if (keyNpcUuids.length === 0 && typeof beat?.keyNpcs === "string" && beat.keyNpcs.trim()) {
+      keyNpcUuids = PlaybookService.#migrateKeyNpcsText(beat.keyNpcs);
+    }
+
     return {
       title: typeof beat?.title === "string" ? beat.title : "",
       objective: typeof beat?.objective === "string" ? beat.objective : "",
+      sceneUuid,
+      keyNpcUuids,
       gmNotes: typeof beat?.gmNotes === "string" ? beat.gmNotes : "",
       related
     };
@@ -289,6 +363,8 @@ export class PlaybookService {
     return {
       title: beat.title ?? "",
       objective: beat.objective ?? "",
+      sceneUuid: beat.sceneUuid ?? null,
+      keyNpcUuids: [...(beat.keyNpcUuids ?? [])],
       gmNotes: beat.gmNotes ?? "",
       related: (beat.related ?? []).map((ref) => ({
         name: ref.name,
@@ -299,7 +375,75 @@ export class PlaybookService {
 
   /** @returns {PlaybookBeat} */
   static #emptyBeat() {
-    return { title: "", objective: "", gmNotes: "", related: [] };
+    return {
+      title: "",
+      objective: "",
+      sceneUuid: null,
+      keyNpcUuids: [],
+      gmNotes: "",
+      related: []
+    };
+  }
+
+  /**
+   * @param {unknown} value
+   * @returns {string|null}
+   */
+  static #normalizeSceneUuid(value) {
+    if (!value || typeof value !== "string") return null;
+    const entity = EntityRegistry.findByUUID(value);
+    return entity?.kind === "scene" ? entity.uuid : null;
+  }
+
+  /**
+   * @param {unknown[]} values
+   * @returns {string[]}
+   */
+  static #normalizeActorUuids(values) {
+    /** @type {string[]} */
+    const out = [];
+    const seen = new Set();
+    for (const value of values) {
+      if (typeof value !== "string" || !value) continue;
+      const entity = EntityRegistry.findByUUID(value);
+      if (entity?.kind !== "actor") continue;
+      if (seen.has(entity.uuid)) continue;
+      seen.add(entity.uuid);
+      out.push(entity.uuid);
+    }
+    return out;
+  }
+
+  /**
+   * @param {string} name
+   * @param {"actor"|"scene"} kind
+   * @returns {string|null}
+   */
+  static #migrateNameToUuid(name, kind) {
+    const byUuid = EntityRegistry.findByUUID(name);
+    if (byUuid?.kind === kind) return byUuid.uuid;
+
+    const result = EntityRegistry.findByName(name, kind);
+    return result.status === "ok" ? result.entity.uuid : null;
+  }
+
+  /**
+   * @param {string} text
+   * @returns {string[]}
+   */
+  static #migrateKeyNpcsText(text) {
+    /** @type {string[]} */
+    const out = [];
+    const seen = new Set();
+    for (const part of text.split(/[\n,;]+/)) {
+      const name = part.trim();
+      if (!name) continue;
+      const uuid = PlaybookService.#migrateNameToUuid(name, "actor");
+      if (!uuid || seen.has(uuid)) continue;
+      seen.add(uuid);
+      out.push(uuid);
+    }
+    return out;
   }
 
   /**

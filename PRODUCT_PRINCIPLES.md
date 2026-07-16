@@ -25,6 +25,8 @@ Companion Memory and Live Notes hold **DM judgment** (secrets, focus, session ca
 
 ---
 
+
+
 ## 3. Reduce cognitive load
 
 The Companion is a second brain, not a second project.
@@ -34,6 +36,8 @@ Prefer fewer surfaces, clearer defaults, and less to remember mid-session. Featu
 **Test:** Does this make the live session *easier* for the DM, or merely *more complete*? Easy wins. Completeness waits.
 
 ---
+
+
 
 ## 4. Optimize for live DMing
 
@@ -47,6 +51,8 @@ Build for real tables under time pressure—not for archive completeness or perf
 
 ---
 
+
+
 ## 5. Engines before UI
 
 Logic lives in small engines (storage, notes, awareness, focus, registry). UI paints and attaches.
@@ -56,6 +62,8 @@ Do not bury business rules inside templates or one-off click handlers that other
 **Test:** Can another feature call this capability without opening the Companion window? Engines yes; chrome-only hacks no.
 
 ---
+
+
 
 ## 6. AI assists; the DM decides
 
@@ -67,6 +75,8 @@ The DM always confirms or discards. Foundry documents remain authoritative.
 
 ---
 
+
+
 ## 7. Fast navigation
 
 During play, everything important should be reachable in **two clicks or less** (or one shortcut later).
@@ -76,6 +86,8 @@ No nested diving for live tools. Workspaces stay flat. Chrome (context + focus) 
 **Test:** Count clicks from “I need X” to “I’m editing/seeing X.” More than two during play → redesign.
 
 ---
+
+
 
 ## 8. Automation over manual bookkeeping
 
@@ -87,6 +99,8 @@ Avoid: checklists the DM must tick to keep Companion “in sync,” manual re-en
 
 ---
 
+
+
 ## 9. Complement Foundry; don’t replace sheets
 
 The Companion never reinvents Actor sheets, journals, or combat trackers.
@@ -97,6 +111,8 @@ Open or leverage Foundry when the sheet is the right tool. Companion stays the l
 
 ---
 
+
+
 ## 10. Real use before perfection
 
 Ship the smallest thing that reduces friction. Validate in a real session (`UX_NOTES.md`) before adding richness (markdown preview, graphs, AI).
@@ -104,6 +120,8 @@ Ship the smallest thing that reduces friction. Validate in a real session (`UX_N
 **Test:** Have we watched a real session with this feature—or only imagined one?
 
 ---
+
+
 
 ## How to use this document
 
@@ -116,3 +134,13 @@ Before implementing a feature, answer:
 5. Is AI involved—and is the DM still the authority?
 
 If any answer is weak, cut scope until the answers are clear.
+
+
+
+## UI Evolution
+
+The approved layout is considered stable.
+
+New features should integrate into the existing interface rather than introducing new layouts.
+
+The Companion should evolve through refinement instead of redesign.

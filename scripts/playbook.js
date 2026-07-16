@@ -1,5 +1,6 @@
 import { EntityRegistry } from "./entity-registry.js";
 import { Navigation } from "./navigation.js";
+import { PlaybookEntities } from "./playbook-entities.js";
 import { PlaybookService } from "./playbook-service.js";
 
 /**
@@ -74,42 +75,55 @@ export class Playbook {
       if (el) el.textContent = value ?? "";
     };
 
-    setText("counter", `${snapshot.index + 1} / ${snapshot.total}`);
-    setText("title", snapshot.beat.title);
-    setText("objective", snapshot.beat.objective);
-    setText("gmNotes", snapshot.beat.gmNotes);
+    const setTextField = (key, value) => {
+      const field = panel.querySelector(`[data-playbook-field-block="${key}"]`);
+      const text = value?.trim() ?? "";
+      if (field) field.hidden = !text;
+      setText(key, text);
+    };
+
+    if (snapshot.total <= 0) {
+      setText("counter", "0 / 0");
+      setText("title", "No beats");
+      setTextField("objective", "");
+      setTextField("gmNotes", "");
+      Playbook.#paintEntityBlock(panel, "scene", []);
+      Playbook.#paintEntityBlock(panel, "characters", []);
+    } else {
+      setText("counter", `${snapshot.index + 1} / ${snapshot.total}`);
+      setText("title", snapshot.beat.title?.trim() || "Untitled Beat");
+      setTextField("objective", snapshot.beat.objective);
+      setTextField("gmNotes", snapshot.beat.gmNotes);
+
+      const sceneUuids = snapshot.beat.sceneUuid ? [snapshot.beat.sceneUuid] : [];
+      Playbook.#paintEntityBlock(panel, "scene", sceneUuids);
+      Playbook.#paintEntityBlock(panel, "characters", snapshot.beat.keyNpcUuids ?? []);
+    }
 
     const prevBtn = panel.querySelector("[data-playbook-nav=\"prev\"]");
     const nextBtn = panel.querySelector("[data-playbook-nav=\"next\"]");
     if (prevBtn instanceof HTMLButtonElement) prevBtn.disabled = !snapshot.canPrev;
     if (nextBtn instanceof HTMLButtonElement) nextBtn.disabled = !snapshot.canNext;
 
+    // related[] reserved for future relationship system — do not paint
     const relatedRoot = panel.querySelector("[data-playbook=\"related\"]");
     const relatedSection = panel.querySelector("[data-playbook-related]");
-    if (relatedRoot) {
-      relatedRoot.replaceChildren();
-      for (const item of snapshot.related) {
-        const chip = document.createElement(item.navigable ? "button" : "span");
-        chip.className = "nd-playbook__entity";
-        chip.textContent = item.name;
-        if (item.hint) chip.title = item.hint;
+    if (relatedRoot) relatedRoot.replaceChildren();
+    if (relatedSection) relatedSection.hidden = true;
+  }
 
-        if (item.navigable && item.uuid) {
-          if (chip instanceof HTMLButtonElement) chip.type = "button";
-          chip.classList.add("nd-playbook__entity--navigable");
-          chip.dataset.playbookEntity = item.uuid;
-        } else {
-          chip.classList.add("nd-playbook__entity--disabled");
-          chip.setAttribute("aria-disabled", "true");
-        }
+  /**
+   * @param {HTMLElement} panel
+   * @param {"scene"|"characters"} key
+   * @param {string[]} uuids
+   */
+  static #paintEntityBlock(panel, key, uuids) {
+    const field = panel.querySelector(`[data-playbook-field-block="${key}"]`);
+    const container = panel.querySelector(`[data-playbook="${key}"]`);
+    if (!field || !container) return;
 
-        relatedRoot.append(chip);
-      }
-    }
-
-    if (relatedSection) {
-      relatedSection.hidden = snapshot.related.length === 0;
-    }
+    PlaybookEntities.paintChips(container, uuids);
+    field.hidden = uuids.length === 0;
   }
 
   /**
@@ -154,6 +168,7 @@ export class Playbook {
   }
 
   /**
+   * Kept for future relationship system — related[] is not painted.
    * @param {import("./playbook-service.js").PlaybookRelatedRef[]} refs
    * @returns {ResolvedRelated[]}
    */

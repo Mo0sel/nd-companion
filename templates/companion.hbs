@@ -150,17 +150,27 @@
 
         <h3 class="nd-playbook__title" data-playbook="title"></h3>
 
-        <div class="nd-playbook__field">
+        <div class="nd-playbook__field" data-playbook-field-block="objective">
           <span class="nd-playbook__field-label">Objective</span>
           <p class="nd-card__text" data-playbook="objective"></p>
         </div>
 
-        <div class="nd-playbook__field">
+        <div class="nd-playbook__field" data-playbook-field-block="scene">
+          <span class="nd-playbook__field-label">Scene</span>
+          <div class="nd-playbook__related" data-playbook="scene"></div>
+        </div>
+
+        <div class="nd-playbook__field" data-playbook-field-block="characters">
+          <span class="nd-playbook__field-label">Characters</span>
+          <div class="nd-playbook__related" data-playbook="characters"></div>
+        </div>
+
+        <div class="nd-playbook__field" data-playbook-field-block="gmNotes">
           <span class="nd-playbook__field-label">GM Notes</span>
           <p class="nd-card__text" data-playbook="gmNotes"></p>
         </div>
 
-        <div class="nd-playbook__field" data-playbook-related>
+        <div class="nd-playbook__field" data-playbook-related hidden>
           <span class="nd-playbook__field-label">Related</span>
           <div class="nd-playbook__related" data-playbook="related"></div>
         </div>
@@ -176,12 +186,22 @@
         </header>
 
         <div class="nd-playbook-prepare">
-          <div class="nd-playbook-prepare__list" data-playbook-prepare-list role="list"></div>
+          <div class="nd-playbook-prepare__sidebar">
+            <button type="button" class="nd-playbook-prepare__add" data-playbook-add-beat>
+              + Add Beat
+            </button>
+            <div class="nd-playbook-prepare__list" data-playbook-prepare-list role="list"></div>
+          </div>
 
           <div class="nd-playbook-prepare__main">
-            <p class="nd-card__text nd-workspace__placeholder" data-playbook-prepare-empty hidden>
-              No beats in this Playbook.
-            </p>
+            <div class="nd-playbook-prepare__empty" data-playbook-prepare-empty hidden>
+              <p class="nd-card__text nd-workspace__placeholder">
+                No beats yet. Add a beat to start preparing this session.
+              </p>
+              <button type="button" class="nd-playbook-prepare__add" data-playbook-add-beat>
+                + Add Beat
+              </button>
+            </div>
 
             <div class="nd-playbook-prepare__editor" data-playbook-prepare-editor>
               <div class="nd-playbook-prepare__actions">
@@ -210,6 +230,23 @@
                   role="textbox"
                   aria-label="Beat objective"
                 ></div>
+              </div>
+
+              <div class="nd-playbook__field">
+                <span class="nd-playbook__field-label">Scene</span>
+                <select class="nd-playbook-prepare__select" data-playbook-scene-select aria-label="Scene"></select>
+                <div class="nd-playbook__related nd-playbook-prepare__chips" data-playbook-scene-chips></div>
+              </div>
+
+              <div class="nd-playbook__field">
+                <span class="nd-playbook__field-label">Characters</span>
+                <div class="nd-playbook-prepare__picker-row">
+                  <select class="nd-playbook-prepare__select" data-playbook-character-select aria-label="Add character"></select>
+                  <button type="button" class="nd-playbook-prepare__add-entity" data-playbook-add-character>
+                    Add
+                  </button>
+                </div>
+                <div class="nd-playbook__related nd-playbook-prepare__chips" data-playbook-character-chips></div>
               </div>
 
               <div class="nd-playbook__field">
