@@ -1,0 +1,217 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import 'tailwindcss';
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   N&D COMPANION — DESIGN TOKENS
+   All tokens are CSS custom properties so Foundry VTT can override the entire
+   theme by injecting a single :root block in its module settings.
+───────────────────────────────────────────────────────────────────────────── */
+
+:root {
+
+  /* ── Color: surfaces ───────────────────────────────────────────────────── */
+  --nd-bg:          #0d0d0f;   /* page background */
+  --nd-surface:     #131316;   /* primary card / panel */
+  --nd-surface-2:   #1a1a20;   /* raised / input bg */
+  --nd-surface-3:   #18181e;   /* muted / subtle surface */
+
+  /* ── Color: text ───────────────────────────────────────────────────────── */
+  --nd-text-1:      #e4e4eb;   /* primary text */
+  --nd-text-2:      #a0a0b0;   /* secondary text */
+  --nd-text-3:      #6b6b7e;   /* muted / labels */
+
+  /* ── Color: accent ─────────────────────────────────────────────────────── */
+  --nd-blue:        #5b8eff;   /* primary accent */
+  --nd-purple:      #a78bfa;   /* card header labels */
+  --nd-blue-dim:    rgba(91,142,255,0.08);
+  --nd-blue-tint:   rgba(91,142,255,0.05);
+  --nd-blue-border: rgba(91,142,255,0.15);
+  --nd-blue-hover:  rgba(91,142,255,0.50);
+
+  /* ── Color: semantic ───────────────────────────────────────────────────── */
+  --nd-danger:        #ef4444;
+  --nd-danger-bg:     rgba(239,68,68,0.10);
+  --nd-danger-border: rgba(239,68,68,0.25);
+  --nd-success:       #22c55e;
+  --nd-success-bg:    rgba(34,197,94,0.10);
+  --nd-warning:       #f59e0b;
+  --nd-warning-bg:    rgba(245,158,11,0.10);
+
+  /* ── Color: borders ────────────────────────────────────────────────────── */
+  --nd-border:      #1e1e26;
+  --nd-border-2:    rgba(255,255,255,0.06);  /* subtle separator */
+
+  /* ── Color: status pills ───────────────────────────────────────────────── */
+  --nd-status-planned-color:  #6b6b7e;
+  --nd-status-planned-bg:     rgba(107,107,126,0.10);
+  --nd-status-planned-border: rgba(107,107,126,0.25);
+  --nd-status-active-color:   #5b8eff;
+  --nd-status-active-bg:      rgba(91,142,255,0.12);
+  --nd-status-active-border:  rgba(91,142,255,0.30);
+  --nd-status-done-color:     #22c55e;
+  --nd-status-done-bg:        rgba(34,197,94,0.10);
+  --nd-status-done-border:    rgba(34,197,94,0.25);
+  --nd-status-skipped-color:  #f59e0b;
+  --nd-status-skipped-bg:     rgba(245,158,11,0.10);
+  --nd-status-skipped-border: rgba(245,158,11,0.25);
+
+  /* ── Color: entity chips ───────────────────────────────────────────────── */
+  --nd-actor-color:       #5b8eff;
+  --nd-actor-bg:          rgba(91,142,255,0.08);
+  --nd-actor-border:      rgba(91,142,255,0.20);
+  --nd-scene-color:       #f97316;
+  --nd-scene-bg:          rgba(249,115,22,0.08);
+  --nd-scene-border:      rgba(249,115,22,0.20);
+  --nd-journal-color:     #a78bfa;
+  --nd-journal-bg:        rgba(167,139,250,0.08);
+  --nd-journal-border:    rgba(167,139,250,0.20);
+  --nd-rolltable-color:   #22c55e;
+  --nd-rolltable-bg:      rgba(34,197,94,0.08);
+  --nd-rolltable-border:  rgba(34,197,94,0.20);
+
+  /* ── Spacing: 4 / 8 pt grid ────────────────────────────────────────────── */
+  --nd-space-1:   4px;
+  --nd-space-2:   8px;
+  --nd-space-3:  12px;
+  --nd-space-3h: 14px;
+  --nd-space-4:  16px;
+  --nd-space-5:  20px;
+  --nd-space-6:  24px;
+  --nd-space-7:  28px;
+  --nd-space-8:  32px;
+
+  /* ── Border radius ─────────────────────────────────────────────────────── */
+  --nd-radius-sm:   6px;   /* pills, small buttons */
+  --nd-radius-md:   7px;   /* inputs, stat boxes */
+  --nd-radius-lg:   9px;   /* tinted panels */
+  --nd-radius-xl:  10px;   /* standard cards */
+  --nd-radius-2xl: 12px;   /* hero card */
+  --nd-radius-full: 9999px;
+
+  /* ── Typography ────────────────────────────────────────────────────────── */
+  --nd-font-sans: 'Inter', system-ui, sans-serif;
+  --nd-font-mono: 'JetBrains Mono', monospace;
+
+  --nd-text-display:   22px;  /* beat editor title */
+  --nd-text-h1:        18px;  /* beat card title */
+  --nd-text-h2:        16px;  /* campaign name */
+  --nd-text-h3:        15px;  /* stat values */
+  --nd-text-body:      13.5px;
+  --nd-text-body-sm:   13px;
+  --nd-text-caption:   12px;
+  --nd-text-label:     11px;  /* section headers */
+  --nd-text-micro:     10px;  /* field labels */
+  --nd-text-mono:      11px;
+
+  --nd-leading-tight:  1.2;
+  --nd-leading-snug:   1.45;
+  --nd-leading-normal: 1.6;
+  --nd-leading-relaxed: 1.7;
+
+  /* ── Elevation / shadow ────────────────────────────────────────────────── */
+  --nd-shadow-none:    none;
+  --nd-shadow-sm:      0 1px 3px rgba(0,0,0,0.40);
+  --nd-shadow-md:      0 4px 16px rgba(0,0,0,0.50);
+  --nd-shadow-lg:      0 8px 32px rgba(0,0,0,0.60);
+
+  /* ── Transitions ───────────────────────────────────────────────────────── */
+  --nd-transition-fast: all 0.10s ease;
+  --nd-transition-base: all 0.15s ease;
+
+  /* ── Layout ────────────────────────────────────────────────────────────── */
+  --nd-header-h:    48px;
+  --nd-sidebar-w:   260px;
+  --nd-page-x:      28px;
+  --nd-card-gap:    16px;
+  --nd-card-pad:    14px;
+
+  /* ── Legacy aliases (keep existing var() references working) ───────────── */
+  --background:          var(--nd-bg);
+  --foreground:          var(--nd-text-1);
+  --card:                var(--nd-surface);
+  --card-foreground:     var(--nd-text-1);
+  --primary:             var(--nd-blue);
+  --primary-foreground:  #ffffff;
+  --secondary:           var(--nd-surface-2);
+  --secondary-foreground: var(--nd-text-2);
+  --muted:               var(--nd-surface-3);
+  --muted-foreground:    var(--nd-text-3);
+  --accent:              var(--nd-blue);
+  --accent-foreground:   #ffffff;
+  --border:              var(--nd-border);
+  --ring:                var(--nd-blue);
+  --radius:              var(--nd-radius-xl);
+  --danger:              var(--nd-danger);
+  --danger-muted:        var(--nd-danger-bg);
+  --success:             var(--nd-success);
+  --warning:             var(--nd-warning);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TAILWIND THEME BRIDGE
+───────────────────────────────────────────────────────────────────────────── */
+
+@theme inline {
+  --color-background:          var(--background);
+  --color-foreground:          var(--foreground);
+  --color-card:                var(--card);
+  --color-card-foreground:     var(--card-foreground);
+  --color-primary:             var(--primary);
+  --color-primary-foreground:  var(--primary-foreground);
+  --color-secondary:           var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted:               var(--muted);
+  --color-muted-foreground:    var(--muted-foreground);
+  --color-accent:              var(--accent);
+  --color-accent-foreground:   var(--accent-foreground);
+  --color-border:              var(--border);
+  --color-ring:                var(--ring);
+  --radius-DEFAULT:            var(--radius);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   BASE RESET
+───────────────────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: var(--nd-font-sans);
+  font-size: var(--nd-text-body);
+  background-color: var(--nd-bg);
+  color: var(--nd-text-1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SCROLLBAR
+───────────────────────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar          { width: 5px; height: 5px; }
+::-webkit-scrollbar-track    { background: transparent; }
+::-webkit-scrollbar-thumb    { background: transparent; border-radius: 99px; }
+*:hover::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   FOCUS VISIBLE (accessibility — keyboard nav only)
+───────────────────────────────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid var(--nd-blue);
+  outline-offset: 2px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   UTILITY
+───────────────────────────────────────────────────────────────────────────── */
+
+.nd-mono {
+  font-family: var(--nd-font-mono);
+}
