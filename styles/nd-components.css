@@ -137,30 +137,30 @@
   width: 3px;
   height: 14px;
   border-radius: 2px;
-  background: var(--nd-blue);
+  background: var(--nd-tertiary-accent);
 }
 
 .nd-card--playbook .nd-card__accent,
 .nd-card--playbook-prepare .nd-card__accent {
-  background: var(--nd-purple);
+  background: var(--nd-tertiary-accent);
 }
 
 .nd-card--threads .nd-card__accent {
-  background: var(--nd-warning);
+  background: var(--nd-tertiary-accent);
 }
 
 .nd-card--session-notes .nd-card__accent {
-  background: var(--nd-blue);
+  background: var(--nd-tertiary-accent);
 }
 
 .nd-card__label {
   margin: 0;
-  font-family: var(--nd-font-sans);
+  color: var(--nd-tertiary-accent);
+  font-family: var(--nd-font-mono);
   font-size: var(--nd-text-label);
-  font-weight: var(--nd-weight-semibold);
+  font-weight: var(--nd-weight-bold);
   text-transform: uppercase;
-  letter-spacing: var(--nd-tracking-label);
-  color: var(--nd-text-3);
+  letter-spacing: 0.1em;
 }
 
 .nd-card__text {

@@ -1,6 +1,6 @@
 # N&D Companion
 
-Version: 0.2.8
+Version: 0.2.9
 
 ## Vision
 
@@ -149,6 +149,20 @@ Campaign is the source of truth.
 5. Card title — tertiary accent, bold uppercase label, and increased tracking.
 
 Use hierarchy before adding color or decoration.
+
+---
+
+# Semantic Color Language
+
+- Primary text is neutral and identifies titles, objects and content.
+- Secondary text is muted gray and identifies metadata and helper text.
+- Tertiary mint identifies every card title and field heading.
+- Light blue identifies section groups and always includes a subtle divider.
+- Green is reserved for Active status.
+- Blue is reserved for In Progress status.
+- Gray is reserved for Completed status.
+
+Status colors must not be reused for headings or navigation. Color communicates role, never decoration.
 
 ---
 

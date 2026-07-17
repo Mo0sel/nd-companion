@@ -372,7 +372,7 @@
 }
 
 .nd-campaign-panel__eyebrow {
-  color: var(--nd-purple);
+  color: var(--nd-context-accent);
   font-family: var(--nd-font-mono);
   font-size: var(--nd-text-micro);
   font-weight: var(--nd-weight-semibold);
@@ -395,11 +395,18 @@
   letter-spacing: 0.04em;
 }
 
+.nd-campaign-status[data-status="OPEN"],
+.nd-campaign-status[data-status="open"] {
+  color: var(--nd-status-in-progress-color);
+  background: var(--nd-status-in-progress-bg);
+  border-color: var(--nd-status-in-progress-border);
+}
+
 .nd-campaign-status[data-status="ACTIVE"],
 .nd-campaign-status[data-status="active"] {
   color: var(--nd-status-active-color);
   background: var(--nd-status-active-bg);
-  border-color: var(--nd-status-active-color);
+  border-color: var(--nd-status-active-border);
 }
 
 .nd-campaign-status[data-status="RESOLVED"],
@@ -407,7 +414,7 @@
 .nd-campaign-status[data-status="completed"] {
   color: var(--nd-status-done-color);
   background: var(--nd-status-done-bg);
-  border-color: var(--nd-status-done-color);
+  border-color: var(--nd-status-done-border);
 }
 
 .nd-campaign-session-meta {

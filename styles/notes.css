@@ -22,7 +22,7 @@
 }
 
 .nd-companion-memory-card .nd-card__accent {
-  background: var(--nd-purple);
+  background: var(--nd-tertiary-accent);
 }
 
 .nd-companion-memory-card__actor {
@@ -82,7 +82,7 @@
 }
 
 .nd-reputation-card .nd-card__accent {
-  background: var(--nd-blue);
+  background: var(--nd-tertiary-accent);
 }
 
 .nd-reputation-card__empty {

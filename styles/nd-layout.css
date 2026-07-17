@@ -212,6 +212,8 @@
   cursor: pointer;
   transition: var(--nd-transition-fast);
   box-shadow: none;
+  background-image: none;
+  appearance: none;
 }
 
 .nd-workspace-switcher__button:hover {
@@ -223,7 +225,15 @@
 .nd-workspace-switcher__button[aria-pressed="true"] {
   color: var(--nd-text-1);
   background: var(--nd-bg);
+  background-image: none;
   box-shadow: var(--nd-shadow-sm);
+}
+
+.nd-companion .nd-workspace-switcher__button.is-active,
+.nd-companion .nd-workspace-switcher__button[aria-pressed="true"] {
+  color: var(--nd-text-1);
+  background: var(--nd-bg);
+  background-image: none;
 }
 
 .nd-workspace-region {

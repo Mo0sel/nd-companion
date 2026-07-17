@@ -156,7 +156,7 @@
 
 .nd-play-beat-focus__label {
   margin-bottom: 3px;
-  color: var(--nd-purple);
+  color: var(--nd-tertiary-accent);
   font-size: var(--nd-text-micro);
   font-weight: var(--nd-weight-semibold);
   letter-spacing: 0.08em;
@@ -212,7 +212,7 @@
 }
 
 .nd-play-session-plan__eyebrow {
-  color: var(--nd-purple);
+  color: var(--nd-context-accent);
   font-family: var(--nd-font-mono);
   font-size: var(--nd-text-micro);
   font-weight: var(--nd-weight-semibold);
@@ -406,7 +406,7 @@
 
 .nd-playbook-card__eyebrow {
   margin-bottom: 2px;
-  color: var(--nd-purple);
+  color: var(--nd-text-3);
   font-family: var(--nd-font-mono);
   font-size: var(--nd-text-micro);
   font-weight: var(--nd-weight-semibold);
@@ -840,7 +840,7 @@
 
 .nd-playbook-card__related-label {
   margin-bottom: 7px;
-  color: var(--nd-purple);
+  color: var(--nd-tertiary-accent);
   font-family: var(--nd-font-mono);
   font-size: var(--nd-text-micro);
   font-weight: var(--nd-weight-semibold);
@@ -895,7 +895,7 @@
 }
 
 .nd-play-notes__title {
-  color: var(--nd-purple);
+  color: var(--nd-tertiary-accent);
   font-size: var(--nd-text-label);
   font-weight: var(--nd-weight-semibold);
   letter-spacing: 0.08em;
