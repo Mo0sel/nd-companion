@@ -19,6 +19,13 @@
       type="button"
       class="nd-workspace-switcher__button"
       data-action="setWorkspace"
+      data-workspace="campaign"
+      aria-pressed="false"
+    >Campaign</button>
+    <button
+      type="button"
+      class="nd-workspace-switcher__button"
+      data-action="setWorkspace"
       data-workspace="notes"
       aria-pressed="false"
     >NPC</button>
@@ -153,6 +160,205 @@
             aria-label="Session Summary"
           ></div>
         </section>
+      </div>
+    </section>
+
+    {{!-- CAMPAIGN — lightweight Session and Thread database --}}
+    <section
+      class="nd-workspace nd-campaign"
+      data-workspace-panel="campaign"
+      data-campaign-workspace
+      aria-label="Campaign workspace"
+      hidden
+    >
+      <header class="nd-campaign-header">
+        <div class="nd-campaign-header__title">Campaign</div>
+        <div class="nd-campaign-header__current">
+          <span>Current Session</span>
+          <strong data-campaign-current-session>Session 1</strong>
+        </div>
+      </header>
+
+      <div class="nd-campaign-layout">
+        <aside class="nd-campaign-sidebar" aria-label="Campaign navigation">
+          <h2 class="nd-campaign-sidebar__title">Campaign</h2>
+
+          <div class="nd-campaign-sidebar__section">
+            <div class="nd-campaign-sidebar__label">Sessions</div>
+            <button
+              type="button"
+              class="nd-campaign-sidebar__item"
+              data-campaign-select-session
+            >Session 1</button>
+          </div>
+
+          <div class="nd-campaign-sidebar__section">
+            <button
+              type="button"
+              class="nd-campaign-sidebar__label nd-campaign-sidebar__label--button"
+              data-campaign-select-threads
+            >Threads</button>
+            <div class="nd-campaign-sidebar__threads" data-campaign-sidebar-threads></div>
+            <button type="button" class="nd-campaign-new-thread" data-campaign-new-thread>
+              + New Thread
+            </button>
+          </div>
+        </aside>
+
+        <main class="nd-campaign-panel">
+          <section data-campaign-view="session" aria-label="Session">
+            <header class="nd-campaign-panel__header">
+              <div>
+                <div class="nd-campaign-panel__eyebrow">Session</div>
+                <h2 data-campaign-session="title">Session 1</h2>
+              </div>
+              <span
+                class="nd-campaign-status nd-campaign-status--session"
+                data-campaign-session="status"
+              >active</span>
+            </header>
+
+            <dl class="nd-campaign-session-meta">
+              <div>
+                <dt>Session Number</dt>
+                <dd data-campaign-session="number">1</dd>
+              </div>
+              <div>
+                <dt>Real Date</dt>
+                <dd data-campaign-session="real-date">—</dd>
+              </div>
+              <div>
+                <dt>In-game Date</dt>
+                <dd data-campaign-session="in-game-date">—</dd>
+              </div>
+            </dl>
+
+            <section class="nd-campaign-content-block">
+              <h3>Session Summary</h3>
+              <div class="nd-richtext" data-campaign-session="summary"></div>
+            </section>
+
+            <section class="nd-campaign-content-block">
+              <h3>Session Notes</h3>
+              <div class="nd-richtext" data-campaign-session="notes"></div>
+            </section>
+
+            <section class="nd-campaign-content-block">
+              <h3>Beats</h3>
+              <div class="nd-campaign-beats" data-campaign-session-beats></div>
+            </section>
+          </section>
+
+          <section data-campaign-view="threads" aria-label="Threads" hidden>
+            <header class="nd-campaign-panel__header">
+              <div>
+                <div class="nd-campaign-panel__eyebrow">Campaign</div>
+                <h2>Threads</h2>
+              </div>
+              <button type="button" class="nd-campaign-new-thread" data-campaign-new-thread>
+                + New Thread
+              </button>
+            </header>
+            <div class="nd-campaign-thread-empty" data-campaign-thread-empty>
+              <p>No narrative threads yet.</p>
+              <button type="button" class="nd-campaign-new-thread" data-campaign-new-thread>
+                + New Thread
+              </button>
+            </div>
+            <div class="nd-campaign-thread-list" data-campaign-thread-list></div>
+          </section>
+
+          <section
+            data-campaign-view="thread"
+            data-campaign-thread-editor
+            aria-label="Thread editor"
+            hidden
+          >
+            <header class="nd-campaign-panel__header">
+              <div>
+                <div class="nd-campaign-panel__eyebrow">Narrative Thread</div>
+                <h2>Thread Editor</h2>
+              </div>
+              <span class="nd-campaign-save-status" data-campaign-thread-saved hidden></span>
+            </header>
+
+            <div class="nd-campaign-thread-fields">
+              <label class="nd-campaign-field nd-campaign-field--wide">
+                <span>Title</span>
+                <input type="text" data-campaign-thread-title placeholder="Thread title">
+              </label>
+              <label class="nd-campaign-field">
+                <span>Status</span>
+                <select data-campaign-thread-status>
+                  <option value="OPEN">OPEN</option>
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="RESOLVED">RESOLVED</option>
+                </select>
+              </label>
+              <label class="nd-campaign-field">
+                <span>Type <small>Optional</small></span>
+                <input type="text" data-campaign-thread-type placeholder="Type">
+              </label>
+            </div>
+
+            <div class="nd-campaign-field nd-campaign-field--notes">
+              <span>Notes</span>
+              <div
+                class="nd-richtext-toolbar"
+                data-richtext-toolbar
+                role="toolbar"
+                aria-label="Thread Notes formatting"
+              >
+                <button type="button" data-richtext-command="bold" aria-label="Bold"><strong>B</strong></button>
+                <button type="button" data-richtext-command="italic" aria-label="Italic"><em>I</em></button>
+                <button type="button" data-richtext-command="underline" aria-label="Underline"><u>U</u></button>
+                <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
+                <button type="button" data-richtext-command="heading" data-richtext-value="h2" aria-label="Heading 2">H2</button>
+                <button type="button" data-richtext-command="heading" data-richtext-value="h3" aria-label="Heading 3">H3</button>
+                <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
+                <button type="button" data-richtext-command="list" data-richtext-value="ul" aria-label="Bullet list">• List</button>
+                <button type="button" data-richtext-command="list" data-richtext-value="ol" aria-label="Numbered list">1. List</button>
+                <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
+                <label class="nd-richtext-toolbar__color">
+                  <select data-richtext-color aria-label="Text color">
+                    <option value="default">Default</option>
+                    <option value="blue">Blue</option>
+                    <option value="green">Green</option>
+                    <option value="yellow">Yellow</option>
+                    <option value="orange">Orange</option>
+                    <option value="red">Red</option>
+                    <option value="purple">Purple</option>
+                    <option value="gray">Gray</option>
+                  </select>
+                </label>
+                <button type="button" data-richtext-command="clear" aria-label="Clear formatting">Clear</button>
+              </div>
+              <div
+                class="nd-richtext nd-richtext--editor nd-campaign-thread-notes"
+                data-richtext-editor
+                data-campaign-thread-notes
+                contenteditable="true"
+                data-placeholder="Thread notes..."
+                role="textbox"
+                aria-label="Thread Notes"
+              ></div>
+            </div>
+
+            <section class="nd-campaign-references" aria-label="References">
+              <h3>References</h3>
+              <details><summary>Beats</summary><p>No references</p></details>
+              <details><summary>Characters</summary><p>No references</p></details>
+              <details><summary>Locations</summary><p>No references</p></details>
+              <details><summary>Items</summary><p>No references</p></details>
+            </section>
+
+            <div class="nd-campaign-thread-actions">
+              <button type="button" class="nd-campaign-save" data-campaign-save-thread>
+                Save
+              </button>
+            </div>
+          </section>
+        </main>
       </div>
     </section>
 

@@ -1,20 +1,22 @@
 import { CampaignAwareness, CampaignContext } from "./campaign-context.js";
+import { CampaignWorkspace } from "./campaign-workspace.js";
 import { FocusManager } from "./focus-manager.js";
 import { FocusPanel } from "./focus-panel.js";
 import { LiveNotes } from "./live-notes.js";
 import { Playbook } from "./playbook.js";
 import { PlaybookPrepare } from "./playbook-prepare.js";
+import { PlaybookService } from "./playbook-service.js";
 import { RichText } from "./rich-text.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
-const WORKSPACES = new Set(["play", "notes", "prepare"]);
+const WORKSPACES = new Set(["play", "prepare", "campaign", "notes"]);
 
 /**
  * The N&D Companion window.
  */
 export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
-  /** @type {"play"|"notes"|"prepare"} */
+  /** @type {"play"|"prepare"|"campaign"|"notes"} */
   workspace = "play";
 
   static DEFAULT_OPTIONS = {
@@ -43,12 +45,13 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /**
    * Switch the lower workspace region. Safe to call from actions or future hotkeys.
-   * @param {"play"|"notes"|"prepare"} workspace
+   * @param {"play"|"prepare"|"campaign"|"notes"} workspace
    */
   setWorkspace(workspace) {
     if (!WORKSPACES.has(workspace)) return;
     this.workspace = workspace;
     this.#applyWorkspace();
+    if (workspace === "campaign") CampaignWorkspace.paint(this.element);
   }
 
   /**
@@ -87,6 +90,15 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     Playbook.attach(this.element);
     PlaybookPrepare.paint(this.element);
     PlaybookPrepare.attach(this.element);
+    CampaignWorkspace.paint(this.element);
+    CampaignWorkspace.attach(this.element, {
+      onOpenBeat: async (index) => {
+        const moved = await PlaybookService.setCurrentIndex(index);
+        if (!moved) return;
+        this.setWorkspace("play");
+        Playbook.paint(this.element, Playbook.get());
+      }
+    });
     this.element.querySelectorAll("[data-storage]:not([data-memory-editor])").forEach((el) => {
       const html = el.hasAttribute("data-storage-html");
       LiveNotes.attach(el, el.dataset.storage, {
