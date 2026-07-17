@@ -28,6 +28,7 @@
 }
 
 .nd-play__row--hero {
+  gap: 10px;
   padding: 10px var(--nd-page-x, 28px) 0;
 }
 
@@ -194,6 +195,116 @@
 }
 
 /* ── Fixed Playbook card ─────────────────────────────────────────────────── */
+
+.nd-play-session-plan {
+  padding: 10px 14px;
+  background: var(--nd-surface);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-xl);
+}
+
+.nd-play-session-plan > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nd-space-3);
+  margin-bottom: 7px;
+}
+
+.nd-play-session-plan__eyebrow {
+  color: var(--nd-purple);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nd-play-session-plan > header > span {
+  color: var(--nd-text-3);
+  font-size: var(--nd-text-caption);
+}
+
+.nd-play-session-plan__list {
+  display: grid;
+  gap: 4px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.nd-play-session-entry {
+  overflow: hidden;
+  background: var(--nd-surface-inset);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-sm);
+}
+
+.nd-play-session-entry > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  color: var(--nd-text-1);
+  cursor: pointer;
+  list-style: none;
+}
+
+.nd-play-session-entry > summary::-webkit-details-marker {
+  display: none;
+}
+
+.nd-play-session-entry__status {
+  min-width: 58px;
+  color: var(--nd-text-3);
+  font-family: var(--nd-font-mono);
+  font-size: 9px;
+}
+
+.nd-play-session-entry__status[data-status="active"] {
+  color: var(--nd-status-active-color);
+}
+
+.nd-play-session-entry__status[data-status="done"] {
+  color: var(--nd-status-done-color);
+}
+
+.nd-play-session-entry__body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 220px;
+  padding: 9px;
+  overflow-y: auto;
+  border-top: 1px solid var(--nd-border);
+}
+
+.nd-play-session-entry__body section {
+  min-width: 0;
+}
+
+.nd-play-session-entry__body h4 {
+  margin: 0 0 4px;
+  color: var(--nd-text-3);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nd-play-session-entry__references {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.nd-play-session-entry__references span {
+  padding: 2px 6px;
+  color: var(--nd-text-2);
+  background: var(--nd-surface-2);
+  border: 1px solid var(--nd-border);
+  border-radius: 999px;
+  font-size: var(--nd-text-micro);
+}
 
 .nd-playbook-card {
   overflow: hidden;

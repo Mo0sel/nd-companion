@@ -2,6 +2,8 @@ import { CompanionStorage } from "./storage.js";
 
 /** @typedef {"planned"|"active"|"completed"} SessionStatus */
 /** @typedef {"OPEN"|"ACTIVE"|"RESOLVED"} ThreadStatus */
+/** @typedef {"MAIN"|"SIDE"|"COMPANION"} QuestCategory */
+/** @typedef {"PLANNED"|"ACTIVE"|"COMPLETED"} QuestEntryStatus */
 
 /**
  * @typedef {object} CampaignSession
@@ -24,7 +26,32 @@ import { CompanionStorage } from "./storage.js";
  * @property {string} title
  * @property {ThreadStatus} status
  * @property {string} [type]
+ * @property {QuestCategory} category
+ * @property {string} overview
+ * @property {string[]} entryIds
  * @property {string} description
+ * @property {string} notes
+ * @property {string[]} relatedBeatIds
+ * @property {string[]} relatedCharacterIds
+ * @property {string[]} relatedLocationIds
+ * @property {string[]} relatedItemIds
+ * @property {number} created
+ * @property {number} updated
+ */
+
+/**
+ * Campaign-authored playable content. Imported copies become Playbook Beats.
+ * @typedef {object} CampaignQuestEntry
+ * @property {string} id
+ * @property {string} questId
+ * @property {string} title
+ * @property {QuestEntryStatus} status
+ * @property {string} speechNotes
+ * @property {string} objective
+ * @property {string} setup
+ * @property {string} twist
+ * @property {string} possibleOutcomes
+ * @property {string} reward
  * @property {string} notes
  * @property {string[]} relatedBeatIds
  * @property {string[]} relatedCharacterIds
@@ -40,12 +67,15 @@ import { CompanionStorage } from "./storage.js";
  * @property {string} activeSessionId
  * @property {CampaignSession[]} sessions
  * @property {CampaignThread[]} threads
+ * @property {CampaignQuestEntry[]} questEntries
  */
 
-export const CAMPAIGN_SCHEMA_VERSION = 1;
+export const CAMPAIGN_SCHEMA_VERSION = 2;
 
 export const SESSION_STATUSES = Object.freeze(["planned", "active", "completed"]);
 export const THREAD_STATUSES = Object.freeze(["OPEN", "ACTIVE", "RESOLVED"]);
+export const QUEST_CATEGORIES = Object.freeze(["MAIN", "SIDE", "COMPANION"]);
+export const QUEST_ENTRY_STATUSES = Object.freeze(["PLANNED", "ACTIVE", "COMPLETED"]);
 
 /**
  * In-memory campaign document (sessions + threads).
@@ -126,7 +156,8 @@ export class CampaignDocument {
         schemaVersion: CAMPAIGN_SCHEMA_VERSION,
         activeSessionId: stored?.activeSessionId,
         sessions: existingSessions,
-        threads: stored?.threads
+        threads: stored?.threads,
+        questEntries: stored?.questEntries
       });
       return normalized;
     }
@@ -151,7 +182,8 @@ export class CampaignDocument {
       schemaVersion: CAMPAIGN_SCHEMA_VERSION,
       activeSessionId: sessionId,
       sessions: [session],
-      threads: CampaignDocument.#normalizeThreads(stored?.threads)
+      threads: CampaignDocument.#normalizeThreads(stored?.threads),
+      questEntries: CampaignDocument.#normalizeQuestEntries(stored?.questEntries)
     };
   }
 
@@ -172,7 +204,8 @@ export class CampaignDocument {
       schemaVersion: CAMPAIGN_SCHEMA_VERSION,
       activeSessionId,
       sessions,
-      threads: CampaignDocument.#normalizeThreads(stored?.threads)
+      threads: CampaignDocument.#normalizeThreads(stored?.threads),
+      questEntries: CampaignDocument.#normalizeQuestEntries(stored?.questEntries)
     };
   }
 
@@ -192,6 +225,15 @@ export class CampaignDocument {
   static #normalizeThreads(value) {
     if (!Array.isArray(value)) return [];
     return value.map((thread) => CampaignDocument.normalizeThread(thread));
+  }
+
+  /**
+   * @param {unknown} value
+   * @returns {CampaignQuestEntry[]}
+   */
+  static #normalizeQuestEntries(value) {
+    if (!Array.isArray(value)) return [];
+    return value.map((entry) => CampaignDocument.normalizeQuestEntry(entry));
   }
 
   /**
@@ -229,6 +271,12 @@ export class CampaignDocument {
   static normalizeThread(thread) {
     const now = Date.now();
     const status = THREAD_STATUSES.includes(thread?.status) ? thread.status : "OPEN";
+    const legacyCategory = String(thread?.type ?? "").toUpperCase();
+    const category = QUEST_CATEGORIES.includes(thread?.category)
+      ? thread.category
+      : QUEST_CATEGORIES.includes(legacyCategory)
+        ? legacyCategory
+        : "SIDE";
     const idList = (value) =>
       Array.isArray(value)
         ? [...new Set(value.filter((id) => typeof id === "string" && id))]
@@ -239,6 +287,16 @@ export class CampaignDocument {
       title: typeof thread?.title === "string" ? thread.title : "",
       status,
       type: typeof thread?.type === "string" ? thread.type : "",
+      category,
+      overview:
+        typeof thread?.overview === "string"
+          ? thread.overview
+          : typeof thread?.description === "string" && thread.description
+            ? thread.description
+            : typeof thread?.notes === "string"
+              ? thread.notes
+              : "",
+      entryIds: idList(thread?.entryIds),
       description: typeof thread?.description === "string" ? thread.description : "",
       notes: typeof thread?.notes === "string" ? thread.notes : "",
       relatedBeatIds: idList(thread?.relatedBeatIds),
@@ -250,13 +308,47 @@ export class CampaignDocument {
     };
   }
 
+  /**
+   * @param {unknown} entry
+   * @returns {CampaignQuestEntry}
+   */
+  static normalizeQuestEntry(entry) {
+    const now = Date.now();
+    const status = QUEST_ENTRY_STATUSES.includes(entry?.status) ? entry.status : "PLANNED";
+    const idList = (value) =>
+      Array.isArray(value)
+        ? [...new Set(value.filter((id) => typeof id === "string" && id))]
+        : [];
+
+    return {
+      id: typeof entry?.id === "string" && entry.id ? entry.id : foundry.utils.randomID(),
+      questId: typeof entry?.questId === "string" ? entry.questId : "",
+      title: typeof entry?.title === "string" ? entry.title : "",
+      status,
+      speechNotes: typeof entry?.speechNotes === "string" ? entry.speechNotes : "",
+      objective: typeof entry?.objective === "string" ? entry.objective : "",
+      setup: typeof entry?.setup === "string" ? entry.setup : "",
+      twist: typeof entry?.twist === "string" ? entry.twist : "",
+      possibleOutcomes: typeof entry?.possibleOutcomes === "string" ? entry.possibleOutcomes : "",
+      reward: typeof entry?.reward === "string" ? entry.reward : "",
+      notes: typeof entry?.notes === "string" ? entry.notes : "",
+      relatedBeatIds: idList(entry?.relatedBeatIds),
+      relatedCharacterIds: idList(entry?.relatedCharacterIds),
+      relatedLocationIds: idList(entry?.relatedLocationIds),
+      relatedItemIds: idList(entry?.relatedItemIds),
+      created: Number.isFinite(entry?.created) ? entry.created : now,
+      updated: Number.isFinite(entry?.updated) ? entry.updated : now
+    };
+  }
+
   /** @returns {CampaignDocumentData} */
   static #empty() {
     return {
       schemaVersion: 0,
       activeSessionId: "",
       sessions: [],
-      threads: []
+      threads: [],
+      questEntries: []
     };
   }
 

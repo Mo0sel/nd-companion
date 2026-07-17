@@ -3,6 +3,7 @@ import { LiveNotes } from "./live-notes.js";
 import { Navigation } from "./navigation.js";
 import { PlaybookEntities } from "./playbook-entities.js";
 import { PlaybookService } from "./playbook-service.js";
+import { QuestEntryService } from "./quest-entry-service.js";
 import { RichText } from "./rich-text.js";
 
 /**
@@ -97,6 +98,11 @@ export class Playbook {
       if (totalEl) totalEl.textContent = String(total);
     };
 
+    const setRichValue = (key, value) => {
+      const element = panel.querySelector(`[data-playbook="${key}"]`);
+      if (element) element.innerHTML = RichText.sanitize(value ?? "");
+    };
+
     const setTextField = (key, value, { alwaysVisible = false } = {}) => {
       const field = panel.querySelector(`[data-playbook-field-block="${key}"]`);
       const renderer = panel.querySelector(`[data-playbook="${key}"]`);
@@ -113,17 +119,17 @@ export class Playbook {
 
     if (snapshot.total <= 0) {
       setCounter(0, 0);
-      setText("title", "No beats");
+      setText("title", "No entries");
       setTextField("objective", "");
       setTextField("gmNotes", "");
-      setText("experience", "");
+      setRichValue("experience", "");
       Playbook.#paintEntities(panel, []);
     } else {
       setCounter(snapshot.index + 1, snapshot.total);
-      setText("title", snapshot.beat.title?.trim() || "Untitled Beat");
+      setText("title", snapshot.beat.title?.trim() || "Untitled Entry");
       setTextField("objective", snapshot.beat.objective, { alwaysVisible: true });
       setTextField("gmNotes", snapshot.beat.gmNotes);
-      setText("experience", snapshot.beat.experience);
+      setRichValue("experience", snapshot.beat.experience);
 
       const entityUuids = [
         ...(snapshot.beat.sceneUuid ? [snapshot.beat.sceneUuid] : []),
@@ -151,8 +157,93 @@ export class Playbook {
     if (nextBtn instanceof HTMLButtonElement) nextBtn.disabled = !snapshot.canNext;
 
     Playbook.#attachInlineEditors(root, snapshot);
+    Playbook.#paintSessionPlan(root, snapshot);
     Playbook.#paintBeatFocus(root, snapshot);
     Playbook.#paintSessionNpcs(root, snapshot);
+  }
+
+  /**
+   * Read-only expandable overview of everything PREPARE assembled.
+   * @param {HTMLElement} root
+   * @param {ReturnType<typeof Playbook.get>} snapshot
+   */
+  static #paintSessionPlan(root, snapshot) {
+    const list = root.querySelector("[data-play-session-plan]");
+    const count = root.querySelector("[data-play-session-count]");
+    if (!list) return;
+    list.replaceChildren();
+    const playbookDoc = PlaybookService.getDocument();
+    if (count) count.textContent = `${playbookDoc.beats.length} ${playbookDoc.beats.length === 1 ? "entry" : "entries"}`;
+
+    if (!playbookDoc.beats.length) {
+      const empty = document.createElement("p");
+      empty.className = "nd-campaign-empty";
+      empty.textContent = "No entries prepared for this session.";
+      list.append(empty);
+      return;
+    }
+
+    playbookDoc.beats.forEach((beat, index) => {
+      const details = document.createElement("details");
+      details.className = "nd-play-session-entry";
+      details.open = index === snapshot.index;
+      const summary = document.createElement("summary");
+      const status = document.createElement("span");
+      status.className = "nd-play-session-entry__status";
+      status.dataset.status = Playbook.#derivedStatus(index, snapshot.index);
+      status.textContent = status.dataset.status === "done"
+        ? "COMPLETED"
+        : status.dataset.status.toUpperCase();
+      const title = document.createElement("strong");
+      title.textContent = beat.title?.trim() || "Untitled Entry";
+      summary.append(status, title);
+
+      const body = document.createElement("div");
+      body.className = "nd-play-session-entry__body";
+      const fields = [
+        ["Speech Notes", beat.speechNotes],
+        ["Objective", beat.objective],
+        ["Setup", beat.setup],
+        ["Twist", beat.twist],
+        ["Possible Outcomes", beat.possibleOutcomes],
+        ["Reward", beat.experience],
+        ["Notes", beat.gmNotes]
+      ];
+      for (const [label, value] of fields) {
+        const safe = RichText.sanitize(value ?? "");
+        if (!RichText.hasContent(safe)) continue;
+        const section = document.createElement("section");
+        const heading = document.createElement("h4");
+        heading.textContent = label;
+        const content = document.createElement("div");
+        content.className = "nd-richtext";
+        content.innerHTML = safe;
+        section.append(heading, content);
+        body.append(section);
+      }
+      const referenceIds = [
+        ...(beat.relatedBeatIds ?? []).map((id) => QuestEntryService.getById(id)?.title ?? id),
+        ...(beat.relatedCharacterIds ?? []).map((id) => EntityRegistry.findByUUID(id)?.name ?? id),
+        ...(beat.relatedLocationIds ?? []).map((id) => EntityRegistry.findByUUID(id)?.name ?? id),
+        ...(beat.relatedItemIds ?? []).map((id) => EntityRegistry.findByUUID(id)?.name ?? id)
+      ];
+      if (referenceIds.length) {
+        const section = document.createElement("section");
+        const heading = document.createElement("h4");
+        heading.textContent = "References";
+        const references = document.createElement("div");
+        references.className = "nd-play-session-entry__references";
+        for (const name of referenceIds) {
+          const chip = document.createElement("span");
+          chip.textContent = name;
+          references.append(chip);
+        }
+        section.append(heading, references);
+        body.append(section);
+      }
+      details.append(summary, body);
+      list.append(details);
+    });
   }
 
   /**
@@ -186,6 +277,8 @@ export class Playbook {
 
     if (experience instanceof HTMLElement) {
       LiveNotes.attach(experience, null, {
+        html: true,
+        sanitize: RichText.sanitize,
         load: () => snapshot.beat.experience ?? "",
         save: (value) => PlaybookService.updateBeat(snapshot.index, { experience: value })
       });
@@ -227,7 +320,7 @@ export class Playbook {
       set("next-title", "—");
       set("next-objective", "", { hideEmpty: true });
     } else {
-      set("now-title", snapshot.beat.title?.trim() || "Untitled Beat");
+      set("now-title", snapshot.beat.title?.trim() || "Untitled Entry");
       set("now-objective", RichText.plainText(snapshot.beat.objective), { hideEmpty: true });
       set("next-title", snapshot.nextBeat?.title?.trim() || "—");
       set(

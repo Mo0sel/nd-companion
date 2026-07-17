@@ -5,6 +5,7 @@ import { EntityRegistry } from "./entity-registry.js";
 import { FocusManager } from "./focus-manager.js";
 import { Navigation } from "./navigation.js";
 import { PlaybookService } from "./playbook-service.js";
+import { QuestEntryService } from "./quest-entry-service.js";
 import { SessionService } from "./session-service.js";
 import { registerSearchProviders } from "./search-providers.js";
 import { SearchService } from "./search-service.js";
@@ -30,6 +31,7 @@ Hooks.once("ready", async () => {
   window.nd.EntityRegistry = EntityRegistry;
   window.nd.FocusManager = FocusManager;
   window.nd.Navigation = Navigation;
+  window.nd.QuestEntryService = QuestEntryService;
   window.nd.SessionService = SessionService;
   window.nd.ThreadService = ThreadService;
   window.nd.CampaignDocument = CampaignDocument;

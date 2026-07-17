@@ -1,5 +1,6 @@
 import { EntityRegistry } from "./entity-registry.js";
 import { PlaybookService } from "./playbook-service.js";
+import { QuestEntryService } from "./quest-entry-service.js";
 
 const GROUP_LABELS = Object.freeze({
   actor: "Characters",
@@ -7,7 +8,7 @@ const GROUP_LABELS = Object.freeze({
   scene: "Locations",
   journal: "Journals",
   rollTable: "Roll Tables",
-  beat: "Beats"
+  beat: "Entries"
 });
 
 /**
@@ -43,8 +44,11 @@ export class MentionProvider {
       if (entries.length) groups.push({ label: MentionProvider.#label(kind), entries });
     }
 
-    const beatEntries = PlaybookService.getDocument()
-      .beats
+    const campaignEntries = QuestEntryService.list();
+    const legacySessionEntries = PlaybookService.getDocument().beats.filter(
+      (entry) => !entry.sourceQuestEntryId
+    );
+    const beatEntries = [...campaignEntries, ...legacySessionEntries]
       .filter((beat) => matches(beat.title))
       .slice(0, limitPerGroup)
       .map((beat) => ({

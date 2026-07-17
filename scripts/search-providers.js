@@ -1,6 +1,7 @@
 import { CampaignWorkspace } from "./campaign-workspace.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { PlaybookService } from "./playbook-service.js";
+import { QuestEntryService } from "./quest-entry-service.js";
 import { SearchService } from "./search-service.js";
 import { SessionService } from "./session-service.js";
 import { ThreadService } from "./thread-service.js";
@@ -45,13 +46,13 @@ export function registerSearchProviders() {
 
   SearchService.registerProvider({
     id: "beats",
-    label: "Beats",
+    label: "Session Entries",
     getItems: () =>
       PlaybookService.getDocument().beats.map((beat) => ({
         id: beat.id,
-        title: beat.title?.trim() || "Untitled Beat",
-        subtitle: "Beat",
-        group: "Beats"
+        title: beat.title?.trim() || "Untitled Entry",
+        subtitle: "Prepared Entry",
+        group: "Session Entries"
       })),
     getQuickAccess: () => {
       const current = PlaybookService.getCurrent();
@@ -59,8 +60,8 @@ export function registerSearchProviders() {
       return current.total > 0 && beat?.id
         ? [{
             id: beat.id,
-            title: beat.title?.trim() || "Untitled Beat",
-            subtitle: "Current Beat"
+            title: beat.title?.trim() || "Untitled Entry",
+            subtitle: "Current Entry"
           }]
         : [];
     },
@@ -71,14 +72,14 @@ export function registerSearchProviders() {
   });
 
   SearchService.registerProvider({
-    id: "threads",
-    label: "Threads",
+    id: "quests",
+    label: "Quests",
     getItems: () =>
       ThreadService.list().map((thread) => ({
         id: thread.id,
-        title: thread.title?.trim() || "Untitled Thread",
-        subtitle: thread.type || thread.status,
-        group: "Threads"
+        title: thread.title?.trim() || "Untitled Quest",
+        subtitle: thread.category || thread.status,
+        group: "Quests"
       })),
     getQuickAccess: () => {
       const id = CampaignWorkspace.getSelectedThreadId();
@@ -86,13 +87,29 @@ export function registerSearchProviders() {
       return thread
         ? [{
             id: thread.id,
-            title: thread.title?.trim() || "Untitled Thread",
-            subtitle: "Current Thread"
+            title: thread.title?.trim() || "Untitled Quest",
+            subtitle: "Current Quest"
           }]
         : [];
     },
     open: (id, context) => {
       context.openThread(id);
+      return true;
+    }
+  });
+
+  SearchService.registerProvider({
+    id: "quest-entries",
+    label: "Quest Entries",
+    getItems: () =>
+      QuestEntryService.list().map((entry) => ({
+        id: entry.id,
+        title: entry.title?.trim() || "Untitled Entry",
+        subtitle: ThreadService.getById(entry.questId)?.title || "Quest Entry",
+        group: "Quest Entries"
+      })),
+    open: (id, context) => {
+      context.openQuestEntry(id);
       return true;
     }
   });

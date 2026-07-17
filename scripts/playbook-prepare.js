@@ -1,3 +1,4 @@
+import { EntityMentions } from "./entity-mentions.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { LiveNotes } from "./live-notes.js";
 import { Navigation } from "./navigation.js";
@@ -7,8 +8,25 @@ import { PlaybookService } from "./playbook-service.js";
 import { RichText } from "./rich-text.js";
 import { RichTextToolbar } from "./rich-text-toolbar.js";
 
-const PREPARE_FIELDS = /** @type {const} */ (["title", "objective", "gmNotes"]);
-const RICH_TEXT_FIELDS = new Set(["objective", "gmNotes"]);
+const PREPARE_FIELDS = /** @type {const} */ ([
+  "title",
+  "speechNotes",
+  "objective",
+  "setup",
+  "twist",
+  "possibleOutcomes",
+  "experience",
+  "gmNotes"
+]);
+const RICH_TEXT_FIELDS = new Set([
+  "speechNotes",
+  "objective",
+  "setup",
+  "twist",
+  "possibleOutcomes",
+  "experience",
+  "gmNotes"
+]);
 
 /**
  * Prepare workspace Playbook authoring.
@@ -91,6 +109,27 @@ export class PlaybookPrepare {
           return;
         }
 
+        const moveBtn = target.closest("[data-playbook-move-entry]");
+        if (moveBtn) {
+          event.preventDefault();
+          event.stopPropagation();
+          const index = Number(moveBtn.getAttribute("data-playbook-move-entry"));
+          const direction = Number(moveBtn.getAttribute("data-direction"));
+          if (Number.isInteger(index) && (direction === -1 || direction === 1)) {
+            void PlaybookService.moveBeat(index, direction).then((moved) => {
+              if (!moved) return;
+              if (PlaybookPrepare.#editIndex === index) {
+                PlaybookPrepare.#editIndex = index + direction;
+              } else if (PlaybookPrepare.#editIndex === index + direction) {
+                PlaybookPrepare.#editIndex = index;
+              }
+              PlaybookPrepare.paint(root);
+              Playbook.refreshOpen();
+            });
+          }
+          return;
+        }
+
         const removeEntity = target.closest("[data-playbook-remove-entity]");
         if (removeEntity) {
           event.preventDefault();
@@ -150,6 +189,9 @@ export class PlaybookPrepare {
     );
 
     RichTextToolbar.attach(panel);
+    panel.querySelectorAll("[data-richtext-editor]").forEach((editor) => {
+      if (editor instanceof HTMLElement) EntityMentions.attach(editor);
+    });
   }
 
   /**
@@ -168,11 +210,11 @@ export class PlaybookPrepare {
    */
   static async #onDeleteBeat(root, index) {
     const beat = PlaybookService.getBeat(index);
-    const label = beat?.title?.trim() || "Untitled Beat";
+    const label = beat?.title?.trim() || "Untitled Entry";
 
     const confirmed = await foundry.applications.api.DialogV2.confirm({
-      window: { title: "Delete Beat" },
-      content: `<p>Delete beat <strong>${foundry.utils.escapeHTML(label)}</strong>?</p>`,
+      window: { title: "Delete Entry" },
+      content: `<p>Delete entry <strong>${foundry.utils.escapeHTML(label)}</strong>?</p>`,
       rejectClose: false,
       modal: true
     });
@@ -272,6 +314,24 @@ export class PlaybookPrepare {
       );
       selectBtn.textContent = `${beat.index + 1}. ${beat.title}`;
 
+      const upBtn = document.createElement("button");
+      upBtn.type = "button";
+      upBtn.className = "nd-playbook-prepare__move";
+      upBtn.dataset.playbookMoveEntry = String(beat.index);
+      upBtn.dataset.direction = "-1";
+      upBtn.disabled = beat.index === 0;
+      upBtn.setAttribute("aria-label", `Move ${beat.title} up`);
+      upBtn.textContent = "↑";
+
+      const downBtn = document.createElement("button");
+      downBtn.type = "button";
+      downBtn.className = "nd-playbook-prepare__move";
+      downBtn.dataset.playbookMoveEntry = String(beat.index);
+      downBtn.dataset.direction = "1";
+      downBtn.disabled = beat.index === beats.length - 1;
+      downBtn.setAttribute("aria-label", `Move ${beat.title} down`);
+      downBtn.textContent = "↓";
+
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.className = "nd-playbook-prepare__delete";
@@ -279,7 +339,7 @@ export class PlaybookPrepare {
       deleteBtn.setAttribute("aria-label", `Delete ${beat.title}`);
       deleteBtn.textContent = "×";
 
-      row.append(selectBtn, deleteBtn);
+      row.append(selectBtn, upBtn, downBtn, deleteBtn);
       list.append(row);
     }
   }
@@ -329,7 +389,7 @@ export class PlaybookPrepare {
       PlaybookPrepare.#editIndex === PlaybookService.getIndex();
 
     button.disabled = total <= 0 || PlaybookPrepare.#editIndex === null || isCurrent;
-    button.textContent = isCurrent ? "Current Beat" : "Set as Current Beat";
+    button.textContent = isCurrent ? "Current Entry" : "Set as Current Entry";
   }
 
   /**
@@ -420,6 +480,7 @@ export class PlaybookPrepare {
         load: () => PlaybookService.getBeat(editIndex)?.[field] ?? "",
         save: async (value) => {
           await PlaybookService.updateBeat(editIndex, { [field]: value });
+          if (richText) await PlaybookPrepare.#syncMentionReferences(editIndex);
           if (field === "title") {
             PlaybookPrepare.#paintList(panel);
             PlaybookPrepare.#paintCurrentButton(panel);
@@ -430,6 +491,24 @@ export class PlaybookPrepare {
         }
       });
     }
+  }
+
+  static async #syncMentionReferences(index) {
+    const beat = PlaybookService.getBeat(index);
+    if (!beat) return;
+    const html = [...RICH_TEXT_FIELDS].map((field) => beat[field] ?? "").join("");
+    const mentions = EntityMentions.extract(html);
+    const ids = (kind, preferUuid) =>
+      mentions
+        .filter((mention) => mention.kind === kind)
+        .map((mention) => (preferUuid ? mention.uuid : mention.id) || mention.id)
+        .filter(Boolean);
+    await PlaybookService.updateBeat(index, {
+      relatedBeatIds: ids("beat", false),
+      relatedCharacterIds: ids("actor", true),
+      relatedLocationIds: ids("scene", true),
+      relatedItemIds: ids("item", true)
+    });
   }
 
   /**

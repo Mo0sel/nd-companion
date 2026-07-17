@@ -17,6 +17,16 @@ import { SessionService } from "./session-service.js";
  * @property {string[]} keyNpcUuids
  * @property {string} gmNotes
  * @property {string} experience
+ * @property {string} speechNotes
+ * @property {string} setup
+ * @property {string} twist
+ * @property {string} possibleOutcomes
+ * @property {string} sourceQuestId
+ * @property {string} sourceQuestEntryId
+ * @property {string[]} relatedBeatIds
+ * @property {string[]} relatedCharacterIds
+ * @property {string[]} relatedLocationIds
+ * @property {string[]} relatedItemIds
  * @property {PlaybookRelatedRef[]} related  Reserved for future relationship system — do not migrate/transform
  */
 
@@ -194,7 +204,7 @@ export class PlaybookService {
     const current = PlaybookService.getIndex();
     return PlaybookService.#doc.beats.map((beat, index) => ({
       index,
-      title: beat.title?.trim() ? beat.title : "Untitled Beat",
+      title: beat.title?.trim() ? beat.title : "Untitled Entry",
       isCurrent: index === current
     }));
   }
@@ -239,7 +249,15 @@ export class PlaybookService {
    *   sceneUuid?: string|null,
    *   keyNpcUuids?: string[],
    *   gmNotes?: string,
-   *   experience?: string
+   *   experience?: string,
+   *   speechNotes?: string,
+   *   setup?: string,
+   *   twist?: string,
+   *   possibleOutcomes?: string,
+   *   relatedBeatIds?: string[],
+   *   relatedCharacterIds?: string[],
+   *   relatedLocationIds?: string[],
+   *   relatedItemIds?: string[]
    * }} patch
    * @returns {Promise<boolean>}
    */
@@ -251,6 +269,20 @@ export class PlaybookService {
     if (typeof patch.objective === "string") beat.objective = patch.objective;
     if (typeof patch.gmNotes === "string") beat.gmNotes = patch.gmNotes;
     if (typeof patch.experience === "string") beat.experience = patch.experience;
+    if (typeof patch.speechNotes === "string") beat.speechNotes = patch.speechNotes;
+    if (typeof patch.setup === "string") beat.setup = patch.setup;
+    if (typeof patch.twist === "string") beat.twist = patch.twist;
+    if (typeof patch.possibleOutcomes === "string") beat.possibleOutcomes = patch.possibleOutcomes;
+    for (const field of [
+      "relatedBeatIds",
+      "relatedCharacterIds",
+      "relatedLocationIds",
+      "relatedItemIds"
+    ]) {
+      if (Array.isArray(patch[field])) {
+        beat[field] = [...new Set(patch[field].filter((value) => typeof value === "string" && value))];
+      }
+    }
     if ("sceneUuid" in patch) {
       beat.sceneUuid = PlaybookService.#normalizeSceneUuid(patch.sceneUuid);
     }
@@ -271,6 +303,46 @@ export class PlaybookService {
     const index = PlaybookService.#doc.beats.length - 1;
     await PlaybookService.#persist();
     return index;
+  }
+
+  /**
+   * Clone campaign Quest Entries into independent Session Beats.
+   * Existing imports from the same source entry are skipped.
+   * @param {import("./campaign-document.js").CampaignQuestEntry[]} entries
+   * @returns {Promise<number[]>} Imported beat indices
+   */
+  static async importQuestEntries(entries) {
+    if (!Array.isArray(entries)) return [];
+    const importedSources = new Set(
+      PlaybookService.#doc.beats.map((beat) => beat.sourceQuestEntryId).filter(Boolean)
+    );
+    const indices = [];
+
+    for (const entry of entries) {
+      if (!entry?.id || importedSources.has(entry.id)) continue;
+      const beat = PlaybookService.#normalizeBeat({
+        title: entry.title,
+        objective: entry.objective,
+        gmNotes: entry.notes,
+        experience: entry.reward,
+        speechNotes: entry.speechNotes,
+        setup: entry.setup,
+        twist: entry.twist,
+        possibleOutcomes: entry.possibleOutcomes,
+        sourceQuestId: entry.questId,
+        sourceQuestEntryId: entry.id,
+        relatedBeatIds: entry.relatedBeatIds,
+        relatedCharacterIds: entry.relatedCharacterIds,
+        relatedLocationIds: entry.relatedLocationIds,
+        relatedItemIds: entry.relatedItemIds
+      });
+      PlaybookService.#doc.beats.push(beat);
+      indices.push(PlaybookService.#doc.beats.length - 1);
+      importedSources.add(entry.id);
+    }
+
+    if (indices.length) await PlaybookService.#persist();
+    return indices;
   }
 
   /**
@@ -302,6 +374,29 @@ export class PlaybookService {
       ok: true,
       nextEditIndex: Math.min(index, PlaybookService.#doc.beats.length - 1)
     };
+  }
+
+  /**
+   * Reorder a prepared Session Entry without changing which entry is current.
+   * @param {number} index
+   * @param {-1|1} direction
+   * @returns {Promise<boolean>}
+   */
+  static async moveBeat(index, direction) {
+    if (!Number.isInteger(index) || ![-1, 1].includes(direction)) return false;
+    const target = index + direction;
+    if (index < 0 || target < 0 || index >= PlaybookService.#doc.beats.length) return false;
+    if (target >= PlaybookService.#doc.beats.length) return false;
+    const currentId = PlaybookService.#doc.beats[PlaybookService.#doc.currentIndex]?.id;
+    const [entry] = PlaybookService.#doc.beats.splice(index, 1);
+    PlaybookService.#doc.beats.splice(target, 0, entry);
+    if (currentId) {
+      PlaybookService.#doc.currentIndex = PlaybookService.#doc.beats.findIndex(
+        (beat) => beat.id === currentId
+      );
+    }
+    await PlaybookService.#persist();
+    return true;
   }
 
   static async #persist() {
@@ -363,6 +458,11 @@ export class PlaybookService {
       keyNpcUuids = PlaybookService.#migrateKeyNpcsText(beat.keyNpcs);
     }
 
+    const idList = (value) =>
+      Array.isArray(value)
+        ? [...new Set(value.filter((id) => typeof id === "string" && id))]
+        : [];
+
     return {
       id:
         typeof beat?.id === "string" && beat.id.trim()
@@ -374,6 +474,18 @@ export class PlaybookService {
       keyNpcUuids,
       gmNotes: typeof beat?.gmNotes === "string" ? beat.gmNotes : "",
       experience: typeof beat?.experience === "string" ? beat.experience : "",
+      speechNotes: typeof beat?.speechNotes === "string" ? beat.speechNotes : "",
+      setup: typeof beat?.setup === "string" ? beat.setup : "",
+      twist: typeof beat?.twist === "string" ? beat.twist : "",
+      possibleOutcomes:
+        typeof beat?.possibleOutcomes === "string" ? beat.possibleOutcomes : "",
+      sourceQuestId: typeof beat?.sourceQuestId === "string" ? beat.sourceQuestId : "",
+      sourceQuestEntryId:
+        typeof beat?.sourceQuestEntryId === "string" ? beat.sourceQuestEntryId : "",
+      relatedBeatIds: idList(beat?.relatedBeatIds),
+      relatedCharacterIds: idList(beat?.relatedCharacterIds),
+      relatedLocationIds: idList(beat?.relatedLocationIds),
+      relatedItemIds: idList(beat?.relatedItemIds),
       related
     };
   }
@@ -391,6 +503,16 @@ export class PlaybookService {
       keyNpcUuids: [...(beat.keyNpcUuids ?? [])],
       gmNotes: beat.gmNotes ?? "",
       experience: beat.experience ?? "",
+      speechNotes: beat.speechNotes ?? "",
+      setup: beat.setup ?? "",
+      twist: beat.twist ?? "",
+      possibleOutcomes: beat.possibleOutcomes ?? "",
+      sourceQuestId: beat.sourceQuestId ?? "",
+      sourceQuestEntryId: beat.sourceQuestEntryId ?? "",
+      relatedBeatIds: [...(beat.relatedBeatIds ?? [])],
+      relatedCharacterIds: [...(beat.relatedCharacterIds ?? [])],
+      relatedLocationIds: [...(beat.relatedLocationIds ?? [])],
+      relatedItemIds: [...(beat.relatedItemIds ?? [])],
       related: (beat.related ?? []).map((ref) => ({
         name: ref.name,
         ...(ref.kind ? { kind: ref.kind } : {})
@@ -408,6 +530,16 @@ export class PlaybookService {
       keyNpcUuids: [],
       gmNotes: "",
       experience: "",
+      speechNotes: "",
+      setup: "",
+      twist: "",
+      possibleOutcomes: "",
+      sourceQuestId: "",
+      sourceQuestEntryId: "",
+      relatedBeatIds: [],
+      relatedCharacterIds: [],
+      relatedLocationIds: [],
+      relatedItemIds: [],
       related: []
     };
   }

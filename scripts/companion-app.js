@@ -11,6 +11,7 @@ import { Playbook } from "./playbook.js";
 import { PlaybookPrepare } from "./playbook-prepare.js";
 import { PlaybookService } from "./playbook-service.js";
 import { RichText } from "./rich-text.js";
+import { SessionBuilder } from "./session-builder.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -94,6 +95,7 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     Playbook.attach(this.element);
     PlaybookPrepare.paint(this.element);
     PlaybookPrepare.attach(this.element);
+    SessionBuilder.attach(this.element);
     CampaignWorkspace.paint(this.element);
     CampaignWorkspace.attach(this.element, {
       onOpenBeat: async (index) => {
@@ -126,6 +128,10 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       },
       openThread: (id) => {
         if (!CampaignWorkspace.selectThread(this.element, id)) return;
+        this.setWorkspace("campaign");
+      },
+      openQuestEntry: (id) => {
+        if (!CampaignWorkspace.selectQuestEntry(this.element, id)) return;
         this.setWorkspace("campaign");
       },
       openEntity: async (uuid, kind) => {

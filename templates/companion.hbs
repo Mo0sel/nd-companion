@@ -76,7 +76,7 @@
           </div>
         </section>
 
-        <section class="nd-play-beat-focus" data-beat-focus aria-label="Beat navigation summary">
+        <section class="nd-play-beat-focus" data-beat-focus aria-label="Entry navigation summary">
           <div class="nd-play-beat-focus__col">
             <div class="nd-play-beat-focus__label">Now</div>
             <div class="nd-play-beat-focus__title" data-beat-focus="now-title">—</div>
@@ -93,27 +93,35 @@
 
       {{!-- Row 2: Playbook hero --}}
       <div class="nd-play__row nd-play__row--hero">
-        <article class="nd-playbook-card" data-playbook aria-label="Playbook">
+        <section class="nd-play-session-plan" aria-label="Today's Session">
+          <header>
+            <div class="nd-play-session-plan__eyebrow">Today's Session</div>
+            <span data-play-session-count>0 entries</span>
+          </header>
+          <div class="nd-play-session-plan__list" data-play-session-plan></div>
+        </section>
+
+        <article class="nd-playbook-card" data-playbook aria-label="Current Session Entry">
           <div class="nd-playbook-card__accent" data-playbook="accent" aria-hidden="true"></div>
           <div class="nd-playbook-card__body">
             <header class="nd-playbook-card__header">
               <div class="nd-playbook-card__identity">
-                <button type="button" class="nd-playbook-card__nav" data-playbook-nav="prev" aria-label="Previous beat">←</button>
-                <div class="nd-playbook-card__counter nd-mono" data-playbook="counter" aria-label="Beat position">
+                <button type="button" class="nd-playbook-card__nav" data-playbook-nav="prev" aria-label="Previous entry">←</button>
+                <div class="nd-playbook-card__counter nd-mono" data-playbook="counter" aria-label="Entry position">
                   <span class="nd-playbook-card__counter-current" data-playbook-counter="current">0</span>
                   <span class="nd-playbook-card__counter-sep">/</span>
                   <span class="nd-playbook-card__counter-total" data-playbook-counter="total">0</span>
                 </div>
                 <div class="nd-playbook-card__title-block">
-                  <div class="nd-playbook-card__eyebrow">Current Beat</div>
+                <div class="nd-playbook-card__eyebrow">Current Entry</div>
                   <h2 class="nd-playbook-card__title" data-playbook="title"></h2>
                 </div>
-                <button type="button" class="nd-playbook-card__nav" data-playbook-nav="next" aria-label="Next beat">→</button>
+                <button type="button" class="nd-playbook-card__nav" data-playbook-nav="next" aria-label="Next entry">→</button>
               </div>
-              <div class="nd-playbook-card__statuses" role="group" aria-label="Beat status">
+              <div class="nd-playbook-card__statuses" role="group" aria-label="Entry status">
                 <span class="nd-playbook-status" data-playbook-status="planned" aria-pressed="false">Planned</span>
                 <span class="nd-playbook-status" data-playbook-status="active" aria-pressed="false">Active</span>
-                <span class="nd-playbook-status" data-playbook-status="done" aria-pressed="false">Done</span>
+                <span class="nd-playbook-status" data-playbook-status="done" aria-pressed="false">Completed</span>
               </div>
             </header>
 
@@ -145,7 +153,7 @@
                     <div class="nd-playbook-experience__hint">Reward</div>
                   </div>
                   <div
-                    class="nd-playbook-experience__value nd-play-inline-editor"
+                    class="nd-playbook-experience__value nd-play-inline-editor nd-richtext"
                     data-playbook="experience"
                     data-placeholder="Add reward..."
                     role="textbox"
@@ -159,7 +167,7 @@
                 data-resizable-panel="play-beat-notes"
                 data-resize-min="110"
               >
-                <div class="nd-playbook-panel__label">Beat Notes</div>
+                <div class="nd-playbook-panel__label">Notes</div>
                 <div class="nd-playbook-panel__text nd-richtext" data-playbook="gmNotes"></div>
               </div>
             </div>
@@ -242,7 +250,145 @@
         </div>
       </header>
 
-      <div class="nd-campaign-layout">
+      <div class="nd-quest-layout">
+        <aside class="nd-quest-sidebar" aria-label="Quest navigation">
+          <div class="nd-quest-sidebar__section">
+            <div class="nd-quest-sidebar__heading">
+              <span>Main Quests</span>
+              <button type="button" data-new-quest="MAIN" aria-label="New Main Quest">+</button>
+            </div>
+            <div data-quest-list="MAIN"></div>
+          </div>
+          <div class="nd-quest-sidebar__section">
+            <div class="nd-quest-sidebar__heading">
+              <span>Side Quests</span>
+              <button type="button" data-new-quest="SIDE" aria-label="New Side Quest">+</button>
+            </div>
+            <div data-quest-list="SIDE"></div>
+          </div>
+          <div class="nd-quest-sidebar__section">
+            <div class="nd-quest-sidebar__heading">
+              <span>Companion Quests</span>
+              <button type="button" data-new-quest="COMPANION" aria-label="New Companion Quest">+</button>
+            </div>
+            <div data-quest-list="COMPANION"></div>
+          </div>
+        </aside>
+
+        <main class="nd-quest-panel">
+          <div class="nd-quest-empty" data-quest-empty>
+            Select a Quest or create one to begin writing your campaign.
+          </div>
+
+          <section data-quest-editor hidden>
+            <header class="nd-campaign-panel__header">
+              <div>
+                <div class="nd-campaign-panel__eyebrow">Campaign Quest</div>
+                <h2>Quest</h2>
+              </div>
+              <span class="nd-campaign-save-status" data-quest-saved hidden></span>
+            </header>
+
+            <div class="nd-campaign-thread-fields">
+              <label class="nd-campaign-field nd-campaign-field--wide">
+                <span>Title</span>
+                <input type="text" data-quest-title placeholder="Quest title">
+              </label>
+              <label class="nd-campaign-field">
+                <span>Status</span>
+                <select data-quest-status>
+                  <option value="OPEN">OPEN</option>
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="RESOLVED">RESOLVED</option>
+                </select>
+              </label>
+              <label class="nd-campaign-field">
+                <span>Category</span>
+                <select data-quest-category>
+                  <option value="MAIN">MAIN QUEST</option>
+                  <option value="SIDE">SIDE QUEST</option>
+                  <option value="COMPANION">COMPANION QUEST</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="nd-campaign-field nd-campaign-field--notes">
+              <span>Overview</span>
+              <div class="nd-richtext-toolbar" data-richtext-toolbar role="toolbar" aria-label="Quest formatting">
+                <button type="button" data-richtext-command="bold" aria-label="Bold"><strong>B</strong></button>
+                <button type="button" data-richtext-command="italic" aria-label="Italic"><em>I</em></button>
+                <button type="button" data-richtext-command="underline" aria-label="Underline"><u>U</u></button>
+                <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
+                <button type="button" data-richtext-command="heading" data-richtext-value="h2" aria-label="Heading 2">H2</button>
+                <button type="button" data-richtext-command="heading" data-richtext-value="h3" aria-label="Heading 3">H3</button>
+                <button type="button" data-richtext-command="list" data-richtext-value="ul" aria-label="Bullet list">• List</button>
+                <button type="button" data-richtext-command="list" data-richtext-value="ol" aria-label="Numbered list">1. List</button>
+                <label class="nd-richtext-toolbar__color">
+                  <select data-richtext-color aria-label="Text color">
+                    <option value="default">Default</option>
+                    <option value="blue">Blue</option>
+                    <option value="green">Green</option>
+                    <option value="yellow">Yellow</option>
+                    <option value="orange">Orange</option>
+                    <option value="red">Red</option>
+                    <option value="purple">Purple</option>
+                    <option value="gray">Gray</option>
+                  </select>
+                </label>
+                <button type="button" data-richtext-command="clear" aria-label="Clear formatting">Clear</button>
+              </div>
+              <div
+                class="nd-richtext nd-richtext--editor nd-quest-overview"
+                data-quest-overview
+                data-richtext-editor
+                contenteditable="true"
+                data-placeholder="Write the long-form campaign overview..."
+              ></div>
+            </div>
+
+            <div class="nd-quest-actions">
+              <button type="button" class="nd-campaign-save" data-save-quest>Save Quest</button>
+            </div>
+
+            <section class="nd-quest-entries">
+              <header>
+                <div>
+                  <div class="nd-campaign-panel__eyebrow">Playable Content</div>
+                  <h3>Quest Entries</h3>
+                </div>
+                <button type="button" class="nd-campaign-new-thread" data-add-quest-entry>
+                  + New Entry
+                </button>
+              </header>
+              <div data-quest-entry-list></div>
+            </section>
+          </section>
+
+          <section data-quest-session-view hidden>
+            <header class="nd-campaign-panel__header">
+              <div>
+                <div class="nd-campaign-panel__eyebrow">Current Session</div>
+                <h2 data-campaign-session="title">Session 1</h2>
+              </div>
+              <span class="nd-campaign-status" data-campaign-session="status">active</span>
+            </header>
+            <section class="nd-campaign-content-block">
+              <h3>Session Summary</h3>
+              <div class="nd-richtext" data-campaign-session="summary"></div>
+            </section>
+            <section class="nd-campaign-content-block">
+              <h3>Session Notes</h3>
+              <div class="nd-richtext" data-campaign-session="notes"></div>
+            </section>
+            <section class="nd-campaign-content-block">
+              <h3>Session Plan</h3>
+              <div class="nd-campaign-beats" data-campaign-session-beats></div>
+            </section>
+          </section>
+        </main>
+      </div>
+
+      <div class="nd-campaign-layout" hidden aria-hidden="true">
         <aside class="nd-campaign-sidebar" aria-label="Campaign navigation">
           <h2 class="nd-campaign-sidebar__title">Campaign</h2>
 
@@ -463,37 +609,40 @@
     </section>
 
     <section class="nd-workspace" data-workspace-panel="prepare" aria-label="Prepare workspace" hidden>
-      <article class="nd-card nd-card--playbook-prepare" data-playbook-prepare data-live-notes-root aria-label="Playbook prepare">
+      <article class="nd-card nd-card--playbook-prepare" data-playbook-prepare data-live-notes-root aria-label="Session Builder">
         <header class="nd-card__header">
           <span class="nd-card__accent" aria-hidden="true"></span>
-          <h2 class="nd-card__label">Playbook</h2>
+          <h2 class="nd-card__label">Session Builder</h2>
           <span class="nd-live-notes__status" data-live-notes-status hidden></span>
         </header>
 
         <div class="nd-playbook-prepare">
           <div class="nd-playbook-prepare__sidebar">
-            <div class="nd-playbook-prepare__section-title">Prepared Beats</div>
+            <div class="nd-playbook-prepare__section-title">Prepared Entries</div>
+            <button type="button" class="nd-session-import__open" data-open-campaign-import>
+              Import from Campaign
+            </button>
             <button type="button" class="nd-playbook-prepare__add" data-playbook-add-beat>
-              + Add Beat
+              + Add Entry
             </button>
             <div class="nd-playbook-prepare__list" data-playbook-prepare-list role="list"></div>
           </div>
 
           <div class="nd-playbook-prepare__main">
-            <div class="nd-playbook-prepare__section-title">Current Beat</div>
+            <div class="nd-playbook-prepare__section-title">Current Entry</div>
             <div class="nd-playbook-prepare__empty" data-playbook-prepare-empty hidden>
               <p class="nd-card__text nd-workspace__placeholder">
-                No beats yet. Add a beat to start preparing this session.
+                No entries yet. Import from Campaign or add an entry.
               </p>
               <button type="button" class="nd-playbook-prepare__add" data-playbook-add-beat>
-                + Add Beat
+                + Add Entry
               </button>
             </div>
 
             <div class="nd-playbook-prepare__editor" data-playbook-prepare-editor>
               <div class="nd-playbook-prepare__actions">
                 <button type="button" class="nd-playbook-prepare__current-button" data-playbook-set-current>
-                  Set as Current Beat
+                  Set as Current Entry
                 </button>
               </div>
 
@@ -502,9 +651,21 @@
                 <div
                   class="nd-card__text nd-live-notes nd-playbook-prepare__field"
                   data-playbook-field="title"
-                  data-placeholder="Beat title..."
+                  data-placeholder="Entry title..."
                   role="textbox"
-                  aria-label="Beat title"
+                  aria-label="Entry title"
+                ></div>
+              </div>
+
+              <div class="nd-playbook__field">
+                <span class="nd-playbook__field-label">Speech Notes</span>
+                <div
+                  class="nd-card__text nd-live-notes nd-playbook-prepare__field nd-richtext nd-richtext--editor"
+                  data-playbook-field="speechNotes"
+                  data-richtext-editor
+                  data-placeholder="Dialogue, read-aloud text, and talking points..."
+                  role="textbox"
+                  aria-label="Speech Notes"
                 ></div>
               </div>
 
@@ -516,7 +677,55 @@
                   data-richtext-editor
                   data-placeholder="Objective..."
                   role="textbox"
-                  aria-label="Beat objective"
+                  aria-label="Entry objective"
+                ></div>
+              </div>
+
+              <div class="nd-playbook__field">
+                <span class="nd-playbook__field-label">Setup</span>
+                <div
+                  class="nd-card__text nd-live-notes nd-playbook-prepare__field nd-richtext nd-richtext--editor"
+                  data-playbook-field="setup"
+                  data-richtext-editor
+                  data-placeholder="Scene setup..."
+                  role="textbox"
+                  aria-label="Setup"
+                ></div>
+              </div>
+
+              <div class="nd-playbook__field">
+                <span class="nd-playbook__field-label">Twist</span>
+                <div
+                  class="nd-card__text nd-live-notes nd-playbook-prepare__field nd-richtext nd-richtext--editor"
+                  data-playbook-field="twist"
+                  data-richtext-editor
+                  data-placeholder="Potential twist..."
+                  role="textbox"
+                  aria-label="Twist"
+                ></div>
+              </div>
+
+              <div class="nd-playbook__field">
+                <span class="nd-playbook__field-label">Possible Outcomes</span>
+                <div
+                  class="nd-card__text nd-live-notes nd-playbook-prepare__field nd-richtext nd-richtext--editor"
+                  data-playbook-field="possibleOutcomes"
+                  data-richtext-editor
+                  data-placeholder="Likely outcomes and consequences..."
+                  role="textbox"
+                  aria-label="Possible Outcomes"
+                ></div>
+              </div>
+
+              <div class="nd-playbook__field">
+                <span class="nd-playbook__field-label">Reward</span>
+                <div
+                  class="nd-card__text nd-live-notes nd-playbook-prepare__field nd-richtext nd-richtext--editor"
+                  data-playbook-field="experience"
+                  data-richtext-editor
+                  data-placeholder="XP, treasure, or narrative reward..."
+                  role="textbox"
+                  aria-label="Reward"
                 ></div>
               </div>
 
@@ -538,8 +747,8 @@
               </div>
 
               <div class="nd-playbook__field">
-                <span class="nd-playbook__field-label">GM Notes</span>
-                <div class="nd-richtext-toolbar" data-richtext-toolbar role="toolbar" aria-label="GM Notes formatting">
+                <span class="nd-playbook__field-label">Session Notes</span>
+                <div class="nd-richtext-toolbar" data-richtext-toolbar role="toolbar" aria-label="Session Entry formatting">
                   <button type="button" data-richtext-command="bold" aria-label="Bold"><strong>B</strong></button>
                   <button type="button" data-richtext-command="italic" aria-label="Italic"><em>I</em></button>
                   <button type="button" data-richtext-command="underline" aria-label="Underline"><u>U</u></button>
@@ -568,14 +777,31 @@
                   class="nd-card__text nd-live-notes nd-playbook-prepare__field nd-playbook-prepare__field--notes nd-richtext nd-richtext--editor"
                   data-playbook-field="gmNotes"
                   data-richtext-editor
-                  data-placeholder="GM notes..."
+                  data-placeholder="Session-specific notes..."
                   role="textbox"
-                  aria-label="GM notes"
+                  aria-label="Session-specific notes"
                 ></div>
               </div>
             </div>
           </div>
         </div>
+
+        <section class="nd-session-import" data-session-import hidden aria-label="Import from Campaign">
+          <header class="nd-session-import__header">
+            <div>
+              <div class="nd-campaign-panel__eyebrow">Session Builder</div>
+              <h2>Import from Campaign</h2>
+            </div>
+            <button type="button" data-close-campaign-import aria-label="Close">×</button>
+          </header>
+          <div class="nd-session-import__list" data-session-import-list></div>
+          <footer>
+            <button type="button" data-close-campaign-import>Cancel</button>
+            <button type="button" class="nd-campaign-save" data-import-campaign-entries>
+              Import Selected
+            </button>
+          </footer>
+        </section>
       </article>
     </section>
 

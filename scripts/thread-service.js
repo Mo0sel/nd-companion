@@ -1,4 +1,8 @@
-import { CampaignDocument, THREAD_STATUSES } from "./campaign-document.js";
+import {
+  CampaignDocument,
+  QUEST_CATEGORIES,
+  THREAD_STATUSES
+} from "./campaign-document.js";
 
 /**
  * Lightweight narrative Threads. Independent of Sessions; refs only.
@@ -25,6 +29,8 @@ export class ThreadService {
    *   title?: string,
    *   status?: import("./campaign-document.js").ThreadStatus,
    *   type?: string,
+   *   category?: import("./campaign-document.js").QuestCategory,
+   *   overview?: string,
    *   description?: string,
    *   notes?: string
    * }} [seed]
@@ -36,6 +42,9 @@ export class ThreadService {
       title: typeof seed.title === "string" ? seed.title : "",
       status: seed.status,
       type: typeof seed.type === "string" ? seed.type : "",
+      category: seed.category,
+      overview: typeof seed.overview === "string" ? seed.overview : "",
+      entryIds: [],
       description: typeof seed.description === "string" ? seed.description : "",
       notes: typeof seed.notes === "string" ? seed.notes : "",
       relatedBeatIds: [],
@@ -59,6 +68,8 @@ export class ThreadService {
    *   title?: string,
    *   status?: import("./campaign-document.js").ThreadStatus,
    *   type?: string,
+   *   category?: import("./campaign-document.js").QuestCategory,
+   *   overview?: string,
    *   description?: string,
    *   notes?: string,
    *   relatedBeatIds?: string[],
@@ -81,6 +92,10 @@ export class ThreadService {
       if (typeof patch.title === "string") thread.title = patch.title;
       if (patch.status && THREAD_STATUSES.includes(patch.status)) thread.status = patch.status;
       if (typeof patch.type === "string") thread.type = patch.type;
+      if (patch.category && QUEST_CATEGORIES.includes(patch.category)) {
+        thread.category = patch.category;
+      }
+      if (typeof patch.overview === "string") thread.overview = patch.overview;
       if (typeof patch.description === "string") thread.description = patch.description;
       if (typeof patch.notes === "string") thread.notes = patch.notes;
 
@@ -112,6 +127,7 @@ export class ThreadService {
       const index = doc.threads.findIndex((thread) => thread.id === id);
       if (index < 0) return;
       doc.threads.splice(index, 1);
+      doc.questEntries = doc.questEntries.filter((entry) => entry.questId !== id);
       ok = true;
     });
     return ok;

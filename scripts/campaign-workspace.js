@@ -1,42 +1,65 @@
 import { EntityMentions } from "./entity-mentions.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { PlaybookService } from "./playbook-service.js";
+import { QuestEntryService } from "./quest-entry-service.js";
 import { RichText } from "./rich-text.js";
 import { RichTextToolbar } from "./rich-text-toolbar.js";
 import { SessionService } from "./session-service.js";
 import { ThreadService } from "./thread-service.js";
 
+const ENTRY_FIELDS = Object.freeze([
+  ["speechNotes", "Speech Notes"],
+  ["objective", "Objective"],
+  ["setup", "Setup"],
+  ["twist", "Twist"],
+  ["possibleOutcomes", "Possible Outcomes"],
+  ["reward", "Reward"],
+  ["notes", "Notes"]
+]);
+
 /**
- * Lightweight browser/editor for the Campaign model.
- * UI state is intentionally local; campaign data remains service-owned.
+ * Campaign authoring workspace.
+ * Threads are presented as Quests; Quest Entries are campaign-owned sources.
  */
 export class CampaignWorkspace {
-  /** @type {"session"|"threads"|"thread"} */
-  static #view = "session";
+  /** @type {"quest"|"session"} */
+  static #view = "quest";
 
   /** @type {string|null} */
-  static #threadId = null;
+  static #questId = null;
+
+  /** @type {string|null} */
+  static #openEntryId = null;
 
   /** @type {WeakMap<HTMLElement, AbortController>} */
   static #listeners = new WeakMap();
 
-  /** @type {HTMLElement|null} */
-  static #mentionEditor = null;
+  /** @type {Set<HTMLElement>} */
+  static #mentionEditors = new Set();
 
   /** @returns {string|null} */
   static getSelectedThreadId() {
-    return CampaignWorkspace.#view === "thread" ? CampaignWorkspace.#threadId : null;
+    return CampaignWorkspace.#view === "quest" ? CampaignWorkspace.#questId : null;
+  }
+
+  /** @returns {string|null} */
+  static getSelectedQuestId() {
+    return CampaignWorkspace.getSelectedThreadId();
+  }
+
+  static selectThread(root, id) {
+    return CampaignWorkspace.selectQuest(root, id);
   }
 
   /**
    * @param {HTMLElement} root
    * @param {string} id
-   * @returns {boolean}
    */
-  static selectThread(root, id) {
+  static selectQuest(root, id) {
     if (!ThreadService.getById(id)) return false;
-    CampaignWorkspace.#view = "thread";
-    CampaignWorkspace.#threadId = id;
+    CampaignWorkspace.#view = "quest";
+    CampaignWorkspace.#questId = id;
+    CampaignWorkspace.#openEntryId = null;
     CampaignWorkspace.paint(root);
     return true;
   }
@@ -44,12 +67,24 @@ export class CampaignWorkspace {
   /**
    * @param {HTMLElement} root
    * @param {string} id
-   * @returns {boolean}
+   */
+  static selectQuestEntry(root, id) {
+    const entry = QuestEntryService.getById(id);
+    if (!entry) return false;
+    CampaignWorkspace.#view = "quest";
+    CampaignWorkspace.#questId = entry.questId;
+    CampaignWorkspace.#openEntryId = entry.id;
+    CampaignWorkspace.paint(root);
+    return true;
+  }
+
+  /**
+   * Search compatibility: current Session remains reachable without occupying
+   * one of the visible Quest sections.
    */
   static selectSession(root, id) {
     if (!SessionService.getById(id)) return false;
     CampaignWorkspace.#view = "session";
-    CampaignWorkspace.#threadId = null;
     CampaignWorkspace.paint(root);
     return true;
   }
@@ -63,22 +98,23 @@ export class CampaignWorkspace {
     if (!(panel instanceof HTMLElement)) return;
 
     const session = SessionService.getActive();
-    const threads = ThreadService.list().sort((a, b) => b.updated - a.updated);
+    const current = panel.querySelector("[data-campaign-current-session]");
+    if (current) current.textContent = session?.title?.trim() || "No active session";
 
-    CampaignWorkspace.#paintHeader(panel, session);
-    CampaignWorkspace.#paintSidebar(panel, session, threads);
-    CampaignWorkspace.#paintSession(panel, session);
-    CampaignWorkspace.#paintThreadList(panel, threads);
+    const quests = ThreadService.list().sort((a, b) => a.title.localeCompare(b.title));
+    CampaignWorkspace.#paintQuestLists(panel, quests);
 
-    const selectedThread = CampaignWorkspace.#threadId
-      ? ThreadService.getById(CampaignWorkspace.#threadId)
+    const quest = CampaignWorkspace.#questId
+      ? ThreadService.getById(CampaignWorkspace.#questId)
       : null;
-    if (CampaignWorkspace.#view === "thread" && !selectedThread) {
-      CampaignWorkspace.#view = "threads";
-      CampaignWorkspace.#threadId = null;
+    if (CampaignWorkspace.#view === "quest" && CampaignWorkspace.#questId && !quest) {
+      CampaignWorkspace.#questId = null;
     }
-    CampaignWorkspace.#paintThreadEditor(panel, selectedThread);
-    CampaignWorkspace.#applyView(panel);
+
+    CampaignWorkspace.#paintQuest(panel, quest);
+    CampaignWorkspace.#paintSession(panel, session);
+    CampaignWorkspace.#applyView(panel, quest);
+    CampaignWorkspace.#attachRichEditors(panel);
   }
 
   /**
@@ -100,135 +136,252 @@ export class CampaignWorkspace {
         const target = event.target;
         if (!(target instanceof Element)) return;
 
-        if (target.closest("[data-campaign-select-session]")) {
-          CampaignWorkspace.#view = "session";
-          CampaignWorkspace.#threadId = null;
-          CampaignWorkspace.paint(root);
+        const newQuest = target.closest("[data-new-quest]");
+        if (newQuest) {
+          const category = newQuest.getAttribute("data-new-quest") || "SIDE";
+          void CampaignWorkspace.#createQuest(root, category);
           return;
         }
 
-        if (target.closest("[data-campaign-select-threads]")) {
-          CampaignWorkspace.#view = "threads";
-          CampaignWorkspace.#threadId = null;
-          CampaignWorkspace.paint(root);
+        const questButton = target.closest("[data-quest-id]");
+        if (questButton && !target.closest("[data-save-quest-entry]")) {
+          const id = questButton.getAttribute("data-quest-id");
+          if (id) CampaignWorkspace.selectQuest(root, id);
           return;
         }
 
-        if (target.closest("[data-campaign-new-thread]")) {
-          void CampaignWorkspace.#createThread(root);
+        if (target.closest("[data-save-quest]")) {
+          void CampaignWorkspace.#saveQuest(root);
           return;
         }
 
-        const threadRow = target.closest("[data-campaign-thread-id]");
-        if (threadRow) {
-          const id = threadRow.getAttribute("data-campaign-thread-id");
-          if (!id) return;
-          CampaignWorkspace.#view = "thread";
-          CampaignWorkspace.#threadId = id;
-          CampaignWorkspace.paint(root);
-          requestAnimationFrame(() => {
-            const title = panel.querySelector("[data-campaign-thread-title]");
-            if (title instanceof HTMLInputElement) title.focus();
-          });
+        if (target.closest("[data-add-quest-entry]")) {
+          void CampaignWorkspace.#createEntry(root);
           return;
         }
 
-        if (target.closest("[data-campaign-save-thread]")) {
-          void CampaignWorkspace.#saveThread(root);
+        const saveEntry = target.closest("[data-save-quest-entry]");
+        if (saveEntry) {
+          const id = saveEntry.getAttribute("data-save-quest-entry");
+          if (id) void CampaignWorkspace.#saveEntry(root, id);
           return;
         }
 
-        const beatRow = target.closest("[data-campaign-beat-index]");
-        if (beatRow) {
-          const index = Number(beatRow.getAttribute("data-campaign-beat-index"));
-          if (!Number.isInteger(index)) return;
-          void Promise.resolve(options.onOpenBeat?.(index));
+        const beat = target.closest("[data-campaign-beat-index]");
+        if (beat) {
+          const index = Number(beat.getAttribute("data-campaign-beat-index"));
+          if (Number.isInteger(index)) void Promise.resolve(options.onOpenBeat?.(index));
         }
       },
       { signal: controller.signal }
     );
 
-    RichTextToolbar.attach(panel);
-    const notes = panel.querySelector("[data-campaign-thread-notes]");
-    if (notes instanceof HTMLElement) {
-      if (CampaignWorkspace.#mentionEditor && CampaignWorkspace.#mentionEditor !== notes) {
-        EntityMentions.detach(CampaignWorkspace.#mentionEditor);
+    CampaignWorkspace.#attachRichEditors(panel);
+  }
+
+  static #paintQuestLists(panel, quests) {
+    for (const category of ["MAIN", "SIDE", "COMPANION"]) {
+      const list = panel.querySelector(`[data-quest-list="${category}"]`);
+      if (!list) continue;
+      list.replaceChildren();
+      const categoryQuests = quests.filter((quest) => quest.category === category);
+      if (!categoryQuests.length) {
+        const empty = document.createElement("div");
+        empty.className = "nd-quest-sidebar__empty";
+        empty.textContent = "No quests";
+        list.append(empty);
+        continue;
       }
-      EntityMentions.attach(notes);
-      CampaignWorkspace.#mentionEditor = notes;
+      for (const quest of categoryQuests) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "nd-quest-sidebar__quest";
+        button.dataset.questId = quest.id;
+        button.classList.toggle("is-active", quest.id === CampaignWorkspace.#questId);
+        const title = document.createElement("span");
+        title.textContent = quest.title?.trim() || "Untitled Quest";
+        const status = document.createElement("span");
+        status.className = "nd-campaign-status";
+        status.dataset.status = quest.status;
+        status.textContent = quest.status;
+        button.append(title, status);
+        list.append(button);
+      }
     }
   }
 
-  /**
-   * @param {HTMLElement} panel
-   * @param {ReturnType<typeof SessionService.getActive>} session
-   */
-  static #paintHeader(panel, session) {
-    const current = panel.querySelector("[data-campaign-current-session]");
-    if (current) current.textContent = session?.title?.trim() || "No active session";
-  }
+  static #paintQuest(panel, quest) {
+    const editor = panel.querySelector("[data-quest-editor]");
+    const empty = panel.querySelector("[data-quest-empty]");
+    if (!(editor instanceof HTMLElement) || !(empty instanceof HTMLElement)) return;
+    empty.hidden = Boolean(quest);
+    editor.hidden = !quest;
+    if (!quest) return;
 
-  /**
-   * @param {HTMLElement} panel
-   * @param {ReturnType<typeof SessionService.getActive>} session
-   * @param {ReturnType<typeof ThreadService.list>} threads
-   */
-  static #paintSidebar(panel, session, threads) {
-    const sessionButton = panel.querySelector("[data-campaign-select-session]");
-    if (sessionButton) {
-      sessionButton.textContent = session?.title?.trim() || "Session 1";
-      sessionButton.classList.toggle("is-active", CampaignWorkspace.#view === "session");
-    }
+    editor.dataset.questId = quest.id;
+    const title = editor.querySelector("[data-quest-title]");
+    const status = editor.querySelector("[data-quest-status]");
+    const category = editor.querySelector("[data-quest-category]");
+    const overview = editor.querySelector("[data-quest-overview]");
+    if (title instanceof HTMLInputElement) title.value = quest.title ?? "";
+    if (status instanceof HTMLSelectElement) status.value = quest.status ?? "OPEN";
+    if (category instanceof HTMLSelectElement) category.value = quest.category ?? "SIDE";
+    if (overview instanceof HTMLElement) overview.innerHTML = RichText.sanitize(quest.overview ?? "");
 
-    const threadsButton = panel.querySelector("[data-campaign-select-threads]");
-    threadsButton?.classList.toggle("is-active", CampaignWorkspace.#view === "threads");
-
-    const list = panel.querySelector("[data-campaign-sidebar-threads]");
+    const list = editor.querySelector("[data-quest-entry-list]");
     if (!list) return;
     list.replaceChildren();
-
-    for (const thread of threads) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "nd-campaign-sidebar__item nd-campaign-sidebar__thread";
-      button.dataset.campaignThreadId = thread.id;
-      button.classList.toggle(
-        "is-active",
-        CampaignWorkspace.#view === "thread" && CampaignWorkspace.#threadId === thread.id
-      );
-
-      const title = document.createElement("span");
-      title.textContent = thread.title?.trim() || "Untitled Thread";
-      const status = document.createElement("span");
-      status.className = "nd-campaign-status";
-      status.dataset.status = thread.status;
-      status.textContent = thread.status;
-      button.append(title, status);
-      list.append(button);
+    const entries = QuestEntryService.listForQuest(quest.id);
+    if (!entries.length) {
+      const noEntries = document.createElement("div");
+      noEntries.className = "nd-quest-empty nd-quest-empty--entries";
+      noEntries.textContent = "No playable entries yet.";
+      list.append(noEntries);
+    } else {
+      for (const entry of entries) list.append(CampaignWorkspace.#entryElement(entry));
     }
   }
 
-  /**
-   * @param {HTMLElement} panel
-   * @param {ReturnType<typeof SessionService.getActive>} session
-   */
+  static #entryElement(entry) {
+    const details = document.createElement("details");
+    details.className = "nd-quest-entry";
+    details.dataset.questEntryId = entry.id;
+    details.open = entry.id === CampaignWorkspace.#openEntryId;
+
+    const summary = document.createElement("summary");
+    const status = document.createElement("span");
+    status.className = "nd-campaign-status";
+    status.dataset.status = entry.status;
+    status.textContent = entry.status;
+    const title = document.createElement("strong");
+    title.textContent = entry.title?.trim() || "Untitled Entry";
+    summary.append(status, title);
+
+    const body = document.createElement("div");
+    body.className = "nd-quest-entry__body";
+    const headingFields = document.createElement("div");
+    headingFields.className = "nd-campaign-thread-fields";
+    headingFields.append(
+      CampaignWorkspace.#inputField("Title", "title", entry.title, true),
+      CampaignWorkspace.#statusField(entry.status)
+    );
+    body.append(headingFields);
+
+    for (const [field, label] of ENTRY_FIELDS) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "nd-campaign-field nd-quest-entry__field";
+      const fieldLabel = document.createElement("span");
+      fieldLabel.textContent = label;
+      const rich = document.createElement("div");
+      rich.className = "nd-richtext nd-richtext--editor";
+      rich.dataset.entryField = field;
+      rich.dataset.richtextEditor = "";
+      rich.dataset.placeholder = `${label}...`;
+      rich.contentEditable = "true";
+      rich.innerHTML = RichText.sanitize(entry[field] ?? "");
+      wrapper.append(fieldLabel, rich);
+      body.append(wrapper);
+    }
+
+    const references = CampaignWorkspace.#referencesElement(entry);
+    body.append(references);
+
+    const actions = document.createElement("div");
+    actions.className = "nd-quest-actions";
+    const save = document.createElement("button");
+    save.type = "button";
+    save.className = "nd-campaign-save";
+    save.dataset.saveQuestEntry = entry.id;
+    save.textContent = "Save Entry";
+    actions.append(save);
+    body.append(actions);
+
+    details.append(summary, body);
+    return details;
+  }
+
+  static #inputField(label, field, value, wide = false) {
+    const wrapper = document.createElement("label");
+    wrapper.className = `nd-campaign-field${wide ? " nd-campaign-field--wide" : ""}`;
+    const text = document.createElement("span");
+    text.textContent = label;
+    const input = document.createElement("input");
+    input.type = "text";
+    input.dataset.entryField = field;
+    input.value = value ?? "";
+    wrapper.append(text, input);
+    return wrapper;
+  }
+
+  static #statusField(value) {
+    const wrapper = document.createElement("label");
+    wrapper.className = "nd-campaign-field";
+    const text = document.createElement("span");
+    text.textContent = "Status";
+    const select = document.createElement("select");
+    select.dataset.entryField = "status";
+    for (const status of ["PLANNED", "ACTIVE", "COMPLETED"]) {
+      const option = document.createElement("option");
+      option.value = status;
+      option.textContent = status;
+      option.selected = status === value;
+      select.append(option);
+    }
+    wrapper.append(text, select);
+    return wrapper;
+  }
+
+  static #referencesElement(record) {
+    const section = document.createElement("section");
+    section.className = "nd-campaign-references";
+    const heading = document.createElement("h3");
+    heading.textContent = "References";
+    section.append(heading);
+    const groups = [
+      ["Entries", record.relatedBeatIds ?? [], "beat"],
+      ["Characters", record.relatedCharacterIds ?? [], "entity"],
+      ["Locations", record.relatedLocationIds ?? [], "entity"],
+      ["Items", record.relatedItemIds ?? [], "entity"]
+    ];
+    const beats = new Map([
+      ...QuestEntryService.list().map((entry) => [entry.id, entry.title]),
+      ...PlaybookService.getDocument().beats.map((beat) => [beat.id, beat.title])
+    ]);
+
+    for (const [label, ids, kind] of groups) {
+      const details = document.createElement("details");
+      const summary = document.createElement("summary");
+      summary.textContent = label;
+      const content = document.createElement("div");
+      if (!ids.length) {
+        const empty = document.createElement("span");
+        empty.className = "nd-campaign-reference-empty";
+        empty.textContent = "No references";
+        content.append(empty);
+      } else {
+        for (const id of ids) {
+          const chip = document.createElement("span");
+          chip.className = "nd-campaign-reference";
+          chip.textContent =
+            kind === "beat" ? beats.get(id) ?? id : EntityRegistry.findByUUID(id)?.name ?? id;
+          content.append(chip);
+        }
+      }
+      details.append(summary, content);
+      section.append(details);
+    }
+    return section;
+  }
+
   static #paintSession(panel, session) {
-    const view = panel.querySelector("[data-campaign-view=\"session\"]");
+    const view = panel.querySelector("[data-quest-session-view]");
     if (!(view instanceof HTMLElement)) return;
-
     const setText = (key, value, fallback = "—") => {
-      const el = view.querySelector(`[data-campaign-session="${key}"]`);
-      if (el) el.textContent = String(value || fallback);
+      const element = view.querySelector(`[data-campaign-session="${key}"]`);
+      if (element) element.textContent = String(value || fallback);
     };
-
     setText("title", session?.title, "Session 1");
-    setText("number", session?.sessionNumber, "1");
-    setText("real-date", session?.realDate);
-    setText("in-game-date", session?.inGameDate);
     setText("status", session?.status);
-    const status = view.querySelector("[data-campaign-session=\"status\"]");
-    if (status instanceof HTMLElement) status.dataset.status = session?.status ?? "planned";
-
     CampaignWorkspace.#paintRichText(
       view.querySelector("[data-campaign-session=\"summary\"]"),
       session?.summary,
@@ -240,255 +393,137 @@ export class CampaignWorkspace {
       "No session notes yet."
     );
 
-    const beatList = view.querySelector("[data-campaign-session-beats]");
-    if (!beatList) return;
-    beatList.replaceChildren();
-
+    const list = view.querySelector("[data-campaign-session-beats]");
+    if (!list) return;
+    list.replaceChildren();
     const playbook = PlaybookService.getDocument();
-    const beatsById = new Map(playbook.beats.map((beat, index) => [beat.id, { beat, index }]));
-    const ownedBeats = (session?.beatIds ?? [])
-      .map((id) => beatsById.get(id))
-      .filter(Boolean);
-
-    if (ownedBeats.length === 0) {
-      const empty = document.createElement("p");
-      empty.className = "nd-campaign-empty";
-      empty.textContent = "No beats belong to this session.";
-      beatList.append(empty);
-      return;
-    }
-
-    for (const { beat, index } of ownedBeats) {
+    const byId = new Map(playbook.beats.map((beat, index) => [beat.id, { beat, index }]));
+    for (const id of session?.beatIds ?? []) {
+      const item = byId.get(id);
+      if (!item) continue;
       const button = document.createElement("button");
       button.type = "button";
       button.className = "nd-campaign-beat";
-      button.dataset.campaignBeatIndex = String(index);
-
-      const number = document.createElement("span");
-      number.className = "nd-campaign-beat__number";
-      number.textContent = String(index + 1);
-      const title = document.createElement("span");
-      title.textContent = beat.title?.trim() || "Untitled Beat";
-      button.append(number, title);
-      beatList.append(button);
-    }
-  }
-
-  /**
-   * @param {HTMLElement} panel
-   * @param {ReturnType<typeof ThreadService.list>} threads
-   */
-  static #paintThreadList(panel, threads) {
-    const list = panel.querySelector("[data-campaign-thread-list]");
-    const empty = panel.querySelector("[data-campaign-thread-empty]");
-    if (!list || !empty) return;
-    list.replaceChildren();
-    empty.hidden = threads.length > 0;
-
-    for (const thread of threads) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "nd-campaign-thread-row";
-      button.dataset.campaignThreadId = thread.id;
-
-      const main = document.createElement("span");
-      main.className = "nd-campaign-thread-row__main";
-      const title = document.createElement("strong");
-      title.textContent = thread.title?.trim() || "Untitled Thread";
-      const type = document.createElement("span");
-      type.textContent = thread.type?.trim() || "";
-      type.hidden = !thread.type?.trim();
-      main.append(title, type);
-
-      const meta = document.createElement("span");
-      meta.className = "nd-campaign-thread-row__meta";
-      const status = document.createElement("span");
-      status.className = "nd-campaign-status";
-      status.dataset.status = thread.status;
-      status.textContent = thread.status;
-      const updated = document.createElement("time");
-      updated.dateTime = new Date(thread.updated).toISOString();
-      updated.textContent = CampaignWorkspace.#formatDate(thread.updated);
-      meta.append(status, updated);
-
-      button.append(main, meta);
+      button.dataset.campaignBeatIndex = String(item.index);
+      button.textContent = item.beat.title?.trim() || "Untitled Entry";
       list.append(button);
     }
   }
 
-  /**
-   * @param {HTMLElement} panel
-   * @param {ReturnType<typeof ThreadService.getById>} thread
-   */
-  static #paintThreadEditor(panel, thread) {
-    const editor = panel.querySelector("[data-campaign-thread-editor]");
-    if (!(editor instanceof HTMLElement)) return;
-
-    editor.dataset.threadId = thread?.id ?? "";
-    const title = editor.querySelector("[data-campaign-thread-title]");
-    const status = editor.querySelector("[data-campaign-thread-status]");
-    const type = editor.querySelector("[data-campaign-thread-type]");
-    const notes = editor.querySelector("[data-campaign-thread-notes]");
-    const saved = editor.querySelector("[data-campaign-thread-saved]");
-
-    if (title instanceof HTMLInputElement) title.value = thread?.title ?? "";
-    if (status instanceof HTMLSelectElement) status.value = thread?.status ?? "OPEN";
-    if (type instanceof HTMLInputElement) type.value = thread?.type ?? "";
-    if (notes instanceof HTMLElement) notes.innerHTML = RichText.sanitize(thread?.notes ?? "");
-    CampaignWorkspace.#paintReferences(editor, thread);
-    if (saved) {
-      saved.textContent = "";
-      saved.hidden = true;
+  static #applyView(panel, quest) {
+    const questLayout = panel.querySelector("[data-quest-editor]");
+    const questEmpty = panel.querySelector("[data-quest-empty]");
+    const session = panel.querySelector("[data-quest-session-view]");
+    if (session instanceof HTMLElement) session.hidden = CampaignWorkspace.#view !== "session";
+    if (questLayout instanceof HTMLElement) {
+      questLayout.hidden = CampaignWorkspace.#view !== "quest" || !quest;
+    }
+    if (questEmpty instanceof HTMLElement) {
+      questEmpty.hidden = CampaignWorkspace.#view !== "quest" || Boolean(quest);
     }
   }
 
-  /**
-   * Render structured Thread references without edit controls.
-   * @param {HTMLElement} editor
-   * @param {ReturnType<typeof ThreadService.getById>} thread
-   */
-  static #paintReferences(editor, thread) {
-    const playbook = PlaybookService.getDocument();
-    const beatsById = new Map(playbook.beats.map((beat) => [beat.id, beat.title || "Untitled Beat"]));
-    const groups = {
-      beats: (thread?.relatedBeatIds ?? []).map((id) => ({
-        id,
-        name: beatsById.get(id) ?? id
-      })),
-      characters: (thread?.relatedCharacterIds ?? []).map((id) => ({
-        id,
-        name: EntityRegistry.findByUUID(id)?.name ?? id
-      })),
-      locations: (thread?.relatedLocationIds ?? []).map((id) => ({
-        id,
-        name: EntityRegistry.findByUUID(id)?.name ?? id
-      })),
-      items: (thread?.relatedItemIds ?? []).map((id) => ({
-        id,
-        name: EntityRegistry.findByUUID(id)?.name ?? id
-      }))
-    };
-
-    for (const [key, references] of Object.entries(groups)) {
-      const container = editor.querySelector(`[data-campaign-thread-refs="${key}"]`);
-      if (!container) continue;
-      container.replaceChildren();
-      if (references.length === 0) {
-        const empty = document.createElement("span");
-        empty.className = "nd-campaign-reference-empty";
-        empty.textContent = "No references";
-        container.append(empty);
-        continue;
-      }
-      for (const reference of references) {
-        const chip = document.createElement("span");
-        chip.className = "nd-campaign-reference";
-        chip.title = reference.id;
-        chip.textContent = reference.name;
-        container.append(chip);
-      }
-    }
-  }
-
-  /**
-   * @param {HTMLElement} panel
-   */
-  static #applyView(panel) {
-    panel.querySelectorAll("[data-campaign-view]").forEach((view) => {
-      view.hidden = view.getAttribute("data-campaign-view") !== CampaignWorkspace.#view;
+  static #attachRichEditors(panel) {
+    for (const editor of CampaignWorkspace.#mentionEditors) EntityMentions.detach(editor);
+    CampaignWorkspace.#mentionEditors.clear();
+    RichTextToolbar.attach(panel);
+    panel.querySelectorAll("[data-richtext-editor]").forEach((editor) => {
+      if (!(editor instanceof HTMLElement) || editor.closest("[aria-hidden=\"true\"]")) return;
+      EntityMentions.attach(editor);
+      CampaignWorkspace.#mentionEditors.add(editor);
     });
   }
 
-  /**
-   * @param {Element|null} element
-   * @param {string|undefined} html
-   * @param {string} emptyText
-   */
-  static #paintRichText(element, html, emptyText) {
+  static async #createQuest(root, category) {
+    const quest = await ThreadService.create({
+      title: "Untitled Quest",
+      status: "OPEN",
+      category,
+      overview: ""
+    });
+    CampaignWorkspace.#questId = quest.id;
+    CampaignWorkspace.#view = "quest";
+    CampaignWorkspace.paint(root);
+    requestAnimationFrame(() => root.querySelector("[data-quest-title]")?.focus());
+  }
+
+  static async #saveQuest(root) {
+    const editor = root.querySelector("[data-quest-editor]");
+    if (!(editor instanceof HTMLElement)) return;
+    const id = editor.dataset.questId;
+    if (!id) return;
+    const title = editor.querySelector("[data-quest-title]");
+    const status = editor.querySelector("[data-quest-status]");
+    const category = editor.querySelector("[data-quest-category]");
+    const overview = editor.querySelector("[data-quest-overview]");
+    const safeOverview = overview instanceof HTMLElement ? RichText.sanitize(overview.innerHTML) : "";
+    const refs = CampaignWorkspace.#referencePatch(EntityMentions.extract(safeOverview));
+    await ThreadService.update(id, {
+      title: title instanceof HTMLInputElement ? title.value.trim() : "",
+      status: status instanceof HTMLSelectElement ? status.value : "OPEN",
+      category: category instanceof HTMLSelectElement ? category.value : "SIDE",
+      overview: safeOverview,
+      description: RichText.plainText(safeOverview),
+      ...refs
+    });
+    CampaignWorkspace.paint(root);
+  }
+
+  static async #createEntry(root) {
+    if (!CampaignWorkspace.#questId) return;
+    const entry = await QuestEntryService.create(CampaignWorkspace.#questId);
+    if (!entry) return;
+    CampaignWorkspace.#openEntryId = entry.id;
+    CampaignWorkspace.paint(root);
+  }
+
+  static async #saveEntry(root, id) {
+    const details = root.querySelector(`[data-quest-entry-id="${id}"]`);
+    if (!(details instanceof HTMLElement)) return;
+    const patch = {};
+    const richHtml = [];
+    details.querySelectorAll("[data-entry-field]").forEach((field) => {
+      const key = field.getAttribute("data-entry-field");
+      if (!key) return;
+      if (field instanceof HTMLInputElement || field instanceof HTMLSelectElement) {
+        patch[key] = field.value.trim();
+      } else if (field instanceof HTMLElement) {
+        const safe = RichText.sanitize(field.innerHTML);
+        patch[key] = safe;
+        richHtml.push(safe);
+      }
+    });
+    Object.assign(patch, CampaignWorkspace.#referencePatch(
+      EntityMentions.extract(richHtml.join(""))
+    ));
+    await QuestEntryService.update(id, patch);
+    CampaignWorkspace.#openEntryId = id;
+    CampaignWorkspace.paint(root);
+  }
+
+  static #referencePatch(mentions) {
+    const ids = (kind, preferUuid) =>
+      mentions
+        .filter((mention) => mention.kind === kind)
+        .map((mention) => (preferUuid ? mention.uuid : mention.id) || mention.id)
+        .filter(Boolean);
+    return {
+      relatedBeatIds: ids("beat", false),
+      relatedCharacterIds: ids("actor", true),
+      relatedLocationIds: ids("scene", true),
+      relatedItemIds: ids("item", true)
+    };
+  }
+
+  static #paintRichText(element, html, fallback) {
     if (!(element instanceof HTMLElement)) return;
     const safe = RichText.sanitize(html ?? "");
     if (RichText.hasContent(safe)) {
       element.innerHTML = safe;
       element.classList.remove("nd-campaign-empty");
     } else {
-      element.textContent = emptyText;
+      element.textContent = fallback;
       element.classList.add("nd-campaign-empty");
     }
-  }
-
-  /**
-   * @param {HTMLElement} root
-   */
-  static async #createThread(root) {
-    const thread = await ThreadService.create({
-      title: "Untitled Thread",
-      status: "OPEN"
-    });
-    CampaignWorkspace.#view = "thread";
-    CampaignWorkspace.#threadId = thread.id;
-    CampaignWorkspace.paint(root);
-    requestAnimationFrame(() => {
-      const title = root.querySelector("[data-campaign-thread-title]");
-      if (title instanceof HTMLInputElement) {
-        title.focus();
-        title.select();
-      }
-    });
-  }
-
-  /**
-   * @param {HTMLElement} root
-   */
-  static async #saveThread(root) {
-    const editor = root.querySelector("[data-campaign-thread-editor]");
-    if (!(editor instanceof HTMLElement)) return;
-    const id = editor.dataset.threadId;
-    if (!id) return;
-
-    const title = editor.querySelector("[data-campaign-thread-title]");
-    const status = editor.querySelector("[data-campaign-thread-status]");
-    const type = editor.querySelector("[data-campaign-thread-type]");
-    const notes = editor.querySelector("[data-campaign-thread-notes]");
-
-    const safeNotes = notes instanceof HTMLElement ? RichText.sanitize(notes.innerHTML) : "";
-    const mentions = EntityMentions.extract(safeNotes);
-    const idsFor = (kind, identity) =>
-      mentions
-        .filter((mention) => mention.kind === kind)
-        .map((mention) => (identity === "uuid" ? mention.uuid : mention.id) || mention.id)
-        .filter(Boolean);
-
-    const updated = await ThreadService.update(id, {
-      title: title instanceof HTMLInputElement ? title.value.trim() : "",
-      status: status instanceof HTMLSelectElement ? status.value : "OPEN",
-      type: type instanceof HTMLInputElement ? type.value.trim() : "",
-      notes: safeNotes,
-      relatedBeatIds: idsFor("beat", "id"),
-      relatedCharacterIds: idsFor("actor", "uuid"),
-      relatedLocationIds: idsFor("scene", "uuid"),
-      relatedItemIds: idsFor("item", "uuid")
-    });
-    if (!updated) return;
-
-    CampaignWorkspace.#threadId = updated.id;
-    CampaignWorkspace.paint(root);
-    const saved = root.querySelector("[data-campaign-thread-saved]");
-    if (saved) {
-      saved.textContent = "Saved";
-      saved.hidden = false;
-    }
-  }
-
-  /**
-   * @param {number} timestamp
-   * @returns {string}
-   */
-  static #formatDate(timestamp) {
-    if (!Number.isFinite(timestamp)) return "—";
-    return new Intl.DateTimeFormat(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric"
-    }).format(new Date(timestamp));
   }
 }

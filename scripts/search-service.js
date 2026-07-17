@@ -234,6 +234,7 @@ export class SearchService {
  * @property {(id: string) => Promise<void>|void} openSession
  * @property {(id: string) => Promise<void>|void} openBeat
  * @property {(id: string) => Promise<void>|void} openThread
+ * @property {(id: string) => Promise<void>|void} openQuestEntry
  * @property {(uuid: string, kind: string) => Promise<boolean>|boolean} openEntity
  * @property {(message: string) => void} notify
  */
