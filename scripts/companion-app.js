@@ -1,8 +1,12 @@
 import { CampaignAwareness, CampaignContext } from "./campaign-context.js";
 import { CampaignWorkspace } from "./campaign-workspace.js";
+import { EntityRegistry } from "./entity-registry.js";
 import { FocusManager } from "./focus-manager.js";
 import { FocusPanel } from "./focus-panel.js";
+import { GlobalSearch } from "./global-search.js";
 import { LiveNotes } from "./live-notes.js";
+import { Navigation } from "./navigation.js";
+import { PanelResizer } from "./panel-resizer.js";
 import { Playbook } from "./playbook.js";
 import { PlaybookPrepare } from "./playbook-prepare.js";
 import { PlaybookService } from "./playbook-service.js";
@@ -105,6 +109,41 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
         html,
         sanitize: html ? RichText.sanitize : undefined
       });
+    });
+    PanelResizer.attach(this.element);
+    GlobalSearch.attach(this.element, {
+      openSession: (id) => {
+        if (!CampaignWorkspace.selectSession(this.element, id)) return;
+        this.setWorkspace("campaign");
+      },
+      openBeat: async (id) => {
+        const index = PlaybookService.getDocument().beats.findIndex((beat) => beat.id === id);
+        if (index < 0) return;
+        const moved = await PlaybookService.setCurrentIndex(index);
+        if (!moved) return;
+        this.setWorkspace("play");
+        Playbook.paint(this.element, Playbook.get());
+      },
+      openThread: (id) => {
+        if (!CampaignWorkspace.selectThread(this.element, id)) return;
+        this.setWorkspace("campaign");
+      },
+      openEntity: async (uuid, kind) => {
+        const entity = EntityRegistry.findByUUID(uuid);
+        if (!entity) return false;
+        if (kind === "actor") {
+          const result = await Navigation.navigate(entity);
+          this.setWorkspace("notes");
+          return result.status !== "failed";
+        }
+        if (Navigation.canNavigate(entity)) {
+          const result = await Navigation.navigate(entity);
+          return result.status !== "failed";
+        }
+        ui.notifications?.info(`Direct opening for ${entity.name} is not available yet.`);
+        return false;
+      },
+      notify: (message) => ui.notifications?.info(message)
     });
   }
 }

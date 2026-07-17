@@ -441,9 +441,24 @@
   cursor: pointer;
 }
 
-.nd-campaign-references p {
+.nd-campaign-references details > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
   margin: 7px 0 0 18px;
+}
+
+.nd-campaign-reference-empty {
   color: var(--nd-text-3);
+  font-size: var(--nd-text-caption);
+}
+
+.nd-campaign-reference {
+  padding: 2px 7px;
+  color: var(--nd-blue);
+  background: var(--nd-blue-tint);
+  border: 1px solid var(--nd-blue-border);
+  border-radius: var(--nd-radius-full);
   font-size: var(--nd-text-caption);
 }
 

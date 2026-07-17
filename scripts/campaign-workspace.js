@@ -1,3 +1,5 @@
+import { EntityMentions } from "./entity-mentions.js";
+import { EntityRegistry } from "./entity-registry.js";
 import { PlaybookService } from "./playbook-service.js";
 import { RichText } from "./rich-text.js";
 import { RichTextToolbar } from "./rich-text-toolbar.js";
@@ -17,6 +19,40 @@ export class CampaignWorkspace {
 
   /** @type {WeakMap<HTMLElement, AbortController>} */
   static #listeners = new WeakMap();
+
+  /** @type {HTMLElement|null} */
+  static #mentionEditor = null;
+
+  /** @returns {string|null} */
+  static getSelectedThreadId() {
+    return CampaignWorkspace.#view === "thread" ? CampaignWorkspace.#threadId : null;
+  }
+
+  /**
+   * @param {HTMLElement} root
+   * @param {string} id
+   * @returns {boolean}
+   */
+  static selectThread(root, id) {
+    if (!ThreadService.getById(id)) return false;
+    CampaignWorkspace.#view = "thread";
+    CampaignWorkspace.#threadId = id;
+    CampaignWorkspace.paint(root);
+    return true;
+  }
+
+  /**
+   * @param {HTMLElement} root
+   * @param {string} id
+   * @returns {boolean}
+   */
+  static selectSession(root, id) {
+    if (!SessionService.getById(id)) return false;
+    CampaignWorkspace.#view = "session";
+    CampaignWorkspace.#threadId = null;
+    CampaignWorkspace.paint(root);
+    return true;
+  }
 
   /**
    * @param {HTMLElement} root
@@ -113,6 +149,14 @@ export class CampaignWorkspace {
     );
 
     RichTextToolbar.attach(panel);
+    const notes = panel.querySelector("[data-campaign-thread-notes]");
+    if (notes instanceof HTMLElement) {
+      if (CampaignWorkspace.#mentionEditor && CampaignWorkspace.#mentionEditor !== notes) {
+        EntityMentions.detach(CampaignWorkspace.#mentionEditor);
+      }
+      EntityMentions.attach(notes);
+      CampaignWorkspace.#mentionEditor = notes;
+    }
   }
 
   /**
@@ -291,9 +335,58 @@ export class CampaignWorkspace {
     if (status instanceof HTMLSelectElement) status.value = thread?.status ?? "OPEN";
     if (type instanceof HTMLInputElement) type.value = thread?.type ?? "";
     if (notes instanceof HTMLElement) notes.innerHTML = RichText.sanitize(thread?.notes ?? "");
+    CampaignWorkspace.#paintReferences(editor, thread);
     if (saved) {
       saved.textContent = "";
       saved.hidden = true;
+    }
+  }
+
+  /**
+   * Render structured Thread references without edit controls.
+   * @param {HTMLElement} editor
+   * @param {ReturnType<typeof ThreadService.getById>} thread
+   */
+  static #paintReferences(editor, thread) {
+    const playbook = PlaybookService.getDocument();
+    const beatsById = new Map(playbook.beats.map((beat) => [beat.id, beat.title || "Untitled Beat"]));
+    const groups = {
+      beats: (thread?.relatedBeatIds ?? []).map((id) => ({
+        id,
+        name: beatsById.get(id) ?? id
+      })),
+      characters: (thread?.relatedCharacterIds ?? []).map((id) => ({
+        id,
+        name: EntityRegistry.findByUUID(id)?.name ?? id
+      })),
+      locations: (thread?.relatedLocationIds ?? []).map((id) => ({
+        id,
+        name: EntityRegistry.findByUUID(id)?.name ?? id
+      })),
+      items: (thread?.relatedItemIds ?? []).map((id) => ({
+        id,
+        name: EntityRegistry.findByUUID(id)?.name ?? id
+      }))
+    };
+
+    for (const [key, references] of Object.entries(groups)) {
+      const container = editor.querySelector(`[data-campaign-thread-refs="${key}"]`);
+      if (!container) continue;
+      container.replaceChildren();
+      if (references.length === 0) {
+        const empty = document.createElement("span");
+        empty.className = "nd-campaign-reference-empty";
+        empty.textContent = "No references";
+        container.append(empty);
+        continue;
+      }
+      for (const reference of references) {
+        const chip = document.createElement("span");
+        chip.className = "nd-campaign-reference";
+        chip.title = reference.id;
+        chip.textContent = reference.name;
+        container.append(chip);
+      }
     }
   }
 
@@ -357,11 +450,23 @@ export class CampaignWorkspace {
     const type = editor.querySelector("[data-campaign-thread-type]");
     const notes = editor.querySelector("[data-campaign-thread-notes]");
 
+    const safeNotes = notes instanceof HTMLElement ? RichText.sanitize(notes.innerHTML) : "";
+    const mentions = EntityMentions.extract(safeNotes);
+    const idsFor = (kind, identity) =>
+      mentions
+        .filter((mention) => mention.kind === kind)
+        .map((mention) => (identity === "uuid" ? mention.uuid : mention.id) || mention.id)
+        .filter(Boolean);
+
     const updated = await ThreadService.update(id, {
       title: title instanceof HTMLInputElement ? title.value.trim() : "",
       status: status instanceof HTMLSelectElement ? status.value : "OPEN",
       type: type instanceof HTMLInputElement ? type.value.trim() : "",
-      notes: notes instanceof HTMLElement ? RichText.sanitize(notes.innerHTML) : ""
+      notes: safeNotes,
+      relatedBeatIds: idsFor("beat", "id"),
+      relatedCharacterIds: idsFor("actor", "uuid"),
+      relatedLocationIds: idsFor("scene", "uuid"),
+      relatedItemIds: idsFor("item", "uuid")
     });
     if (!updated) return;
 

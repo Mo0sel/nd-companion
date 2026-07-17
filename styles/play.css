@@ -8,7 +8,8 @@
   flex-direction: column;
   min-height: 0;
   height: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: var(--nd-bg);
   box-sizing: border-box;
 }
@@ -36,6 +37,7 @@
   flex: 1;
   min-height: 0;
   padding: 10px var(--nd-page-x, 28px) 16px;
+  align-items: start;
 }
 
 /* ── Stable campaign header ──────────────────────────────────────────────── */
@@ -360,6 +362,7 @@
   grid-template-columns: minmax(220px, 0.85fr) minmax(320px, 1.45fr);
   gap: 10px;
   min-height: 174px;
+  align-items: start;
 }
 
 .nd-playbook-card__panels--single {
@@ -368,7 +371,7 @@
 
 .nd-playbook-card__left-column {
   display: grid;
-  grid-template-rows: 116px 48px;
+  grid-template-rows: auto auto;
   gap: 10px;
   min-width: 0;
 }
@@ -413,6 +416,7 @@
   flex-direction: column;
   background: var(--nd-blue-tint);
   border: 1px solid var(--nd-blue-border);
+  height: 116px;
 }
 
 .nd-playbook-panel--objective .nd-playbook-panel__label {
@@ -424,6 +428,23 @@
   flex: 1;
   overflow-y: auto;
   scrollbar-gutter: stable;
+}
+
+.nd-play-inline-editor {
+  cursor: text;
+  outline: none;
+}
+
+.nd-play-inline-editor:focus-visible {
+  outline: 1px solid var(--nd-blue-border);
+  outline-offset: 2px;
+}
+
+.nd-play-inline-editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--nd-text-3);
+  font-weight: var(--nd-weight-regular);
+  opacity: 0.7;
 }
 
 .nd-playbook-panel--objective .nd-richtext > p,
@@ -451,11 +472,15 @@
   list-style: none;
 }
 
-.nd-playbook-panel--objective .nd-richtext:not(:has(> p, > ul, > ol, > h2, > h3))::before {
+.nd-playbook-panel--objective .nd-richtext:not(:empty):not(:has(> p, > ul, > ol, > h2, > h3))::before {
   content: "☐";
   margin-right: 7px;
   color: var(--nd-blue);
   font-size: 14px;
+}
+
+.nd-playbook-panel--objective .nd-richtext:empty::before {
+  content: "☐  " attr(data-placeholder);
 }
 
 /* Experience is intentionally quiet: reward metadata, not reading content. */
@@ -471,6 +496,8 @@
   border: 1px solid var(--nd-border);
   border-radius: var(--nd-radius-md);
   box-sizing: border-box;
+  height: 48px;
+  overflow: hidden;
 }
 
 .nd-playbook-experience__label {
@@ -489,8 +516,14 @@
 }
 
 .nd-playbook-experience__value {
+  flex: 1;
+  min-width: 60px;
+  max-height: 100%;
+  overflow-y: auto;
   font-family: var(--nd-font-mono);
   font-size: var(--nd-text-caption);
+  text-align: right;
+  white-space: pre-wrap;
 }
 
 /* Beat Notes: primary reading area with isolated scrolling and fixed height. */
@@ -567,6 +600,7 @@
   border: 1px solid var(--nd-border);
   border-radius: var(--nd-radius-xl);
   box-sizing: border-box;
+  min-height: 140px;
 }
 
 .nd-play-notes__header {
@@ -656,7 +690,15 @@
   }
 
   .nd-playbook-card__left-column {
-    grid-template-rows: 104px 44px;
+    grid-template-rows: auto auto;
+  }
+
+  .nd-playbook-panel--objective {
+    height: 104px;
+  }
+
+  .nd-playbook-experience {
+    height: 44px;
   }
 
   .nd-playbook-panel--gm-notes {

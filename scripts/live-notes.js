@@ -87,6 +87,7 @@ export class LiveNotes {
     const onInput = () => {
       clearTimeout(debounceId);
       debounceId = setTimeout(() => {
+        debounceId = null;
         save().catch((err) => {
           console.error("N&D Companion: failed to save live note", key ?? "callback", err);
           setStatus("");
@@ -94,12 +95,24 @@ export class LiveNotes {
       }, DEBOUNCE_MS);
     };
 
+    const onBlur = () => {
+      if (debounceId === null) return;
+      clearTimeout(debounceId);
+      debounceId = null;
+      save().catch((err) => {
+        console.error("N&D Companion: failed to save live note", key ?? "callback", err);
+        setStatus("");
+      });
+    };
+
     element.addEventListener("input", onInput);
+    element.addEventListener("blur", onBlur);
 
     element._ndLiveNotesCleanup = () => {
       clearTimeout(debounceId);
       clearTimeout(statusClearId);
       element.removeEventListener("input", onInput);
+      element.removeEventListener("blur", onBlur);
       setStatus("");
     };
   }

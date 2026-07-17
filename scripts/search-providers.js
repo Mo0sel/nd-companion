@@ -1,0 +1,129 @@
+import { CampaignWorkspace } from "./campaign-workspace.js";
+import { EntityRegistry } from "./entity-registry.js";
+import { PlaybookService } from "./playbook-service.js";
+import { SearchService } from "./search-service.js";
+import { SessionService } from "./session-service.js";
+import { ThreadService } from "./thread-service.js";
+
+const ENTITY_GROUPS = Object.freeze({
+  actor: "Characters",
+  item: "Items",
+  scene: "Locations",
+  journal: "Journals",
+  rollTable: "Roll Tables"
+});
+
+/**
+ * Register current campaign domains with universal search.
+ */
+export function registerSearchProviders() {
+  SearchService.registerProvider({
+    id: "sessions",
+    label: "Sessions",
+    getItems: () =>
+      SessionService.list().map((session) => ({
+        id: session.id,
+        title: session.title || `Session ${session.sessionNumber}`,
+        subtitle: `Session ${session.sessionNumber}`,
+        group: "Sessions"
+      })),
+    getQuickAccess: () => {
+      const session = SessionService.getActive();
+      return session
+        ? [{
+            id: session.id,
+            title: session.title || `Session ${session.sessionNumber}`,
+            subtitle: "Current Session"
+          }]
+        : [];
+    },
+    open: (id, context) => {
+      context.openSession(id);
+      return true;
+    }
+  });
+
+  SearchService.registerProvider({
+    id: "beats",
+    label: "Beats",
+    getItems: () =>
+      PlaybookService.getDocument().beats.map((beat) => ({
+        id: beat.id,
+        title: beat.title?.trim() || "Untitled Beat",
+        subtitle: "Beat",
+        group: "Beats"
+      })),
+    getQuickAccess: () => {
+      const current = PlaybookService.getCurrent();
+      const beat = current.beat;
+      return current.total > 0 && beat?.id
+        ? [{
+            id: beat.id,
+            title: beat.title?.trim() || "Untitled Beat",
+            subtitle: "Current Beat"
+          }]
+        : [];
+    },
+    open: (id, context) => {
+      context.openBeat(id);
+      return true;
+    }
+  });
+
+  SearchService.registerProvider({
+    id: "threads",
+    label: "Threads",
+    getItems: () =>
+      ThreadService.list().map((thread) => ({
+        id: thread.id,
+        title: thread.title?.trim() || "Untitled Thread",
+        subtitle: thread.type || thread.status,
+        group: "Threads"
+      })),
+    getQuickAccess: () => {
+      const id = CampaignWorkspace.getSelectedThreadId();
+      const thread = id ? ThreadService.getById(id) : null;
+      return thread
+        ? [{
+            id: thread.id,
+            title: thread.title?.trim() || "Untitled Thread",
+            subtitle: "Current Thread"
+          }]
+        : [];
+    },
+    open: (id, context) => {
+      context.openThread(id);
+      return true;
+    }
+  });
+
+  SearchService.registerProvider({
+    id: "entities",
+    label: "Entities",
+    getItems: () =>
+      EntityRegistry.kinds().flatMap((kind) =>
+        EntityRegistry.all(kind).map((entity) => ({
+          id: entity.uuid,
+          title: entity.name,
+          subtitle: ENTITY_GROUPS[kind] ?? kind,
+          group: ENTITY_GROUPS[kind] ?? SearchProvidersLabel.fromKind(kind)
+        }))
+      ),
+    open: (uuid, context) => {
+      const entity = EntityRegistry.findByUUID(uuid);
+      if (!entity) {
+        context.notify("That campaign entity is no longer available.");
+        return false;
+      }
+      return context.openEntity(uuid, entity.kind);
+    }
+  });
+}
+
+class SearchProvidersLabel {
+  static fromKind(kind) {
+    return String(kind)
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .replace(/^./, (letter) => letter.toUpperCase());
+  }
+}

@@ -1,4 +1,5 @@
 import { EntityRegistry } from "./entity-registry.js";
+import { LiveNotes } from "./live-notes.js";
 import { Navigation } from "./navigation.js";
 import { PlaybookEntities } from "./playbook-entities.js";
 import { PlaybookService } from "./playbook-service.js";
@@ -96,12 +97,12 @@ export class Playbook {
       if (totalEl) totalEl.textContent = String(total);
     };
 
-    const setTextField = (key, value) => {
+    const setTextField = (key, value, { alwaysVisible = false } = {}) => {
       const field = panel.querySelector(`[data-playbook-field-block="${key}"]`);
       const renderer = panel.querySelector(`[data-playbook="${key}"]`);
       const safeHtml = RichText.sanitize(value ?? "");
       const hasContent = RichText.hasContent(safeHtml);
-      if (field) field.hidden = !hasContent;
+      if (field) field.hidden = !alwaysVisible && !hasContent;
       if (renderer) renderer.innerHTML = safeHtml;
     };
 
@@ -115,12 +116,14 @@ export class Playbook {
       setText("title", "No beats");
       setTextField("objective", "");
       setTextField("gmNotes", "");
+      setText("experience", "");
       Playbook.#paintEntities(panel, []);
     } else {
       setCounter(snapshot.index + 1, snapshot.total);
       setText("title", snapshot.beat.title?.trim() || "Untitled Beat");
-      setTextField("objective", snapshot.beat.objective);
+      setTextField("objective", snapshot.beat.objective, { alwaysVisible: true });
       setTextField("gmNotes", snapshot.beat.gmNotes);
+      setText("experience", snapshot.beat.experience);
 
       const entityUuids = [
         ...(snapshot.beat.sceneUuid ? [snapshot.beat.sceneUuid] : []),
@@ -147,8 +150,46 @@ export class Playbook {
     if (prevBtn instanceof HTMLButtonElement) prevBtn.disabled = !snapshot.canPrev;
     if (nextBtn instanceof HTMLButtonElement) nextBtn.disabled = !snapshot.canNext;
 
+    Playbook.#attachInlineEditors(root, snapshot);
     Playbook.#paintBeatFocus(root, snapshot);
     Playbook.#paintSessionNpcs(root, snapshot);
+  }
+
+  /**
+   * Objective and Experience are deliberately editable in PLAY.
+   * LiveNotes supplies the existing debounce/autosave behavior while
+   * PlaybookService remains the only persistence path.
+   * @param {HTMLElement} root
+   * @param {ReturnType<typeof Playbook.get>} snapshot
+   */
+  static #attachInlineEditors(root, snapshot) {
+    const objective = root.querySelector("[data-playbook=\"objective\"]");
+    const experience = root.querySelector("[data-playbook=\"experience\"]");
+    const editors = [objective, experience].filter((element) => element instanceof HTMLElement);
+
+    if (snapshot.total <= 0) {
+      for (const editor of editors) LiveNotes.detach(editor);
+      return;
+    }
+
+    if (objective instanceof HTMLElement) {
+      LiveNotes.attach(objective, null, {
+        html: true,
+        sanitize: RichText.sanitize,
+        load: () => snapshot.beat.objective ?? "",
+        save: async (value) => {
+          await PlaybookService.updateBeat(snapshot.index, { objective: value });
+          Playbook.#paintBeatFocus(root, Playbook.get());
+        }
+      });
+    }
+
+    if (experience instanceof HTMLElement) {
+      LiveNotes.attach(experience, null, {
+        load: () => snapshot.beat.experience ?? "",
+        save: (value) => PlaybookService.updateBeat(snapshot.index, { experience: value })
+      });
+    }
   }
 
   /**

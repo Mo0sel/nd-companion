@@ -144,17 +144,20 @@
 
 /* Playbook Prepare layout (migrate to prepare.css in 16C) */
 .nd-card--playbook-prepare {
-  max-height: min(70vh, 560px);
+  flex: 1;
+  min-height: 0;
+  max-height: none;
   overflow: hidden;
 }
 
 .nd-playbook-prepare {
   display: grid;
-  grid-template-columns: minmax(160px, 34%) 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(170px, 24%);
   gap: var(--nd-space-4);
   align-items: stretch;
   min-height: 0;
-  height: min(60vh, 480px);
+  height: 100%;
+  flex: 1;
 }
 
 .nd-playbook-prepare__sidebar {
@@ -163,6 +166,18 @@
   gap: var(--nd-space-2);
   min-height: 0;
   overflow: hidden;
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.nd-playbook-prepare__section-title {
+  flex-shrink: 0;
+  color: var(--nd-text-3);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-semibold);
+  letter-spacing: var(--nd-tracking-label);
+  text-transform: uppercase;
 }
 
 .nd-playbook-prepare__list {
@@ -259,6 +274,8 @@
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+  grid-column: 1;
+  grid-row: 1;
 }
 
 .nd-playbook-prepare__empty {
@@ -316,17 +333,31 @@
 
 .nd-playbook-prepare__field {
   min-height: 2.5em;
+  max-height: 150px;
+  overflow-y: auto;
 }
 
 .nd-playbook-prepare__field--notes {
-  min-height: 8em;
+  min-height: 10em;
+  max-height: 260px;
 }
 
 @container nd-companion (max-width: 520px) {
   .nd-playbook-prepare {
     grid-template-columns: 1fr;
-    height: auto;
-    max-height: min(70vh, 640px);
+    grid-template-rows: minmax(0, 1fr) auto;
+    height: 100%;
+    max-height: none;
+  }
+
+  .nd-playbook-prepare__main {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .nd-playbook-prepare__sidebar {
+    grid-column: 1;
+    grid-row: 2;
   }
 
   .nd-playbook-prepare__list {
@@ -334,7 +365,7 @@
   }
 
   .nd-playbook-prepare__editor {
-    max-height: min(45vh, 360px);
+    max-height: none;
   }
 }
 

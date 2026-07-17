@@ -161,6 +161,20 @@ export class RichText {
 
     const clean = document.createElement(tag.toLowerCase());
     if (tag === "SPAN") {
+      if (node.hasAttribute("data-nd-mention")) {
+        const kind = (node.getAttribute("data-mention-kind") ?? "").slice(0, 64);
+        const id = (node.getAttribute("data-mention-id") ?? "").slice(0, 256);
+        const uuid = (node.getAttribute("data-mention-uuid") ?? "").slice(0, 256);
+        if (!/^[a-z][a-zA-Z0-9-]*$/.test(kind) || (!id && !uuid)) return fragment;
+        clean.className = "nd-mention";
+        clean.dataset.ndMention = "";
+        clean.dataset.mentionKind = kind;
+        clean.dataset.mentionId = id;
+        clean.dataset.mentionUuid = uuid;
+        clean.contentEditable = "false";
+        clean.textContent = node.textContent ?? "";
+        return clean;
+      }
       const colorClass = [...node.classList].find((name) => COLOR_CLASSES.has(name));
       if (colorClass) clean.className = colorClass;
       else return fragment;

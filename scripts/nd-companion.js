@@ -6,6 +6,8 @@ import { FocusManager } from "./focus-manager.js";
 import { Navigation } from "./navigation.js";
 import { PlaybookService } from "./playbook-service.js";
 import { SessionService } from "./session-service.js";
+import { registerSearchProviders } from "./search-providers.js";
+import { SearchService } from "./search-service.js";
 import { CompanionStorage } from "./storage.js";
 import { ThreadService } from "./thread-service.js";
 
@@ -23,6 +25,7 @@ Hooks.once("ready", async () => {
   await PlaybookService.ready();
   await CampaignDocument.ready();
   await SessionService.ready();
+  registerSearchProviders();
   window.nd ??= {};
   window.nd.EntityRegistry = EntityRegistry;
   window.nd.FocusManager = FocusManager;
@@ -30,6 +33,7 @@ Hooks.once("ready", async () => {
   window.nd.SessionService = SessionService;
   window.nd.ThreadService = ThreadService;
   window.nd.CampaignDocument = CampaignDocument;
+  window.nd.SearchService = SearchService;
   CampaignAwareness.registerHooks();
   FocusManager.registerHooks();
 });

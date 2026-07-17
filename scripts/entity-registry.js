@@ -3,7 +3,7 @@
  * No persistence. Rebuilt per kind via Foundry document hooks.
  */
 
-/** @typedef {"actor"|"scene"|"journal"|"rollTable"} EntityKind */
+/** @typedef {"actor"|"item"|"scene"|"journal"|"rollTable"} EntityKind */
 
 /**
  * @typedef {object} RegistryEntity
@@ -22,7 +22,7 @@
  *   | { status: "ambiguous", entities: RegistryEntity[] }} NameLookupResult
  */
 
-const KINDS = /** @type {const} */ (["actor", "scene", "journal", "rollTable"]);
+const KINDS = /** @type {const} */ (["actor", "item", "scene", "journal", "rollTable"]);
 
 export class EntityRegistry {
   /** @type {Map<string, RegistryEntity>} */
@@ -55,6 +55,7 @@ export class EntityRegistry {
     };
 
     bind("actor", "createActor", "updateActor", "deleteActor");
+    bind("item", "createItem", "updateItem", "deleteItem");
     bind("scene", "createScene", "updateScene", "deleteScene");
     bind("journal", "createJournalEntry", "updateJournalEntry", "deleteJournalEntry");
     bind("rollTable", "createRollTable", "updateRollTable", "deleteRollTable");
@@ -100,6 +101,14 @@ export class EntityRegistry {
    */
   static all(kind) {
     return [...(this.#byKind.get(kind) ?? [])];
+  }
+
+  /**
+   * Indexed kinds in display order. Mention editors consume this generically.
+   * @returns {EntityKind[]}
+   */
+  static kinds() {
+    return [...KINDS];
   }
 
   /**
@@ -164,6 +173,8 @@ export class EntityRegistry {
     switch (kind) {
       case "actor":
         return game.actors ?? null;
+      case "item":
+        return game.items ?? null;
       case "scene":
         return game.scenes ?? null;
       case "journal":
@@ -202,6 +213,7 @@ export class EntityRegistry {
   static #resolveImg(kind, document) {
     const fallback =
       (kind === "actor" && Actor?.DEFAULT_ICON) ||
+      (kind === "item" && (CONFIG.Item?.documentClass?.DEFAULT_ICON || "icons/svg/item-bag.svg")) ||
       (kind === "scene" && "icons/svg/homeland.svg") ||
       (kind === "journal" && JournalEntry?.DEFAULT_ICON) ||
       (kind === "rollTable" && RollTable?.DEFAULT_ICON) ||

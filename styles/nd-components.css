@@ -80,6 +80,40 @@
   color: var(--nd-text-3);
 }
 
+/* ── Reusable local panel resizing ───────────────────────────────────────── */
+
+.nd-resizable-panel {
+  position: relative;
+}
+
+.nd-resize-handle {
+  position: absolute;
+  z-index: 3;
+  right: 8px;
+  bottom: 0;
+  left: 8px;
+  height: 7px;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.nd-resize-handle::after {
+  content: "";
+  position: absolute;
+  right: 42%;
+  bottom: 2px;
+  left: 42%;
+  height: 1px;
+  background: var(--nd-border);
+  opacity: 0;
+  transition: opacity var(--nd-transition-fast);
+}
+
+.nd-resizable-panel:hover > .nd-resize-handle::after,
+.nd-resize-handle:hover::after {
+  opacity: 1;
+}
+
 /* ── Button ───────────────────────────────────────────────────────────────── */
 
 .nd-button {

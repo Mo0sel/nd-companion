@@ -16,6 +16,7 @@ import { SessionService } from "./session-service.js";
  * @property {string|null} sceneUuid
  * @property {string[]} keyNpcUuids
  * @property {string} gmNotes
+ * @property {string} experience
  * @property {PlaybookRelatedRef[]} related  Reserved for future relationship system — do not migrate/transform
  */
 
@@ -237,7 +238,8 @@ export class PlaybookService {
    *   objective?: string,
    *   sceneUuid?: string|null,
    *   keyNpcUuids?: string[],
-   *   gmNotes?: string
+   *   gmNotes?: string,
+   *   experience?: string
    * }} patch
    * @returns {Promise<boolean>}
    */
@@ -248,6 +250,7 @@ export class PlaybookService {
     if (typeof patch.title === "string") beat.title = patch.title;
     if (typeof patch.objective === "string") beat.objective = patch.objective;
     if (typeof patch.gmNotes === "string") beat.gmNotes = patch.gmNotes;
+    if (typeof patch.experience === "string") beat.experience = patch.experience;
     if ("sceneUuid" in patch) {
       beat.sceneUuid = PlaybookService.#normalizeSceneUuid(patch.sceneUuid);
     }
@@ -370,6 +373,7 @@ export class PlaybookService {
       sceneUuid,
       keyNpcUuids,
       gmNotes: typeof beat?.gmNotes === "string" ? beat.gmNotes : "",
+      experience: typeof beat?.experience === "string" ? beat.experience : "",
       related
     };
   }
@@ -386,6 +390,7 @@ export class PlaybookService {
       sceneUuid: beat.sceneUuid ?? null,
       keyNpcUuids: [...(beat.keyNpcUuids ?? [])],
       gmNotes: beat.gmNotes ?? "",
+      experience: beat.experience ?? "",
       related: (beat.related ?? []).map((ref) => ({
         name: ref.name,
         ...(ref.kind ? { kind: ref.kind } : {})
@@ -402,6 +407,7 @@ export class PlaybookService {
       sceneUuid: null,
       keyNpcUuids: [],
       gmNotes: "",
+      experience: "",
       related: []
     };
   }

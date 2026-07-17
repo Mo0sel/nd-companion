@@ -1,5 +1,29 @@
 <div class="nd-companion__shell">
 
+  <header class="nd-global-header">
+    <div class="nd-global-header__brand">N&amp;D Companion</div>
+    <div class="nd-global-search" data-global-search>
+      <span class="nd-global-search__icon" aria-hidden="true">⌕</span>
+      <input
+        type="search"
+        data-global-search-input
+        placeholder="Search campaign..."
+        aria-label="Search campaign"
+        aria-controls="nd-global-search-results"
+        aria-expanded="false"
+        autocomplete="off"
+      >
+      <kbd>Ctrl K</kbd>
+      <div
+        id="nd-global-search-results"
+        class="nd-global-search__results"
+        data-global-search-results
+        role="listbox"
+        hidden
+      ></div>
+    </div>
+  </header>
+
   <nav class="nd-workspace-switcher" aria-label="Workspaces">
     <button
       type="button"
@@ -95,19 +119,46 @@
 
             <div class="nd-playbook-card__panels">
               <div class="nd-playbook-card__left-column">
-                <div class="nd-playbook-panel nd-playbook-panel--objective" data-playbook-field-block="objective">
+                <div
+                  class="nd-playbook-panel nd-playbook-panel--objective"
+                  data-playbook-field-block="objective"
+                  data-resizable-panel="play-objective"
+                  data-resize-min="84"
+                >
                   <div class="nd-playbook-panel__label">Objectives</div>
-                  <div class="nd-playbook-panel__text nd-richtext" data-playbook="objective"></div>
+                  <div
+                    class="nd-playbook-panel__text nd-richtext nd-play-inline-editor"
+                    data-playbook="objective"
+                    data-placeholder="Add an objective..."
+                    role="textbox"
+                    aria-label="Objectives"
+                  ></div>
                 </div>
-                <div class="nd-playbook-experience" aria-label="Experience reward">
+                <div
+                  class="nd-playbook-experience"
+                  data-resizable-panel="play-experience"
+                  data-resize-min="48"
+                  aria-label="Experience reward"
+                >
                   <div>
                     <div class="nd-playbook-experience__label">Experience</div>
                     <div class="nd-playbook-experience__hint">Reward</div>
                   </div>
-                  <span class="nd-playbook-experience__value">—</span>
+                  <div
+                    class="nd-playbook-experience__value nd-play-inline-editor"
+                    data-playbook="experience"
+                    data-placeholder="Add reward..."
+                    role="textbox"
+                    aria-label="Experience reward"
+                  ></div>
                 </div>
               </div>
-              <div class="nd-playbook-panel nd-playbook-panel--gm-notes" data-playbook-field-block="gmNotes">
+              <div
+                class="nd-playbook-panel nd-playbook-panel--gm-notes"
+                data-playbook-field-block="gmNotes"
+                data-resizable-panel="play-beat-notes"
+                data-resize-min="110"
+              >
                 <div class="nd-playbook-panel__label">Beat Notes</div>
                 <div class="nd-playbook-panel__text nd-richtext" data-playbook="gmNotes"></div>
               </div>
@@ -123,7 +174,13 @@
 
       {{!-- Session Notes and permanent Session Summary share remaining space --}}
       <div class="nd-play__row nd-play__row--bottom">
-        <section class="nd-play-notes" data-live-notes-root aria-label="Session Notes">
+        <section
+          class="nd-play-notes"
+          data-live-notes-root
+          data-resizable-panel="play-session-notes"
+          data-resize-min="140"
+          aria-label="Session Notes"
+        >
           <header class="nd-play-notes__header">
             <span class="nd-play-notes__title">Session Notes</span>
             <div class="nd-play-notes__saved">
@@ -142,7 +199,13 @@
           ></div>
         </section>
 
-        <section class="nd-play-notes nd-play-summary" data-live-notes-root aria-label="Session Summary">
+        <section
+          class="nd-play-notes nd-play-summary"
+          data-live-notes-root
+          data-resizable-panel="play-session-summary"
+          data-resize-min="140"
+          aria-label="Session Summary"
+        >
           <header class="nd-play-notes__header">
             <span class="nd-play-notes__title">Session Summary</span>
             <div class="nd-play-notes__saved">
@@ -346,10 +409,22 @@
 
             <section class="nd-campaign-references" aria-label="References">
               <h3>References</h3>
-              <details><summary>Beats</summary><p>No references</p></details>
-              <details><summary>Characters</summary><p>No references</p></details>
-              <details><summary>Locations</summary><p>No references</p></details>
-              <details><summary>Items</summary><p>No references</p></details>
+              <details>
+                <summary>Beats</summary>
+                <div data-campaign-thread-refs="beats"></div>
+              </details>
+              <details>
+                <summary>Characters</summary>
+                <div data-campaign-thread-refs="characters"></div>
+              </details>
+              <details>
+                <summary>Locations</summary>
+                <div data-campaign-thread-refs="locations"></div>
+              </details>
+              <details>
+                <summary>Items</summary>
+                <div data-campaign-thread-refs="items"></div>
+              </details>
             </section>
 
             <div class="nd-campaign-thread-actions">
@@ -397,6 +472,7 @@
 
         <div class="nd-playbook-prepare">
           <div class="nd-playbook-prepare__sidebar">
+            <div class="nd-playbook-prepare__section-title">Prepared Beats</div>
             <button type="button" class="nd-playbook-prepare__add" data-playbook-add-beat>
               + Add Beat
             </button>
@@ -404,6 +480,7 @@
           </div>
 
           <div class="nd-playbook-prepare__main">
+            <div class="nd-playbook-prepare__section-title">Current Beat</div>
             <div class="nd-playbook-prepare__empty" data-playbook-prepare-empty hidden>
               <p class="nd-card__text nd-workspace__placeholder">
                 No beats yet. Add a beat to start preparing this session.
