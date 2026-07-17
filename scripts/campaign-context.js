@@ -61,7 +61,12 @@ export class CampaignAwareness {
       }
     };
 
-    setItem("scene", context.scene);
+    const sceneEl = root.querySelector("[data-context=\"scene\"]");
+    if (sceneEl) {
+      sceneEl.hidden = false;
+      const valueEl = sceneEl.querySelector("[data-context-value]");
+      if (valueEl) valueEl.textContent = context.scene || "No active scene";
+    }
     setItem("focus", context.focus);
 
     const combatActive = Boolean(context.combat);
