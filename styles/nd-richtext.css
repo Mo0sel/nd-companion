@@ -183,6 +183,18 @@
   margin: 0;
 }
 
+.nd-playbook__field > .nd-richtext-toolbar {
+  margin-bottom: 6px;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.nd-playbook__field > .nd-richtext-toolbar + .nd-richtext--editor {
+  margin-top: -7px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
 @container nd-companion (max-width: 560px) {
   .nd-richtext-toolbar {
     align-items: stretch;

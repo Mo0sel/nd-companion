@@ -22,8 +22,9 @@ export class FocusPanel {
   static paint(root, model) {
     if (!(root instanceof HTMLElement) || !model) return;
 
-    const nameEl = root.querySelector("[data-focus=\"name\"]");
-    if (nameEl) nameEl.textContent = model.name;
+    root.querySelectorAll("[data-focus=\"name\"]").forEach((nameEl) => {
+      nameEl.textContent = model.name;
+    });
 
     const portraitEl = root.querySelector("[data-focus=\"portrait\"]");
     const typeEl = root.querySelector("[data-focus=\"type\"]");

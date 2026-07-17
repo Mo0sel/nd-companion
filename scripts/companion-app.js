@@ -4,6 +4,7 @@ import { FocusPanel } from "./focus-panel.js";
 import { LiveNotes } from "./live-notes.js";
 import { Playbook } from "./playbook.js";
 import { PlaybookPrepare } from "./playbook-prepare.js";
+import { RichText } from "./rich-text.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -87,7 +88,11 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     PlaybookPrepare.paint(this.element);
     PlaybookPrepare.attach(this.element);
     this.element.querySelectorAll("[data-storage]:not([data-memory-editor])").forEach((el) => {
-      LiveNotes.attach(el, el.dataset.storage);
+      const html = el.hasAttribute("data-storage-html");
+      LiveNotes.attach(el, el.dataset.storage, {
+        html,
+        sanitize: html ? RichText.sanitize : undefined
+      });
     });
   }
 }

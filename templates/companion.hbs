@@ -39,6 +39,24 @@
               <span class="nd-play-campaign__location-value" data-context-value>No active scene</span>
             </div>
           </div>
+          <div class="nd-play-campaign__focus">
+            <span class="nd-play-campaign__focus-label">Focused Character</span>
+            <span class="nd-play-campaign__focus-value" data-focus="name">Party</span>
+          </div>
+        </section>
+
+        <section class="nd-play-beat-focus" data-beat-focus aria-label="Beat navigation summary">
+          <div class="nd-play-beat-focus__col">
+            <div class="nd-play-beat-focus__label">Now</div>
+            <div class="nd-play-beat-focus__title" data-beat-focus="now-title">—</div>
+            <div class="nd-play-beat-focus__subtitle" data-beat-focus="now-objective"></div>
+          </div>
+          <div class="nd-play-beat-focus__divider" aria-hidden="true"></div>
+          <div class="nd-play-beat-focus__col nd-play-beat-focus__col--muted">
+            <div class="nd-play-beat-focus__label">Next</div>
+            <div class="nd-play-beat-focus__title" data-beat-focus="next-title">—</div>
+            <div class="nd-play-beat-focus__subtitle" data-beat-focus="next-objective"></div>
+          </div>
         </section>
       </div>
 
@@ -96,7 +114,7 @@
         </article>
       </div>
 
-      {{!-- Session Notes consume all remaining vertical space --}}
+      {{!-- Session Notes and permanent Session Summary share remaining space --}}
       <div class="nd-play__row nd-play__row--bottom">
         <section class="nd-play-notes" data-live-notes-root aria-label="Session Notes">
           <header class="nd-play-notes__header">
@@ -108,21 +126,59 @@
             </div>
           </header>
           <div
-            class="nd-live-notes nd-play-notes__editor"
+            class="nd-live-notes nd-play-notes__editor nd-richtext"
             data-storage="sessionNotes"
+            data-storage-html
             data-placeholder="Session Notes..."
             role="textbox"
             aria-label="Session Notes"
           ></div>
         </section>
 
+        <section class="nd-play-notes nd-play-summary" data-live-notes-root aria-label="Session Summary">
+          <header class="nd-play-notes__header">
+            <span class="nd-play-notes__title">Session Summary</span>
+            <div class="nd-play-notes__saved">
+              <span class="nd-play-notes__dot" aria-hidden="true"></span>
+              <span>auto-saved</span>
+              <span class="nd-live-notes__status" data-live-notes-status hidden></span>
+            </div>
+          </header>
+          <div
+            class="nd-live-notes nd-play-notes__editor nd-richtext"
+            data-storage="sessionSummary"
+            data-storage-html
+            data-placeholder="Write the permanent session summary..."
+            role="textbox"
+            aria-label="Session Summary"
+          ></div>
+        </section>
       </div>
     </section>
 
     <section class="nd-workspace" data-workspace-panel="notes" aria-label="NPC workspace" hidden>
-      <p class="nd-workspace__placeholder">
-        NPC dossiers are reserved for future work.
-      </p>
+      <section class="nd-companion-memory-card nd-card" data-companion-memory data-live-notes-root aria-label="Companion Memory">
+        <header class="nd-card__header">
+          <span class="nd-card__accent" aria-hidden="true"></span>
+          <h2 class="nd-card__label">Companion Memory</h2>
+          <span class="nd-companion-memory-card__focus" data-focus="name">Party</span>
+          <span class="nd-live-notes__status" data-live-notes-status hidden></span>
+        </header>
+        <div class="nd-companion-memory-card__body">
+          <div class="nd-companion-memory-card__label">Focus Notes</div>
+          <p class="nd-companion-memory__empty" data-memory-empty>
+            Select an Actor to view Focus Notes.
+          </p>
+          <div
+            class="nd-card__text nd-live-notes nd-companion-memory-card__editor"
+            data-memory-editor
+            data-placeholder="Click here to start typing..."
+            role="textbox"
+            aria-label="Focus Notes"
+            hidden
+          ></div>
+        </div>
+      </section>
     </section>
 
     <section class="nd-workspace" data-workspace-panel="prepare" aria-label="Prepare workspace" hidden>
@@ -156,32 +212,6 @@
                 <button type="button" class="nd-playbook-prepare__current-button" data-playbook-set-current>
                   Set as Current Beat
                 </button>
-              </div>
-
-              <div class="nd-richtext-toolbar" data-richtext-toolbar role="toolbar" aria-label="Rich text formatting">
-                <button type="button" data-richtext-command="bold" aria-label="Bold"><strong>B</strong></button>
-                <button type="button" data-richtext-command="italic" aria-label="Italic"><em>I</em></button>
-                <button type="button" data-richtext-command="underline" aria-label="Underline"><u>U</u></button>
-                <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
-                <button type="button" data-richtext-command="heading" data-richtext-value="h2" aria-label="Heading 2">H2</button>
-                <button type="button" data-richtext-command="heading" data-richtext-value="h3" aria-label="Heading 3">H3</button>
-                <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
-                <button type="button" data-richtext-command="list" data-richtext-value="ul" aria-label="Bullet list">• List</button>
-                <button type="button" data-richtext-command="list" data-richtext-value="ol" aria-label="Numbered list">1. List</button>
-                <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
-                <label class="nd-richtext-toolbar__color">
-                  <select data-richtext-color aria-label="Text color">
-                    <option value="default">Default</option>
-                    <option value="blue">Blue</option>
-                    <option value="green">Green</option>
-                    <option value="yellow">Yellow</option>
-                    <option value="orange">Orange</option>
-                    <option value="red">Red</option>
-                    <option value="purple">Purple</option>
-                    <option value="gray">Gray</option>
-                  </select>
-                </label>
-                <button type="button" data-richtext-command="clear" aria-label="Clear formatting">Clear</button>
               </div>
 
               <div class="nd-playbook__field">
@@ -226,6 +256,31 @@
 
               <div class="nd-playbook__field">
                 <span class="nd-playbook__field-label">GM Notes</span>
+                <div class="nd-richtext-toolbar" data-richtext-toolbar role="toolbar" aria-label="GM Notes formatting">
+                  <button type="button" data-richtext-command="bold" aria-label="Bold"><strong>B</strong></button>
+                  <button type="button" data-richtext-command="italic" aria-label="Italic"><em>I</em></button>
+                  <button type="button" data-richtext-command="underline" aria-label="Underline"><u>U</u></button>
+                  <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
+                  <button type="button" data-richtext-command="heading" data-richtext-value="h2" aria-label="Heading 2">H2</button>
+                  <button type="button" data-richtext-command="heading" data-richtext-value="h3" aria-label="Heading 3">H3</button>
+                  <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
+                  <button type="button" data-richtext-command="list" data-richtext-value="ul" aria-label="Bullet list">• List</button>
+                  <button type="button" data-richtext-command="list" data-richtext-value="ol" aria-label="Numbered list">1. List</button>
+                  <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
+                  <label class="nd-richtext-toolbar__color">
+                    <select data-richtext-color aria-label="Text color">
+                      <option value="default">Default</option>
+                      <option value="blue">Blue</option>
+                      <option value="green">Green</option>
+                      <option value="yellow">Yellow</option>
+                      <option value="orange">Orange</option>
+                      <option value="red">Red</option>
+                      <option value="purple">Purple</option>
+                      <option value="gray">Gray</option>
+                    </select>
+                  </label>
+                  <button type="button" data-richtext-command="clear" aria-label="Clear formatting">Clear</button>
+                </div>
                 <div
                   class="nd-card__text nd-live-notes nd-playbook-prepare__field nd-playbook-prepare__field--notes nd-richtext nd-richtext--editor"
                   data-playbook-field="gmNotes"

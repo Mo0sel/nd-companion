@@ -1,4 +1,69 @@
 /**
- * Notes workspace styles — Sprint 16D.
- * Layout for [data-workspace-panel="notes"] lives here.
+ * Companion Memory workspace (internally retains the existing "notes" key).
+ * This restores the existing focus-memory workflow without adding NPC systems.
  */
+
+[data-workspace-panel="notes"] {
+  padding: var(--nd-space-4) var(--nd-page-x, 28px);
+}
+
+.nd-companion-memory-card {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.nd-companion-memory-card .nd-card__accent {
+  background: var(--nd-purple);
+}
+
+.nd-companion-memory-card__focus {
+  margin-left: auto;
+  overflow: hidden;
+  color: var(--nd-text-2);
+  font-size: var(--nd-text-caption);
+  font-weight: var(--nd-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nd-companion-memory-card__focus + .nd-live-notes__status {
+  margin-left: var(--nd-space-2);
+}
+
+.nd-companion-memory-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding-top: var(--nd-space-2);
+  border-top: 1px solid var(--nd-border);
+}
+
+.nd-companion-memory-card__label {
+  margin-bottom: var(--nd-space-2);
+  color: var(--nd-text-3);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-semibold);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.nd-companion-memory-card__editor {
+  flex: 1;
+  min-height: 10em;
+  overflow-y: auto;
+}
+
+.nd-companion-memory-card [data-memory-editor][hidden],
+.nd-companion-memory-card [data-memory-empty][hidden] {
+  display: none !important;
+}
+
+@container nd-companion (max-width: 560px) {
+  [data-workspace-panel="notes"] {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+}

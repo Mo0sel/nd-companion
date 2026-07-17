@@ -26,6 +26,16 @@ export class CompanionStorage {
       default: ""
     });
 
+    // Temporary single-summary field. This intentionally does not introduce
+    // session history; the UI can migrate to that future model unchanged.
+    game.settings.register(MODULE_ID, "sessionSummary", {
+      name: "sessionSummary",
+      scope: "world",
+      config: false,
+      type: String,
+      default: ""
+    });
+
     game.settings.register(MODULE_ID, MEMORY_SETTING, {
       name: MEMORY_SETTING,
       scope: "world",

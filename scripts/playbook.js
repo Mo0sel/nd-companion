@@ -40,18 +40,13 @@ export class Playbook {
    *   canNext: boolean,
    *   beat: PlaybookBeat,
    *   nextBeat: PlaybookBeat|null,
-   *   status: DerivedBeatStatus,
-   *   donePercent: number
+   *   status: DerivedBeatStatus
    * }}
    */
   static get() {
     const current = PlaybookService.getCurrent();
     const nextBeat =
       current.index < current.total - 1 ? PlaybookService.getBeat(current.index + 1) : null;
-    const donePercent = current.total
-      ? Math.round((current.index / current.total) * 100)
-      : 0;
-
     return {
       index: current.index,
       total: current.total,
@@ -59,8 +54,7 @@ export class Playbook {
       canNext: current.canNext,
       beat: current.beat,
       nextBeat,
-      status: current.total > 0 ? Playbook.#derivedStatus(current.index, current.index) : "planned",
-      donePercent
+      status: current.total > 0 ? Playbook.#derivedStatus(current.index, current.index) : "planned"
     };
   }
 
@@ -201,12 +195,6 @@ export class Playbook {
         { hideEmpty: true }
       );
     }
-
-    const pctEl = focus.querySelector("[data-beat-focus=\"done-pct\"]");
-    if (pctEl) pctEl.textContent = String(snapshot.donePercent);
-
-    const bar = focus.querySelector("[data-beat-focus=\"done-bar\"]");
-    if (bar instanceof HTMLElement) bar.style.width = `${snapshot.donePercent}%`;
   }
 
   /**

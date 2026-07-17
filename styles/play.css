@@ -21,6 +21,8 @@
 }
 
 .nd-play__row--top {
+  grid-template-columns: minmax(260px, 0.9fr) minmax(360px, 1.1fr);
+  gap: var(--nd-card-gap);
   padding: 14px var(--nd-page-x, 28px) 0;
 }
 
@@ -29,6 +31,8 @@
 }
 
 .nd-play__row--bottom {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--nd-card-gap);
   flex: 1;
   min-height: 0;
   padding: 10px var(--nd-page-x, 28px) 16px;
@@ -39,6 +43,8 @@
 .nd-play-campaign {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: var(--nd-space-4);
   min-width: 0;
   min-height: 54px;
   padding: 9px 16px;
@@ -92,6 +98,97 @@
   font-weight: var(--nd-weight-medium);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.nd-play-campaign__focus {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.nd-play-campaign__focus-label {
+  color: var(--nd-text-3);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-semibold);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.nd-play-campaign__focus-value {
+  max-width: 12em;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--nd-text-2);
+  font-size: var(--nd-text-caption);
+  font-weight: var(--nd-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* NOW / NEXT are navigation aids, separate from Playbook content. */
+.nd-play-beat-focus {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  min-width: 0;
+  min-height: 54px;
+  padding: 9px 16px;
+  background: var(--nd-surface);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-xl);
+  box-sizing: border-box;
+}
+
+.nd-play-beat-focus__col {
+  flex: 1;
+  min-width: 0;
+}
+
+.nd-play-beat-focus__col--muted {
+  opacity: 0.62;
+}
+
+.nd-play-beat-focus__label {
+  margin-bottom: 3px;
+  color: var(--nd-purple);
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nd-play-beat-focus__title {
+  overflow: hidden;
+  color: var(--nd-text-1);
+  font-size: var(--nd-text-body-sm);
+  font-weight: var(--nd-weight-semibold);
+  line-height: var(--nd-leading-snug);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nd-play-beat-focus__subtitle {
+  margin-top: 1px;
+  overflow: hidden;
+  color: var(--nd-text-3);
+  font-size: var(--nd-text-caption);
+  line-height: var(--nd-leading-snug);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nd-play-beat-focus__subtitle:empty,
+.nd-play-beat-focus__subtitle[hidden] {
+  display: none;
+}
+
+.nd-play-beat-focus__divider {
+  flex-shrink: 0;
+  width: 1px;
+  background: var(--nd-border);
 }
 
 /* ── Fixed Playbook card ─────────────────────────────────────────────────── */
@@ -536,6 +633,10 @@
 /* ── Responsive Foundry window ───────────────────────────────────────────── */
 
 @container nd-companion (max-width: 760px) {
+  .nd-play__row--top {
+    grid-template-columns: 1fr;
+  }
+
   .nd-playbook-card__header {
     align-items: stretch;
     flex-direction: column-reverse;
@@ -589,5 +690,10 @@
     height: 28px;
     min-width: 28px;
     min-height: 28px;
+  }
+
+  .nd-play__row--bottom {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(2, minmax(0, 1fr));
   }
 }
