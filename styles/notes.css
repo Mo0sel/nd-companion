@@ -25,17 +25,21 @@
   background: var(--nd-purple);
 }
 
-.nd-companion-memory-card__focus {
+.nd-companion-memory-card__actor {
   margin-left: auto;
+  display: grid;
+  justify-items: end;
+  min-width: 0;
+}
+
+.nd-companion-memory-card__focus {
   overflow: hidden;
-  color: var(--nd-text-2);
-  font-size: var(--nd-text-caption);
-  font-weight: var(--nd-weight-semibold);
+  max-width: 220px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.nd-companion-memory-card__focus + .nd-live-notes__status {
+.nd-companion-memory-card__actor + .nd-live-notes__status {
   margin-left: var(--nd-space-2);
 }
 

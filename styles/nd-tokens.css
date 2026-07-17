@@ -30,6 +30,8 @@
   --nd-blue-tint: rgba(91, 142, 255, 0.05);
   --nd-blue-border: rgba(91, 142, 255, 0.15);
   --nd-blue-hover: rgba(91, 142, 255, 0.5);
+  --nd-context-accent: #8f82bb;
+  --nd-group-accent: #829bd1;
 
   /* ── Color: semantic ───────────────────────────────────────────────────── */
   --nd-danger: #ef4444;

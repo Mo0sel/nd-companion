@@ -28,8 +28,29 @@
   box-sizing: border-box;
 }
 
-/* Three-level information hierarchy: page, section, field. */
-.nd-page-title {
+/* Five-level information hierarchy shared by every workspace. */
+.nd-hierarchy-nav,
+.nd-companion .nd-hierarchy-nav {
+  color: var(--nd-text-3);
+  font-size: var(--nd-text-label);
+  font-weight: var(--nd-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nd-hierarchy-context,
+.nd-companion .nd-hierarchy-context {
+  color: var(--nd-context-accent);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-semibold);
+  letter-spacing: var(--nd-tracking-label);
+  text-transform: uppercase;
+}
+
+.nd-page-title,
+.nd-hierarchy-primary,
+.nd-companion .nd-hierarchy-primary {
   margin: 0;
   color: var(--nd-text-1);
   font-size: var(--nd-text-h1);
@@ -38,15 +59,23 @@
   letter-spacing: -0.02em;
 }
 
-.nd-section-title {
+.nd-section-title,
+.nd-hierarchy-group,
+.nd-companion .nd-hierarchy-group {
   margin: 0;
-  color: var(--nd-text-2);
-  font-size: var(--nd-text-h3);
+  padding-bottom: var(--nd-space-2);
+  color: var(--nd-group-accent);
+  border-bottom: 1px solid var(--nd-border-2);
+  font-size: var(--nd-text-caption);
   font-weight: var(--nd-weight-semibold);
   line-height: var(--nd-leading-snug);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-.nd-field-label {
+.nd-field-label,
+.nd-hierarchy-card,
+.nd-companion .nd-hierarchy-card {
   color: var(--nd-text-3);
   font-family: var(--nd-font-mono);
   font-size: var(--nd-text-micro);

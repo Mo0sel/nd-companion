@@ -24,7 +24,7 @@
     </div>
   </header>
 
-  <nav class="nd-workspace-switcher" aria-label="Workspaces">
+  <nav class="nd-workspace-switcher nd-hierarchy-nav" aria-label="Workspaces">
     <button
       type="button"
       class="nd-workspace-switcher__button"
@@ -66,12 +66,12 @@
           <div class="nd-play-campaign__main">
             <div class="nd-play-campaign__title" data-context="campaign-title"></div>
             <div class="nd-play-campaign__location" data-context="scene">
-              <span class="nd-play-campaign__location-label">Current Location</span>
+              <span class="nd-play-campaign__location-label nd-hierarchy-context">Current Location</span>
               <span class="nd-play-campaign__location-value" data-context-value>No active scene</span>
             </div>
           </div>
           <div class="nd-play-campaign__focus">
-            <span class="nd-play-campaign__focus-label">Focused Character</span>
+            <span class="nd-play-campaign__focus-label nd-hierarchy-context">Focused Character</span>
             <span class="nd-play-campaign__focus-value" data-focus="name">Party</span>
           </div>
         </section>
@@ -199,7 +199,7 @@
           aria-label="Session Notes"
         >
           <header class="nd-play-notes__header">
-            <span class="nd-play-notes__title">Session Notes</span>
+            <span class="nd-play-notes__title nd-hierarchy-card">Session Notes</span>
             <div class="nd-play-notes__saved">
               <span class="nd-play-notes__dot" aria-hidden="true"></span>
               <span>auto-saved</span>
@@ -224,7 +224,7 @@
           aria-label="Session Summary"
         >
           <header class="nd-play-notes__header">
-            <span class="nd-play-notes__title">Session Summary</span>
+            <span class="nd-play-notes__title nd-hierarchy-card">Session Summary</span>
             <div class="nd-play-notes__saved">
               <span class="nd-play-notes__dot" aria-hidden="true"></span>
               <span>auto-saved</span>
@@ -252,9 +252,9 @@
       hidden
     >
       <header class="nd-campaign-header">
-        <div class="nd-campaign-header__title">Campaign</div>
+        <div class="nd-campaign-header__title nd-hierarchy-group">Campaign Information</div>
         <div class="nd-campaign-header__current">
-          <span>Current Session</span>
+          <span class="nd-hierarchy-context">Current Session</span>
           <strong data-campaign-current-session>Session 1</strong>
         </div>
       </header>
@@ -262,21 +262,21 @@
       <div class="nd-quest-layout">
         <aside class="nd-quest-sidebar" aria-label="Quest navigation">
           <div class="nd-quest-sidebar__section">
-            <div class="nd-quest-sidebar__heading">
+            <div class="nd-quest-sidebar__heading nd-hierarchy-group">
               <span>Main Quests</span>
               <button type="button" data-new-quest="MAIN" aria-label="New Main Quest">+</button>
             </div>
             <div data-quest-list="MAIN"></div>
           </div>
           <div class="nd-quest-sidebar__section">
-            <div class="nd-quest-sidebar__heading">
+            <div class="nd-quest-sidebar__heading nd-hierarchy-group">
               <span>Side Quests</span>
               <button type="button" data-new-quest="SIDE" aria-label="New Side Quest">+</button>
             </div>
             <div data-quest-list="SIDE"></div>
           </div>
           <div class="nd-quest-sidebar__section">
-            <div class="nd-quest-sidebar__heading">
+            <div class="nd-quest-sidebar__heading nd-hierarchy-group">
               <span>Companion Quests</span>
               <button type="button" data-new-quest="COMPANION" aria-label="New Companion Quest">+</button>
             </div>
@@ -292,8 +292,8 @@
           <section data-quest-editor hidden>
             <header class="nd-campaign-panel__header">
               <div>
-                <div class="nd-campaign-panel__eyebrow">Campaign Quest</div>
-                <h2>Quest</h2>
+                <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Campaign Quest</div>
+                <h2 class="nd-hierarchy-primary">Quest</h2>
               </div>
               <span class="nd-campaign-save-status" data-quest-saved hidden></span>
             </header>
@@ -301,7 +301,7 @@
             <div class="nd-campaign-thread-fields">
               <label class="nd-campaign-field nd-campaign-field--wide">
                 <span>Title</span>
-                <input type="text" data-quest-title placeholder="Quest title">
+                <input class="nd-hierarchy-primary" type="text" data-quest-title placeholder="Quest title">
               </label>
               <label class="nd-campaign-field">
                 <span>Status</span>
@@ -362,8 +362,8 @@
             <section class="nd-quest-entries">
               <header>
                 <div>
-                  <div class="nd-campaign-panel__eyebrow">Playable Content</div>
-                  <h3>Quest Entries</h3>
+                  <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Playable Content</div>
+                  <h3 class="nd-hierarchy-group">Quest Entries</h3>
                 </div>
                 <button type="button" class="nd-campaign-new-thread" data-add-quest-entry>
                   + New Entry
@@ -376,21 +376,21 @@
           <section data-quest-session-view hidden>
             <header class="nd-campaign-panel__header">
               <div>
-                <div class="nd-campaign-panel__eyebrow">Current Session</div>
-                <h2 data-campaign-session="title">Session 1</h2>
+                <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Current Session</div>
+                <h2 class="nd-hierarchy-primary" data-campaign-session="title">Session 1</h2>
               </div>
               <span class="nd-campaign-status" data-campaign-session="status">active</span>
             </header>
             <section class="nd-campaign-content-block">
-              <h3>Session Summary</h3>
+              <h3 class="nd-hierarchy-group">Session Summary</h3>
               <div class="nd-richtext" data-campaign-session="summary"></div>
             </section>
             <section class="nd-campaign-content-block">
-              <h3>Session Notes</h3>
+              <h3 class="nd-hierarchy-group">Session Notes</h3>
               <div class="nd-richtext" data-campaign-session="notes"></div>
             </section>
             <section class="nd-campaign-content-block">
-              <h3>Session Plan</h3>
+              <h3 class="nd-hierarchy-group">Session Plan</h3>
               <div class="nd-campaign-beats" data-campaign-session-beats></div>
             </section>
           </section>
@@ -597,8 +597,11 @@
         <section class="nd-companion-memory-card nd-card" data-companion-memory data-live-notes-root aria-label="Companion Memory">
           <header class="nd-card__header">
             <span class="nd-card__accent" aria-hidden="true"></span>
-            <h2 class="nd-card__label">Companion Memory</h2>
-            <span class="nd-companion-memory-card__focus" data-focus="name">Party</span>
+            <h2 class="nd-card__label nd-hierarchy-card">Companion Memory</h2>
+            <span class="nd-companion-memory-card__actor">
+              <span class="nd-hierarchy-context">Focused Actor</span>
+              <strong class="nd-companion-memory-card__focus nd-hierarchy-primary" data-focus="name">Party</strong>
+            </span>
             <span class="nd-live-notes__status" data-live-notes-status hidden></span>
           </header>
           <div class="nd-companion-memory-card__body">
@@ -631,7 +634,7 @@
         <section class="nd-reputation-card nd-card" aria-label="Reputation">
           <header class="nd-card__header">
             <span class="nd-card__accent" aria-hidden="true"></span>
-            <h2 class="nd-card__label">Reputation</h2>
+            <h2 class="nd-card__label nd-hierarchy-card">Reputation</h2>
           </header>
           <div class="nd-reputation-card__empty">
             <strong>No reputation network yet.</strong>
@@ -645,13 +648,13 @@
       <article class="nd-card nd-card--playbook-prepare" data-playbook-prepare data-live-notes-root aria-label="Session Builder">
         <header class="nd-card__header">
           <span class="nd-card__accent" aria-hidden="true"></span>
-          <h2 class="nd-card__label">Session Builder</h2>
+          <h2 class="nd-card__label nd-hierarchy-context">Session Builder</h2>
           <span class="nd-live-notes__status" data-live-notes-status hidden></span>
         </header>
 
         <div class="nd-playbook-prepare">
           <div class="nd-playbook-prepare__sidebar">
-            <div class="nd-playbook-prepare__section-title">Prepared Entries</div>
+            <div class="nd-playbook-prepare__section-title nd-hierarchy-group">Prepared Entries</div>
             <button type="button" class="nd-session-import__open" data-open-campaign-import>
               Import from Campaign
             </button>
@@ -662,7 +665,7 @@
           </div>
 
           <div class="nd-playbook-prepare__main">
-            <div class="nd-playbook-prepare__section-title">Current Entry</div>
+            <div class="nd-playbook-prepare__section-title nd-hierarchy-group">Current Entry</div>
             <div class="nd-playbook-prepare__empty" data-playbook-prepare-empty hidden>
               <p class="nd-card__text nd-workspace__placeholder">
                 No entries yet. Import from Campaign or add an entry.
@@ -682,7 +685,7 @@
               <div class="nd-playbook__field">
                 <span class="nd-playbook__field-label">Title</span>
                 <div
-                  class="nd-card__text nd-live-notes nd-playbook-prepare__field"
+                  class="nd-card__text nd-live-notes nd-playbook-prepare__field nd-hierarchy-primary"
                   data-playbook-field="title"
                   data-placeholder="Entry title..."
                   role="textbox"

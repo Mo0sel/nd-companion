@@ -1,6 +1,6 @@
 # N&D Companion
 
-Version: 0.2.6
+Version: 0.2.7
 
 ## Vision
 
@@ -137,6 +137,18 @@ Fast under pressure.
 No duplicated information.
 
 Campaign is the source of truth.
+
+---
+
+# Information Hierarchy
+
+1. Workspace navigation — neutral.
+2. Page context — subtle accent.
+3. Primary object — largest and highest emphasis.
+4. Section group — muted color with a subtle divider.
+5. Card title — consistent uppercase micro-label.
+
+Use hierarchy before adding color or decoration.
 
 ---
 
