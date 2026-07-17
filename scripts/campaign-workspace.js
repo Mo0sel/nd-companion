@@ -143,13 +143,6 @@ export class CampaignWorkspace {
           return;
         }
 
-        const questButton = target.closest("[data-quest-id]");
-        if (questButton && !target.closest("[data-save-quest-entry]")) {
-          const id = questButton.getAttribute("data-quest-id");
-          if (id) CampaignWorkspace.selectQuest(root, id);
-          return;
-        }
-
         if (target.closest("[data-save-quest]")) {
           void CampaignWorkspace.#saveQuest(root);
           return;
@@ -157,6 +150,13 @@ export class CampaignWorkspace {
 
         if (target.closest("[data-add-quest-entry]")) {
           void CampaignWorkspace.#createEntry(root);
+          return;
+        }
+
+        const questButton = target.closest("[data-quest-nav-id]");
+        if (questButton) {
+          const id = questButton.getAttribute("data-quest-nav-id");
+          if (id) CampaignWorkspace.selectQuest(root, id);
           return;
         }
 
@@ -196,7 +196,7 @@ export class CampaignWorkspace {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "nd-quest-sidebar__quest";
-        button.dataset.questId = quest.id;
+        button.dataset.questNavId = quest.id;
         button.classList.toggle("is-active", quest.id === CampaignWorkspace.#questId);
         const title = document.createElement("span");
         title.textContent = quest.title?.trim() || "Untitled Quest";

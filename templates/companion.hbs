@@ -52,7 +52,7 @@
       data-action="setWorkspace"
       data-workspace="notes"
       aria-pressed="false"
-    >NPC</button>
+    >Actors</button>
   </nav>
 
   <div class="nd-workspace-region">
@@ -76,31 +76,10 @@
           </div>
         </section>
 
-        <section class="nd-play-beat-focus" data-beat-focus aria-label="Entry navigation summary">
-          <div class="nd-play-beat-focus__col">
-            <div class="nd-play-beat-focus__label">Now</div>
-            <div class="nd-play-beat-focus__title" data-beat-focus="now-title">—</div>
-            <div class="nd-play-beat-focus__subtitle" data-beat-focus="now-objective"></div>
-          </div>
-          <div class="nd-play-beat-focus__divider" aria-hidden="true"></div>
-          <div class="nd-play-beat-focus__col nd-play-beat-focus__col--muted">
-            <div class="nd-play-beat-focus__label">Next</div>
-            <div class="nd-play-beat-focus__title" data-beat-focus="next-title">—</div>
-            <div class="nd-play-beat-focus__subtitle" data-beat-focus="next-objective"></div>
-          </div>
-        </section>
       </div>
 
       {{!-- Row 2: Playbook hero --}}
       <div class="nd-play__row nd-play__row--hero">
-        <section class="nd-play-session-plan" aria-label="Today's Session">
-          <header>
-            <div class="nd-play-session-plan__eyebrow">Today's Session</div>
-            <span data-play-session-count>0 entries</span>
-          </header>
-          <div class="nd-play-session-plan__list" data-play-session-plan></div>
-        </section>
-
         <article class="nd-playbook-card" data-playbook aria-label="Current Session Entry">
           <div class="nd-playbook-card__accent" data-playbook="accent" aria-hidden="true"></div>
           <div class="nd-playbook-card__body">
@@ -119,62 +98,78 @@
                 <button type="button" class="nd-playbook-card__nav" data-playbook-nav="next" aria-label="Next entry">→</button>
               </div>
               <div class="nd-playbook-card__statuses" role="group" aria-label="Entry status">
-                <span class="nd-playbook-status" data-playbook-status="planned" aria-pressed="false">Planned</span>
                 <span class="nd-playbook-status" data-playbook-status="active" aria-pressed="false">Active</span>
                 <span class="nd-playbook-status" data-playbook-status="done" aria-pressed="false">Completed</span>
               </div>
             </header>
 
-            <div class="nd-playbook-card__panels">
-              <div class="nd-playbook-card__left-column">
+            <div class="nd-play-entry-grid">
+              <section class="nd-play-entry-card nd-play-entry-card--speech" data-playbook-field-block="speechNotes">
+                <div class="nd-play-entry-card__label">Speech Notes</div>
                 <div
-                  class="nd-playbook-panel nd-playbook-panel--objective"
-                  data-playbook-field-block="objective"
-                  data-resizable-panel="play-objective"
-                  data-resize-min="84"
-                >
-                  <div class="nd-playbook-panel__label">Objectives</div>
-                  <div
-                    class="nd-playbook-panel__text nd-richtext nd-play-inline-editor"
-                    data-playbook="objective"
-                    data-placeholder="Add an objective..."
-                    role="textbox"
-                    aria-label="Objectives"
-                  ></div>
-                </div>
-                <div
-                  class="nd-playbook-experience"
-                  data-resizable-panel="play-experience"
-                  data-resize-min="48"
-                  aria-label="Experience reward"
-                >
-                  <div>
-                    <div class="nd-playbook-experience__label">Experience</div>
-                    <div class="nd-playbook-experience__hint">Reward</div>
-                  </div>
-                  <div
-                    class="nd-playbook-experience__value nd-play-inline-editor nd-richtext"
-                    data-playbook="experience"
-                    data-placeholder="Add reward..."
-                    role="textbox"
-                    aria-label="Experience reward"
-                  ></div>
-                </div>
-              </div>
-              <div
-                class="nd-playbook-panel nd-playbook-panel--gm-notes"
-                data-playbook-field-block="gmNotes"
-                data-resizable-panel="play-beat-notes"
-                data-resize-min="110"
-              >
-                <div class="nd-playbook-panel__label">Notes</div>
-                <div class="nd-playbook-panel__text nd-richtext" data-playbook="gmNotes"></div>
-              </div>
-            </div>
+                  class="nd-play-entry-card__content nd-richtext nd-play-inline-editor"
+                  data-playbook="speechNotes"
+                  data-placeholder="Add dialogue or read-aloud text..."
+                  role="textbox"
+                  aria-label="Speech Notes"
+                ></div>
+              </section>
 
-            <div class="nd-playbook-card__related" data-playbook-field-block="entities">
-              <div class="nd-playbook-card__related-label">Related</div>
-              <div class="nd-playbook-card__chips" data-playbook="entities"></div>
+              <section class="nd-play-entry-card" data-playbook-field-block="setup">
+                <div class="nd-play-entry-card__label">Setup</div>
+                <div class="nd-play-entry-card__content nd-richtext" data-playbook="setup"></div>
+              </section>
+
+              <section class="nd-play-entry-card nd-play-entry-card--objective" data-playbook-field-block="objective">
+                <header class="nd-play-entry-card__header">
+                  <div class="nd-play-entry-card__label">Objectives</div>
+                  <button type="button" data-objective-add aria-label="Add objective">+ Objective</button>
+                </header>
+                <div
+                  class="nd-play-entry-card__content nd-richtext nd-play-inline-editor"
+                  data-playbook="objective"
+                  data-placeholder="Add an objective..."
+                  role="textbox"
+                  aria-label="Objectives"
+                ></div>
+              </section>
+
+              <section class="nd-play-entry-card nd-play-entry-card--experience" data-playbook-field-block="experience">
+                <div class="nd-play-entry-card__label">Experience</div>
+                <div
+                  class="nd-play-entry-card__content nd-richtext nd-play-inline-editor"
+                  data-playbook="experience"
+                  data-placeholder="Add XP or reward..."
+                  role="textbox"
+                  aria-label="Experience"
+                ></div>
+              </section>
+
+              <section class="nd-play-entry-card" data-playbook-field-block="twist">
+                <div class="nd-play-entry-card__label">Twist</div>
+                <div class="nd-play-entry-card__content nd-richtext" data-playbook="twist"></div>
+              </section>
+
+              <section class="nd-play-entry-card" data-playbook-field-block="possibleOutcomes">
+                <div class="nd-play-entry-card__label">Possible Outcomes</div>
+                <div class="nd-play-entry-card__content nd-richtext" data-playbook="possibleOutcomes"></div>
+              </section>
+
+              <section class="nd-play-entry-card nd-play-entry-card--notes" data-playbook-field-block="gmNotes">
+                <div class="nd-play-entry-card__label">Notes</div>
+                <div
+                  class="nd-play-entry-card__content nd-richtext nd-play-inline-editor"
+                  data-playbook="gmNotes"
+                  data-placeholder="Add live entry notes..."
+                  role="textbox"
+                  aria-label="Entry Notes"
+                ></div>
+              </section>
+
+              <section class="nd-play-entry-card nd-play-entry-card--references" data-playbook-field-block="entities">
+                <div class="nd-play-entry-card__label">Related References</div>
+                <div class="nd-playbook-card__chips" data-playbook="entities"></div>
+              </section>
             </div>
           </div>
         </article>
@@ -583,29 +578,53 @@
       </div>
     </section>
 
-    <section class="nd-workspace" data-workspace-panel="notes" aria-label="NPC workspace" hidden>
-      <section class="nd-companion-memory-card nd-card" data-companion-memory data-live-notes-root aria-label="Companion Memory">
-        <header class="nd-card__header">
-          <span class="nd-card__accent" aria-hidden="true"></span>
-          <h2 class="nd-card__label">Companion Memory</h2>
-          <span class="nd-companion-memory-card__focus" data-focus="name">Party</span>
-          <span class="nd-live-notes__status" data-live-notes-status hidden></span>
-        </header>
-        <div class="nd-companion-memory-card__body">
-          <div class="nd-companion-memory-card__label">Focus Notes</div>
-          <p class="nd-companion-memory__empty" data-memory-empty>
-            Select an Actor to view Focus Notes.
-          </p>
-          <div
-            class="nd-card__text nd-live-notes nd-companion-memory-card__editor"
-            data-memory-editor
-            data-placeholder="Click here to start typing..."
-            role="textbox"
-            aria-label="Focus Notes"
-            hidden
-          ></div>
-        </div>
-      </section>
+    <section class="nd-workspace" data-workspace-panel="notes" aria-label="Actors workspace" hidden>
+      <div class="nd-actors-grid">
+        <section class="nd-companion-memory-card nd-card" data-companion-memory data-live-notes-root aria-label="Companion Memory">
+          <header class="nd-card__header">
+            <span class="nd-card__accent" aria-hidden="true"></span>
+            <h2 class="nd-card__label">Companion Memory</h2>
+            <span class="nd-companion-memory-card__focus" data-focus="name">Party</span>
+            <span class="nd-live-notes__status" data-live-notes-status hidden></span>
+          </header>
+          <div class="nd-companion-memory-card__body">
+            <p class="nd-companion-memory__empty" data-memory-empty>
+              Select an Actor to view Companion Memory.
+            </p>
+            <div class="nd-richtext-toolbar" data-richtext-toolbar data-memory-toolbar role="toolbar" aria-label="Companion Memory formatting" hidden>
+              <button type="button" data-richtext-command="bold" aria-label="Bold"><strong>B</strong></button>
+              <button type="button" data-richtext-command="italic" aria-label="Italic"><em>I</em></button>
+              <button type="button" data-richtext-command="underline" aria-label="Underline"><u>U</u></button>
+              <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
+              <button type="button" data-richtext-command="heading" data-richtext-value="h2">H2</button>
+              <button type="button" data-richtext-command="heading" data-richtext-value="h3">H3</button>
+              <button type="button" data-richtext-command="list" data-richtext-value="ul">• List</button>
+              <button type="button" data-richtext-command="list" data-richtext-value="ol">1. List</button>
+              <button type="button" data-richtext-command="clear">Clear</button>
+            </div>
+            <div
+              class="nd-card__text nd-live-notes nd-companion-memory-card__editor nd-richtext nd-richtext--editor"
+              data-memory-editor
+              data-richtext-editor
+              data-placeholder="Record everything the Companion permanently knows..."
+              role="textbox"
+              aria-label="Companion Memory"
+              hidden
+            ></div>
+          </div>
+        </section>
+
+        <section class="nd-reputation-card nd-card" aria-label="Reputation">
+          <header class="nd-card__header">
+            <span class="nd-card__accent" aria-hidden="true"></span>
+            <h2 class="nd-card__label">Reputation</h2>
+          </header>
+          <div class="nd-reputation-card__empty">
+            <strong>No reputation network yet.</strong>
+            <span>Relationships and social connections will appear here in a future update.</span>
+          </div>
+        </section>
+      </div>
     </section>
 
     <section class="nd-workspace" data-workspace-panel="prepare" aria-label="Prepare workspace" hidden>

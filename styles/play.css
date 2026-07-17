@@ -22,7 +22,7 @@
 }
 
 .nd-play__row--top {
-  grid-template-columns: minmax(260px, 0.9fr) minmax(360px, 1.1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--nd-card-gap);
   padding: 14px var(--nd-page-x, 28px) 0;
 }
@@ -465,6 +465,145 @@
   color: var(--nd-status-done-color);
   background: var(--nd-status-done-bg);
   border-color: var(--nd-status-done-color);
+}
+
+.nd-play-entry-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.nd-play-entry-card {
+  min-width: 0;
+  padding: 11px 13px;
+  background: var(--nd-surface-inset);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-lg);
+  box-sizing: border-box;
+}
+
+.nd-play-entry-card--speech,
+.nd-play-entry-card--objective,
+.nd-play-entry-card--notes,
+.nd-play-entry-card--references {
+  grid-column: 1 / -1;
+}
+
+.nd-play-entry-card--speech {
+  border-color: rgba(168, 85, 247, 0.28);
+}
+
+.nd-play-entry-card--objective {
+  background: var(--nd-blue-tint);
+  border-color: var(--nd-blue-border);
+}
+
+.nd-play-entry-card--notes {
+  border-color: rgba(245, 158, 11, 0.22);
+}
+
+.nd-play-entry-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nd-space-3);
+}
+
+.nd-play-entry-card__label {
+  margin-bottom: 7px;
+  color: var(--nd-text-3);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nd-play-entry-card__header .nd-play-entry-card__label {
+  margin-bottom: 0;
+}
+
+.nd-play-entry-card__header button {
+  margin: 0;
+  padding: 3px 7px;
+  color: var(--nd-blue);
+  background: transparent;
+  border: 1px solid var(--nd-blue-border);
+  border-radius: var(--nd-radius-sm);
+  box-shadow: none;
+  font-size: var(--nd-text-micro);
+  cursor: pointer;
+}
+
+.nd-play-entry-card__content {
+  min-height: 42px;
+  max-height: 180px;
+  overflow-y: auto;
+  color: var(--nd-text-1);
+  line-height: var(--nd-leading-normal);
+}
+
+.nd-play-entry-card__content:empty::before,
+.nd-play-entry-card--references .nd-playbook-card__chips:empty::before {
+  content: attr(data-placeholder);
+  color: var(--nd-text-3);
+  opacity: 0.72;
+}
+
+.nd-play-entry-card:not(:has(.nd-play-inline-editor)) .nd-play-entry-card__content:empty::before {
+  content: "Not prepared.";
+}
+
+.nd-play-entry-card--references .nd-playbook-card__chips:empty::before {
+  content: "No related references.";
+}
+
+.nd-play-entry-card--objective .nd-richtext > p,
+.nd-play-entry-card--objective .nd-richtext li {
+  position: relative;
+  margin-bottom: 5px;
+  padding-left: 22px;
+}
+
+.nd-play-entry-card--objective .nd-richtext > p::before,
+.nd-play-entry-card--objective .nd-richtext li::before {
+  content: "☐";
+  position: absolute;
+  left: 0;
+  color: var(--nd-blue);
+  cursor: pointer;
+}
+
+.nd-play-entry-card--objective .nd-richtext > p.nd-objective-complete::before,
+.nd-play-entry-card--objective .nd-richtext li.nd-objective-complete::before {
+  content: "☑";
+  color: var(--nd-status-done-color);
+}
+
+.nd-play-entry-card--objective .nd-objective-complete {
+  color: var(--nd-text-3);
+  text-decoration: line-through;
+}
+
+.nd-play-entry-card--objective .nd-richtext ul,
+.nd-play-entry-card--objective .nd-richtext ol {
+  padding-left: 0;
+  list-style: none;
+}
+
+.nd-play-entry-card--experience .nd-play-entry-card__content {
+  min-height: 28px;
+  font-family: var(--nd-font-mono);
+}
+
+@container nd-companion (max-width: 620px) {
+  .nd-play-entry-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nd-play-entry-card {
+    grid-column: 1;
+  }
 }
 
 /* Objective / Experience left; fixed-height Beat Notes right. */

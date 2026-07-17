@@ -1,4 +1,6 @@
 import { LiveNotes } from "./live-notes.js";
+import { RichText } from "./rich-text.js";
+import { RichTextToolbar } from "./rich-text-toolbar.js";
 
 /**
  * Renders focus-driven Companion Memory (Focus Notes) from FocusManager.
@@ -63,18 +65,26 @@ export class FocusPanel {
 
     const emptyEl = section.querySelector("[data-memory-empty]");
     const editorEl = section.querySelector("[data-memory-editor]");
+    const toolbarEl = section.querySelector("[data-memory-toolbar]");
     if (!emptyEl || !editorEl) return;
 
     if (model.kind === "actor" && model.uuid) {
       emptyEl.hidden = true;
+      if (toolbarEl instanceof HTMLElement) toolbarEl.hidden = false;
       editorEl.hidden = false;
-      LiveNotes.attach(editorEl, FocusPanel.memoryKey("actor", model.uuid), { memory: true });
+      RichTextToolbar.attach(section);
+      LiveNotes.attach(editorEl, FocusPanel.memoryKey("actor", model.uuid), {
+        memory: true,
+        html: true,
+        sanitize: RichText.sanitize
+      });
       return;
     }
 
     LiveNotes.detach(editorEl);
+    if (toolbarEl instanceof HTMLElement) toolbarEl.hidden = true;
     editorEl.hidden = true;
-    editorEl.textContent = "";
+    editorEl.innerHTML = "";
     emptyEl.hidden = false;
   }
 }

@@ -160,6 +160,9 @@ export class RichText {
     if (!ALLOWED_TAGS.has(tag)) return fragment;
 
     const clean = document.createElement(tag.toLowerCase());
+    if (["P", "LI"].includes(tag) && node.classList.contains("nd-objective-complete")) {
+      clean.className = "nd-objective-complete";
+    }
     if (tag === "SPAN") {
       if (node.hasAttribute("data-nd-mention")) {
         const kind = (node.getAttribute("data-mention-kind") ?? "").slice(0, 64);

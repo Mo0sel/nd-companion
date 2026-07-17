@@ -35,6 +35,40 @@ export class Playbook {
   }
 
   /**
+   * Completion is derived from the current Entry's objective checklist.
+   * This keeps PLAY status lightweight and avoids another persistence field.
+   * @param {PlaybookBeat} beat
+   * @returns {"active"|"done"}
+   */
+  static #currentStatus(beat) {
+    const template = document.createElement("template");
+    template.innerHTML = Playbook.#objectiveHtml(beat?.objective ?? "");
+    const objectives = [...template.content.querySelectorAll("p, li")];
+    return objectives.length > 0 &&
+      objectives.every((objective) => objective.classList.contains("nd-objective-complete"))
+      ? "done"
+      : "active";
+  }
+
+  /**
+   * Legacy single-line objectives become one checklist row without migration.
+   * @param {string} value
+   * @returns {string}
+   */
+  static #objectiveHtml(value) {
+    const safe = RichText.sanitize(value ?? "");
+    if (!RichText.hasContent(safe)) return safe;
+    const container = document.createElement("div");
+    container.innerHTML = safe;
+    if (!container.querySelector("p, li")) {
+      const row = document.createElement("p");
+      row.append(...container.childNodes);
+      container.append(row);
+    }
+    return container.innerHTML;
+  }
+
+  /**
    * @returns {{
    *   index: number,
    *   total: number,
@@ -56,7 +90,7 @@ export class Playbook {
       canNext: current.canNext,
       beat: current.beat,
       nextBeat,
-      status: current.total > 0 ? Playbook.#derivedStatus(current.index, current.index) : "planned"
+      status: current.total > 0 ? Playbook.#currentStatus(current.beat) : "active"
     };
   }
 
@@ -98,15 +132,12 @@ export class Playbook {
       if (totalEl) totalEl.textContent = String(total);
     };
 
-    const setRichValue = (key, value) => {
-      const element = panel.querySelector(`[data-playbook="${key}"]`);
-      if (element) element.innerHTML = RichText.sanitize(value ?? "");
-    };
-
     const setTextField = (key, value, { alwaysVisible = false } = {}) => {
       const field = panel.querySelector(`[data-playbook-field-block="${key}"]`);
       const renderer = panel.querySelector(`[data-playbook="${key}"]`);
-      const safeHtml = RichText.sanitize(value ?? "");
+      const safeHtml = key === "objective"
+        ? Playbook.#objectiveHtml(value ?? "")
+        : RichText.sanitize(value ?? "");
       const hasContent = RichText.hasContent(safeHtml);
       if (field) field.hidden = !alwaysVisible && !hasContent;
       if (renderer) renderer.innerHTML = safeHtml;
@@ -120,22 +151,33 @@ export class Playbook {
     if (snapshot.total <= 0) {
       setCounter(0, 0);
       setText("title", "No entries");
-      setTextField("objective", "");
-      setTextField("gmNotes", "");
-      setRichValue("experience", "");
-      Playbook.#paintEntities(panel, []);
+      for (const field of [
+        "speechNotes",
+        "setup",
+        "objective",
+        "experience",
+        "twist",
+        "possibleOutcomes",
+        "gmNotes"
+      ]) {
+        setTextField(field, "", { alwaysVisible: true });
+      }
+      Playbook.#paintEntities(panel, null);
     } else {
       setCounter(snapshot.index + 1, snapshot.total);
       setText("title", snapshot.beat.title?.trim() || "Untitled Entry");
-      setTextField("objective", snapshot.beat.objective, { alwaysVisible: true });
-      setTextField("gmNotes", snapshot.beat.gmNotes);
-      setRichValue("experience", snapshot.beat.experience);
-
-      const entityUuids = [
-        ...(snapshot.beat.sceneUuid ? [snapshot.beat.sceneUuid] : []),
-        ...(snapshot.beat.keyNpcUuids ?? [])
-      ];
-      Playbook.#paintEntities(panel, entityUuids);
+      for (const field of [
+        "speechNotes",
+        "setup",
+        "objective",
+        "experience",
+        "twist",
+        "possibleOutcomes",
+        "gmNotes"
+      ]) {
+        setTextField(field, snapshot.beat[field], { alwaysVisible: true });
+      }
+      Playbook.#paintEntities(panel, snapshot.beat);
     }
 
     panel.querySelectorAll("[data-playbook-status]").forEach((el) => {
@@ -145,20 +187,12 @@ export class Playbook {
       el.classList.toggle("is-active", active);
     });
 
-    const panels = panel.querySelector(".nd-playbook-card__panels");
-    if (panels) {
-      const visible = [...panels.querySelectorAll(".nd-playbook-panel")].filter((el) => !el.hidden);
-      panels.classList.toggle("nd-playbook-card__panels--single", visible.length <= 1);
-    }
-
     const prevBtn = panel.querySelector("[data-playbook-nav=\"prev\"]");
     const nextBtn = panel.querySelector("[data-playbook-nav=\"next\"]");
     if (prevBtn instanceof HTMLButtonElement) prevBtn.disabled = !snapshot.canPrev;
     if (nextBtn instanceof HTMLButtonElement) nextBtn.disabled = !snapshot.canNext;
 
     Playbook.#attachInlineEditors(root, snapshot);
-    Playbook.#paintSessionPlan(root, snapshot);
-    Playbook.#paintBeatFocus(root, snapshot);
     Playbook.#paintSessionNpcs(root, snapshot);
   }
 
@@ -254,48 +288,61 @@ export class Playbook {
    * @param {ReturnType<typeof Playbook.get>} snapshot
    */
   static #attachInlineEditors(root, snapshot) {
-    const objective = root.querySelector("[data-playbook=\"objective\"]");
-    const experience = root.querySelector("[data-playbook=\"experience\"]");
-    const editors = [objective, experience].filter((element) => element instanceof HTMLElement);
+    const editableFields = ["speechNotes", "objective", "experience", "gmNotes"];
+    const editors = editableFields
+      .map((field) => root.querySelector(`[data-playbook="${field}"]`))
+      .filter((element) => element instanceof HTMLElement);
 
     if (snapshot.total <= 0) {
       for (const editor of editors) LiveNotes.detach(editor);
       return;
     }
 
-    if (objective instanceof HTMLElement) {
-      LiveNotes.attach(objective, null, {
+    for (const field of editableFields) {
+      const editor = root.querySelector(`[data-playbook="${field}"]`);
+      if (!(editor instanceof HTMLElement)) continue;
+      LiveNotes.attach(editor, null, {
         html: true,
         sanitize: RichText.sanitize,
-        load: () => snapshot.beat.objective ?? "",
+        load: () =>
+          field === "objective"
+            ? Playbook.#objectiveHtml(snapshot.beat[field] ?? "")
+            : snapshot.beat[field] ?? "",
         save: async (value) => {
-          await PlaybookService.updateBeat(snapshot.index, { objective: value });
-          Playbook.#paintBeatFocus(root, Playbook.get());
+          await PlaybookService.updateBeat(snapshot.index, { [field]: value });
         }
-      });
-    }
-
-    if (experience instanceof HTMLElement) {
-      LiveNotes.attach(experience, null, {
-        html: true,
-        sanitize: RichText.sanitize,
-        load: () => snapshot.beat.experience ?? "",
-        save: (value) => PlaybookService.updateBeat(snapshot.index, { experience: value })
       });
     }
   }
 
   /**
    * @param {HTMLElement} panel
-   * @param {string[]} uuids
+   * @param {PlaybookBeat|null} beat
    */
-  static #paintEntities(panel, uuids) {
+  static #paintEntities(panel, beat) {
     const field = panel.querySelector("[data-playbook-field-block=\"entities\"]");
     const container = panel.querySelector("[data-playbook=\"entities\"]");
     if (!field || !container) return;
 
+    const uuids = beat
+      ? [
+          ...(beat.sceneUuid ? [beat.sceneUuid] : []),
+          ...(beat.keyNpcUuids ?? []),
+          ...(beat.relatedCharacterIds ?? []),
+          ...(beat.relatedLocationIds ?? []),
+          ...(beat.relatedItemIds ?? [])
+        ]
+      : [];
     PlaybookEntities.paintChips(container, uuids);
-    field.hidden = uuids.length === 0;
+    for (const id of beat?.relatedBeatIds ?? []) {
+      const reference = QuestEntryService.getById(id);
+      if (!reference) continue;
+      const chip = document.createElement("span");
+      chip.className = "nd-chip";
+      chip.textContent = reference.title?.trim() || "Untitled Entry";
+      container.append(chip);
+    }
+    field.hidden = false;
   }
 
   /**
@@ -438,6 +485,50 @@ export class Playbook {
           if (direction === "prev") void Playbook.prev();
           else if (direction === "next") void Playbook.next();
           return;
+        }
+
+        const addObjective = target.closest("[data-objective-add]");
+        if (addObjective) {
+          const editor = panel.querySelector("[data-playbook=\"objective\"]");
+          if (!(editor instanceof HTMLElement)) return;
+          const objective = document.createElement("p");
+          objective.textContent = "New objective";
+          editor.append(objective);
+          editor.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertParagraph" }));
+          const range = document.createRange();
+          range.selectNodeContents(objective);
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+          editor.focus();
+          return;
+        }
+
+        const objectiveEditor = panel.querySelector("[data-playbook=\"objective\"]");
+        const objectiveLine = target.closest("p, li");
+        if (
+          objectiveEditor instanceof HTMLElement &&
+          objectiveLine instanceof HTMLElement &&
+          objectiveEditor.contains(objectiveLine)
+        ) {
+          const bounds = objectiveLine.getBoundingClientRect();
+          if (event.clientX <= bounds.left + 22) {
+            event.preventDefault();
+            objectiveLine.classList.toggle("nd-objective-complete");
+            objectiveEditor.dispatchEvent(
+              new InputEvent("input", { bubbles: true, inputType: "formatSetBlockTextDirection" })
+            );
+            const status = Playbook.#currentStatus({
+              ...Playbook.get().beat,
+              objective: objectiveEditor.innerHTML
+            });
+            panel.querySelectorAll("[data-playbook-status]").forEach((element) => {
+              const active = element.getAttribute("data-playbook-status") === status;
+              element.setAttribute("aria-pressed", active ? "true" : "false");
+              element.classList.toggle("is-active", active);
+            });
+            return;
+          }
         }
 
         const chip = target.closest("[data-playbook-entity]");
