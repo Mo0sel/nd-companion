@@ -114,11 +114,11 @@
             <div class="nd-playbook-card__panels">
               <div class="nd-playbook-panel nd-playbook-panel--objective" data-playbook-field-block="objective">
                 <div class="nd-playbook-panel__label">Objective</div>
-                <p class="nd-playbook-panel__text" data-playbook="objective"></p>
+                <div class="nd-playbook-panel__text nd-richtext" data-playbook="objective"></div>
               </div>
               <div class="nd-playbook-panel nd-playbook-panel--gm-notes" data-playbook-field-block="gmNotes">
                 <div class="nd-playbook-panel__label">GM Notes</div>
-                <p class="nd-playbook-panel__text" data-playbook="gmNotes"></p>
+                <div class="nd-playbook-panel__text nd-richtext" data-playbook="gmNotes"></div>
               </div>
             </div>
 
@@ -230,6 +230,32 @@
                 </button>
               </div>
 
+              <div class="nd-richtext-toolbar" data-richtext-toolbar role="toolbar" aria-label="Rich text formatting">
+                <button type="button" data-richtext-command="bold" aria-label="Bold"><strong>B</strong></button>
+                <button type="button" data-richtext-command="italic" aria-label="Italic"><em>I</em></button>
+                <button type="button" data-richtext-command="underline" aria-label="Underline"><u>U</u></button>
+                <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
+                <button type="button" data-richtext-command="heading" data-richtext-value="h2" aria-label="Heading 2">H2</button>
+                <button type="button" data-richtext-command="heading" data-richtext-value="h3" aria-label="Heading 3">H3</button>
+                <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
+                <button type="button" data-richtext-command="list" data-richtext-value="ul" aria-label="Bullet list">• List</button>
+                <button type="button" data-richtext-command="list" data-richtext-value="ol" aria-label="Numbered list">1. List</button>
+                <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
+                <label class="nd-richtext-toolbar__color">
+                  <select data-richtext-color aria-label="Text color">
+                    <option value="default">Default</option>
+                    <option value="blue">Blue</option>
+                    <option value="green">Green</option>
+                    <option value="yellow">Yellow</option>
+                    <option value="orange">Orange</option>
+                    <option value="red">Red</option>
+                    <option value="purple">Purple</option>
+                    <option value="gray">Gray</option>
+                  </select>
+                </label>
+                <button type="button" data-richtext-command="clear" aria-label="Clear formatting">Clear</button>
+              </div>
+
               <div class="nd-playbook__field">
                 <span class="nd-playbook__field-label">Title</span>
                 <div
@@ -244,8 +270,9 @@
               <div class="nd-playbook__field">
                 <span class="nd-playbook__field-label">Objective</span>
                 <div
-                  class="nd-card__text nd-live-notes nd-playbook-prepare__field"
+                  class="nd-card__text nd-live-notes nd-playbook-prepare__field nd-richtext nd-richtext--editor"
                   data-playbook-field="objective"
+                  data-richtext-editor
                   data-placeholder="Objective..."
                   role="textbox"
                   aria-label="Beat objective"
@@ -272,8 +299,9 @@
               <div class="nd-playbook__field">
                 <span class="nd-playbook__field-label">GM Notes</span>
                 <div
-                  class="nd-card__text nd-live-notes nd-playbook-prepare__field nd-playbook-prepare__field--notes"
+                  class="nd-card__text nd-live-notes nd-playbook-prepare__field nd-playbook-prepare__field--notes nd-richtext nd-richtext--editor"
                   data-playbook-field="gmNotes"
+                  data-richtext-editor
                   data-placeholder="GM notes..."
                   role="textbox"
                   aria-label="GM notes"

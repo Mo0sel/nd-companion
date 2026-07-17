@@ -9,7 +9,7 @@ const SAVED_VISIBLE_MS = 1000;
  */
 export class LiveNotes {
   /**
-   * Load text and attach autosave behavior to a contenteditable element.
+   * Load content and attach autosave behavior to a contenteditable element.
    * Safe to call again when the binding changes (replaces prior listeners).
    *
    * Storage-key mode:
@@ -23,6 +23,8 @@ export class LiveNotes {
    * @param {string|null} key Storage key, or null in callback mode
    * @param {{
    *   memory?: boolean,
+   *   html?: boolean,
+   *   sanitize?: (value: string) => string,
    *   load?: () => string,
    *   save?: (value: string) => Promise<unknown>|unknown
    * }} [options]
@@ -40,6 +42,10 @@ export class LiveNotes {
     }
 
     const useMemory = Boolean(options.memory);
+    const useHtml = Boolean(options.html);
+    const sanitize = typeof options.sanitize === "function"
+      ? options.sanitize
+      : (value) => value;
     const read = () => {
       if (callbackMode) return options.load() ?? "";
       return useMemory ? CompanionStorage.getMemory(key) : CompanionStorage.get(key);
@@ -52,7 +58,9 @@ export class LiveNotes {
     element.setAttribute("contenteditable", "true");
     if (key) element.dataset.storage = key;
     else delete element.dataset.storage;
-    element.textContent = read();
+    const initial = String(read() ?? "");
+    if (useHtml) element.innerHTML = sanitize(initial);
+    else element.textContent = initial;
 
     let debounceId = null;
     let statusClearId = null;
@@ -67,7 +75,8 @@ export class LiveNotes {
     };
 
     const save = async () => {
-      const value = element.textContent ?? "";
+      const raw = useHtml ? element.innerHTML : element.textContent ?? "";
+      const value = useHtml ? sanitize(raw) : raw;
       setStatus("Saving...");
       await write(value);
       setStatus("Saved");

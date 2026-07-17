@@ -2,6 +2,7 @@ import { EntityRegistry } from "./entity-registry.js";
 import { Navigation } from "./navigation.js";
 import { PlaybookEntities } from "./playbook-entities.js";
 import { PlaybookService } from "./playbook-service.js";
+import { RichText } from "./rich-text.js";
 
 /**
  * @typedef {import("./playbook-service.js").PlaybookBeat} PlaybookBeat
@@ -103,9 +104,11 @@ export class Playbook {
 
     const setTextField = (key, value) => {
       const field = panel.querySelector(`[data-playbook-field-block="${key}"]`);
-      const text = value?.trim() ?? "";
-      if (field) field.hidden = !text;
-      setText(key, text);
+      const renderer = panel.querySelector(`[data-playbook="${key}"]`);
+      const safeHtml = RichText.sanitize(value ?? "");
+      const hasContent = RichText.hasContent(safeHtml);
+      if (field) field.hidden = !hasContent;
+      if (renderer) renderer.innerHTML = safeHtml;
     };
 
     const status = snapshot.status;
@@ -190,11 +193,11 @@ export class Playbook {
       set("next-objective", "", { hideEmpty: true });
     } else {
       set("now-title", snapshot.beat.title?.trim() || "Untitled Beat");
-      set("now-objective", snapshot.beat.objective ?? "", { hideEmpty: true });
+      set("now-objective", RichText.plainText(snapshot.beat.objective), { hideEmpty: true });
       set("next-title", snapshot.nextBeat?.title?.trim() || "—");
       set(
         "next-objective",
-        snapshot.nextBeat ? snapshot.nextBeat.objective ?? "" : "",
+        snapshot.nextBeat ? RichText.plainText(snapshot.nextBeat.objective) : "",
         { hideEmpty: true }
       );
     }

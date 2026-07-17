@@ -4,8 +4,11 @@ import { Navigation } from "./navigation.js";
 import { Playbook } from "./playbook.js";
 import { PlaybookEntities } from "./playbook-entities.js";
 import { PlaybookService } from "./playbook-service.js";
+import { RichText } from "./rich-text.js";
+import { RichTextToolbar } from "./rich-text-toolbar.js";
 
 const PREPARE_FIELDS = /** @type {const} */ (["title", "objective", "gmNotes"]);
+const RICH_TEXT_FIELDS = new Set(["objective", "gmNotes"]);
 
 /**
  * Prepare workspace Playbook authoring.
@@ -145,6 +148,8 @@ export class PlaybookPrepare {
       },
       { signal: controller.signal }
     );
+
+    RichTextToolbar.attach(panel);
   }
 
   /**
@@ -299,7 +304,8 @@ export class PlaybookPrepare {
         const el = editor.querySelector(`[data-playbook-field="${field}"]`);
         if (el) {
           LiveNotes.detach(el);
-          el.textContent = "";
+          if (RICH_TEXT_FIELDS.has(field)) el.innerHTML = "";
+          else el.textContent = "";
         }
       }
       return;
@@ -407,7 +413,10 @@ export class PlaybookPrepare {
       const el = editor.querySelector(`[data-playbook-field="${field}"]`);
       if (!(el instanceof HTMLElement)) continue;
 
+      const richText = RICH_TEXT_FIELDS.has(field);
       LiveNotes.attach(el, null, {
+        html: richText,
+        sanitize: richText ? RichText.sanitize : undefined,
         load: () => PlaybookService.getBeat(editIndex)?.[field] ?? "",
         save: async (value) => {
           await PlaybookService.updateBeat(editIndex, { [field]: value });
