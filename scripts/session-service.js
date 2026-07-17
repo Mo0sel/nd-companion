@@ -1,0 +1,135 @@
+import { CampaignDocument, SESSION_STATUSES } from "./campaign-document.js";
+import { CompanionStorage } from "./storage.js";
+
+/**
+ * Session CRUD and active-session accessors.
+ * Beats remain in PlaybookService; ownership is Session.beatIds only.
+ */
+export class SessionService {
+  /**
+   * Wire Live Notes session keys to the active Session after campaign ready.
+   * Re-sync beat ownership from the current playbook.
+   * @returns {Promise<void>}
+   */
+  static async ready() {
+    CompanionStorage.setSessionBridge({
+      getNotes: () => SessionService.getActiveNotes(),
+      setNotes: (value) => SessionService.setActiveNotes(value),
+      getSummary: () => SessionService.getActiveSummary(),
+      setSummary: (value) => SessionService.setActiveSummary(value)
+    });
+
+    const playbook = CompanionStorage.getPlaybook();
+    const beatIds = Array.isArray(playbook?.beats)
+      ? playbook.beats
+          .map((beat) => (typeof beat?.id === "string" ? beat.id : ""))
+          .filter(Boolean)
+      : [];
+    await SessionService.syncActiveBeatIds(beatIds);
+  }
+
+  /**
+   * @returns {import("./campaign-document.js").CampaignSession|null}
+   */
+  static getActive() {
+    const doc = CampaignDocument.get();
+    if (!doc.activeSessionId) return null;
+    return doc.sessions.find((session) => session.id === doc.activeSessionId) ?? null;
+  }
+
+  /**
+   * @returns {import("./campaign-document.js").CampaignSession[]}
+   */
+  static list() {
+    return CampaignDocument.get().sessions;
+  }
+
+  /**
+   * @param {string} id
+   * @returns {import("./campaign-document.js").CampaignSession|null}
+   */
+  static getById(id) {
+    if (!id) return null;
+    return CampaignDocument.get().sessions.find((session) => session.id === id) ?? null;
+  }
+
+  /**
+   * Notes for the active session (Live Notes compatibility).
+   * @returns {string}
+   */
+  static getActiveNotes() {
+    return SessionService.getActive()?.notes ?? "";
+  }
+
+  /**
+   * @param {string} value
+   * @returns {Promise<string>}
+   */
+  static async setActiveNotes(value) {
+    const notes = value ?? "";
+    await SessionService.#patchActive({ notes });
+    return notes;
+  }
+
+  /**
+   * Summary for the active session (Live Notes compatibility).
+   * @returns {string}
+   */
+  static getActiveSummary() {
+    return SessionService.getActive()?.summary ?? "";
+  }
+
+  /**
+   * @param {string} value
+   * @returns {Promise<string>}
+   */
+  static async setActiveSummary(value) {
+    const summary = value ?? "";
+    await SessionService.#patchActive({ summary });
+    return summary;
+  }
+
+  /**
+   * Replace beat ownership on the active session (playbook order).
+   * @param {string[]} beatIds
+   * @returns {Promise<boolean>}
+   */
+  static async syncActiveBeatIds(beatIds) {
+    const ids = Array.isArray(beatIds)
+      ? [...new Set(beatIds.filter((id) => typeof id === "string" && id))]
+      : [];
+    return SessionService.#patchActive({ beatIds: ids });
+  }
+
+  /**
+   * @param {Partial<import("./campaign-document.js").CampaignSession>} patch
+   * @returns {Promise<boolean>}
+   */
+  static async #patchActive(patch) {
+    if (!CampaignDocument.isReady) return false;
+
+    let ok = false;
+    await CampaignDocument.update((doc) => {
+      const session = doc.sessions.find((entry) => entry.id === doc.activeSessionId);
+      if (!session) return;
+
+      if (typeof patch.title === "string") session.title = patch.title;
+      if (Number.isFinite(patch.sessionNumber)) {
+        session.sessionNumber = Math.max(1, Math.trunc(patch.sessionNumber));
+      }
+      if (patch.status && SESSION_STATUSES.includes(patch.status)) {
+        session.status = patch.status;
+      }
+      if (typeof patch.inGameDate === "string") session.inGameDate = patch.inGameDate;
+      if (typeof patch.realDate === "string") session.realDate = patch.realDate;
+      if (typeof patch.notes === "string") session.notes = patch.notes;
+      if (typeof patch.summary === "string") session.summary = patch.summary;
+      if (Array.isArray(patch.beatIds)) {
+        session.beatIds = [...new Set(patch.beatIds.filter((id) => typeof id === "string" && id))];
+      }
+      session.updated = Date.now();
+      ok = true;
+    });
+    return ok;
+  }
+}

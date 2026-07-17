@@ -1,5 +1,6 @@
 import { CompanionStorage } from "./storage.js";
 import { EntityRegistry } from "./entity-registry.js";
+import { SessionService } from "./session-service.js";
 
 /**
  * @typedef {object} PlaybookRelatedRef
@@ -9,6 +10,7 @@ import { EntityRegistry } from "./entity-registry.js";
 
 /**
  * @typedef {object} PlaybookBeat
+ * @property {string} id
  * @property {string} title
  * @property {string} objective
  * @property {string|null} sceneUuid
@@ -113,8 +115,9 @@ export class PlaybookService {
   /**
    * Load from world storage. Seed sample beats only when beats are empty.
    * After that, SAMPLE_BEATS is never read again.
+   * @returns {Promise<void>}
    */
-  static ready() {
+  static async ready() {
     const stored = CompanionStorage.getPlaybook();
     const beats = Array.isArray(stored?.beats) ? stored.beats : [];
 
@@ -123,12 +126,12 @@ export class PlaybookService {
         currentIndex: 2,
         beats: SAMPLE_BEATS.map((beat) => PlaybookService.#normalizeBeat(beat))
       };
-      void CompanionStorage.setPlaybook(PlaybookService.#doc);
+      await CompanionStorage.setPlaybook(PlaybookService.#doc);
       return;
     }
 
     PlaybookService.#doc = PlaybookService.#normalize(stored);
-    void CompanionStorage.setPlaybook(PlaybookService.#doc);
+    await CompanionStorage.setPlaybook(PlaybookService.#doc);
   }
 
   /**
@@ -303,6 +306,18 @@ export class PlaybookService {
       currentIndex: PlaybookService.#doc.currentIndex,
       beats: PlaybookService.#doc.beats.map((beat) => PlaybookService.#cloneBeat(beat))
     });
+    await PlaybookService.#syncSessionBeatIds();
+  }
+
+  /**
+   * Keep active Session.beatIds aligned with playbook order.
+   * Ownership is by id only — beats are not nested in the Session.
+   */
+  static async #syncSessionBeatIds() {
+    const beatIds = PlaybookService.#doc.beats
+      .map((beat) => beat.id)
+      .filter((id) => typeof id === "string" && id);
+    await SessionService.syncActiveBeatIds(beatIds);
   }
 
   /**
@@ -346,6 +361,10 @@ export class PlaybookService {
     }
 
     return {
+      id:
+        typeof beat?.id === "string" && beat.id.trim()
+          ? beat.id.trim()
+          : foundry.utils.randomID(),
       title: typeof beat?.title === "string" ? beat.title : "",
       objective: typeof beat?.objective === "string" ? beat.objective : "",
       sceneUuid,
@@ -361,6 +380,7 @@ export class PlaybookService {
    */
   static #cloneBeat(beat) {
     return {
+      id: beat.id ?? foundry.utils.randomID(),
       title: beat.title ?? "",
       objective: beat.objective ?? "",
       sceneUuid: beat.sceneUuid ?? null,
@@ -376,6 +396,7 @@ export class PlaybookService {
   /** @returns {PlaybookBeat} */
   static #emptyBeat() {
     return {
+      id: foundry.utils.randomID(),
       title: "",
       objective: "",
       sceneUuid: null,

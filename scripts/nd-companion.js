@@ -1,10 +1,13 @@
 import { CompanionApp } from "./companion-app.js";
 import { CampaignAwareness } from "./campaign-context.js";
+import { CampaignDocument } from "./campaign-document.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { FocusManager } from "./focus-manager.js";
 import { Navigation } from "./navigation.js";
 import { PlaybookService } from "./playbook-service.js";
+import { SessionService } from "./session-service.js";
 import { CompanionStorage } from "./storage.js";
+import { ThreadService } from "./thread-service.js";
 
 Hooks.once("init", () => {
   console.log("%cN&D Companion", "color:#7dd3fc;font-size:16px;font-weight:bold;");
@@ -12,15 +15,21 @@ Hooks.once("init", () => {
   CompanionStorage.register();
 });
 
-Hooks.once("ready", () => {
+Hooks.once("ready", async () => {
   console.log("N&D Companion ready.");
   EntityRegistry.ready();
   EntityRegistry.registerHooks();
-  PlaybookService.ready();
+  // Beats first (stable ids), then campaign migration + session bridge.
+  await PlaybookService.ready();
+  await CampaignDocument.ready();
+  await SessionService.ready();
   window.nd ??= {};
   window.nd.EntityRegistry = EntityRegistry;
   window.nd.FocusManager = FocusManager;
   window.nd.Navigation = Navigation;
+  window.nd.SessionService = SessionService;
+  window.nd.ThreadService = ThreadService;
+  window.nd.CampaignDocument = CampaignDocument;
   CampaignAwareness.registerHooks();
   FocusManager.registerHooks();
 });
