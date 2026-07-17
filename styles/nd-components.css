@@ -12,11 +12,78 @@
   display: flex;
   flex-direction: column;
   gap: var(--nd-space-3);
-  padding: var(--nd-space-4) 18px;
+  padding: var(--nd-card-pad);
   background: var(--nd-surface);
   border: 1px solid var(--nd-border);
   border-radius: var(--nd-radius-xl);
   box-sizing: border-box;
+}
+
+.nd-panel-card {
+  min-width: 0;
+  padding: var(--nd-card-pad);
+  background: var(--nd-surface-inset);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-lg);
+  box-sizing: border-box;
+}
+
+/* Three-level information hierarchy: page, section, field. */
+.nd-page-title {
+  margin: 0;
+  color: var(--nd-text-1);
+  font-size: var(--nd-text-h1);
+  font-weight: var(--nd-weight-bold);
+  line-height: var(--nd-leading-tight);
+  letter-spacing: -0.02em;
+}
+
+.nd-section-title {
+  margin: 0;
+  color: var(--nd-text-2);
+  font-size: var(--nd-text-h3);
+  font-weight: var(--nd-weight-semibold);
+  line-height: var(--nd-leading-snug);
+}
+
+.nd-field-label {
+  color: var(--nd-text-3);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-semibold);
+  letter-spacing: var(--nd-tracking-label);
+  text-transform: uppercase;
+}
+
+/* Shared text/select/contenteditable control treatment. */
+.nd-input,
+.nd-field-control {
+  min-height: var(--nd-control-h);
+  color: var(--nd-text-1);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--nd-radius-sm);
+  box-sizing: border-box;
+  outline: none;
+  transition: var(--nd-transition-fast);
+}
+
+.nd-input {
+  padding: 0 var(--nd-control-pad-x);
+  background: var(--nd-surface-inset);
+  border-color: var(--nd-border);
+  font: inherit;
+}
+
+.nd-input:hover,
+.nd-field-control:hover {
+  border-color: var(--nd-border-2);
+}
+
+.nd-input:focus,
+.nd-field-control:focus {
+  border-color: var(--nd-blue-border);
+  box-shadow: var(--nd-shadow-focus);
 }
 
 .nd-card--hero {

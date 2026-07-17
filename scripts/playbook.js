@@ -180,12 +180,7 @@ export class Playbook {
       Playbook.#paintEntities(panel, snapshot.beat);
     }
 
-    panel.querySelectorAll("[data-playbook-status]").forEach((el) => {
-      const value = el.getAttribute("data-playbook-status");
-      const active = snapshot.total > 0 && value === status;
-      el.setAttribute("aria-pressed", active ? "true" : "false");
-      el.classList.toggle("is-active", active);
-    });
+    Playbook.#paintStatus(panel, snapshot.total > 0 ? status : "idle");
 
     const prevBtn = panel.querySelector("[data-playbook-nav=\"prev\"]");
     const nextBtn = panel.querySelector("[data-playbook-nav=\"next\"]");
@@ -194,6 +189,21 @@ export class Playbook {
 
     Playbook.#attachInlineEditors(root, snapshot);
     Playbook.#paintSessionNpcs(root, snapshot);
+  }
+
+  /**
+   * @param {Element} panel
+   * @param {"active"|"done"|"idle"} status
+   */
+  static #paintStatus(panel, status) {
+    const state = panel.querySelector("[data-playbook-state]");
+    const value = panel.querySelector("[data-playbook-state-value]");
+    const accent = panel.querySelector("[data-playbook=\"accent\"]");
+    if (state instanceof HTMLElement) state.dataset.state = status;
+    if (accent instanceof HTMLElement) accent.dataset.status = status;
+    if (value) {
+      value.textContent = status === "done" ? "Completed" : status === "active" ? "Active" : "No Entry";
+    }
   }
 
   /**
@@ -522,11 +532,7 @@ export class Playbook {
               ...Playbook.get().beat,
               objective: objectiveEditor.innerHTML
             });
-            panel.querySelectorAll("[data-playbook-status]").forEach((element) => {
-              const active = element.getAttribute("data-playbook-status") === status;
-              element.setAttribute("aria-pressed", active ? "true" : "false");
-              element.classList.toggle("is-active", active);
-            });
+            Playbook.#paintStatus(panel, status);
             return;
           }
         }

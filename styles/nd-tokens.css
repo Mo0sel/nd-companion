@@ -133,6 +133,9 @@
   --nd-page-x: 28px;
   --nd-card-gap: 16px;
   --nd-card-pad: 14px;
+  --nd-panel-gap: 12px;
+  --nd-control-h: 32px;
+  --nd-control-pad-x: 10px;
 
   /* ── Legacy aliases (existing Foundry CSS) ─────────────────────────────── */
   --nd-text: var(--nd-text-1);

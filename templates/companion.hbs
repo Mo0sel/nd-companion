@@ -85,7 +85,7 @@
           <div class="nd-playbook-card__body">
             <header class="nd-playbook-card__header">
               <div class="nd-playbook-card__identity">
-                <button type="button" class="nd-playbook-card__nav" data-playbook-nav="prev" aria-label="Previous entry">←</button>
+                <button type="button" class="nd-button nd-button--nav nd-playbook-card__nav" data-playbook-nav="prev" aria-label="Previous entry">←</button>
                 <div class="nd-playbook-card__counter nd-mono" data-playbook="counter" aria-label="Entry position">
                   <span class="nd-playbook-card__counter-current" data-playbook-counter="current">0</span>
                   <span class="nd-playbook-card__counter-sep">/</span>
@@ -93,82 +93,96 @@
                 </div>
                 <div class="nd-playbook-card__title-block">
                 <div class="nd-playbook-card__eyebrow">Current Entry</div>
-                  <h2 class="nd-playbook-card__title" data-playbook="title"></h2>
+                  <h2 class="nd-playbook-card__title nd-page-title" data-playbook="title"></h2>
                 </div>
-                <button type="button" class="nd-playbook-card__nav" data-playbook-nav="next" aria-label="Next entry">→</button>
+                <button type="button" class="nd-button nd-button--nav nd-playbook-card__nav" data-playbook-nav="next" aria-label="Next entry">→</button>
               </div>
-              <div class="nd-playbook-card__statuses" role="group" aria-label="Entry status">
-                <span class="nd-playbook-status" data-playbook-status="active" aria-pressed="false">Active</span>
-                <span class="nd-playbook-status" data-playbook-status="done" aria-pressed="false">Completed</span>
+              <div class="nd-entry-state" data-playbook-state data-state="active" role="status" aria-label="Entry status">
+                <span class="nd-entry-state__label">Entry State</span>
+                <span class="nd-entry-state__value">
+                  <span class="nd-entry-state__dot" aria-hidden="true"></span>
+                  <span data-playbook-state-value>Active</span>
+                </span>
               </div>
             </header>
 
             <div class="nd-play-entry-grid">
-              <section class="nd-play-entry-card nd-play-entry-card--speech" data-playbook-field-block="speechNotes">
-                <div class="nd-play-entry-card__label">Speech Notes</div>
-                <div
-                  class="nd-play-entry-card__content nd-richtext nd-play-inline-editor"
-                  data-playbook="speechNotes"
-                  data-placeholder="Add dialogue or read-aloud text..."
-                  role="textbox"
-                  aria-label="Speech Notes"
-                ></div>
+              <section class="nd-play-entry-column" aria-labelledby="nd-play-scene-flow">
+                <h3 class="nd-section-title" id="nd-play-scene-flow">Scene Flow</h3>
+
+                <section class="nd-panel-card nd-play-entry-card nd-play-entry-card--speech" data-playbook-field-block="speechNotes">
+                  <div class="nd-field-label nd-play-entry-card__label">Speech Notes</div>
+                  <div
+                    class="nd-field-control nd-play-entry-card__content nd-richtext nd-play-inline-editor"
+                    data-playbook="speechNotes"
+                    data-placeholder="Add dialogue or read-aloud text..."
+                    role="textbox"
+                    aria-label="Speech Notes"
+                  ></div>
+                </section>
+
+                <details class="nd-panel-card nd-play-entry-card nd-play-entry-card--setup" data-playbook-field-block="setup" open>
+                  <summary>
+                    <span class="nd-field-label">Setup</span>
+                    <span class="nd-play-entry-card__collapse-label">Collapse</span>
+                  </summary>
+                  <div class="nd-play-entry-card__content nd-richtext" data-playbook="setup"></div>
+                </details>
+
+                <section class="nd-panel-card nd-play-entry-card nd-play-entry-card--objective" data-playbook-field-block="objective">
+                  <header class="nd-play-entry-card__header">
+                    <div class="nd-field-label nd-play-entry-card__label">Objectives</div>
+                    <button type="button" class="nd-button nd-button--ghost" data-objective-add aria-label="Add objective">+ Objective</button>
+                  </header>
+                  <div
+                    class="nd-field-control nd-play-entry-card__content nd-richtext nd-play-inline-editor"
+                    data-playbook="objective"
+                    data-placeholder="Add an objective..."
+                    role="textbox"
+                    aria-label="Objectives"
+                  ></div>
+                </section>
+
+                <section class="nd-panel-card nd-play-entry-card nd-play-entry-card--experience" data-playbook-field-block="experience">
+                  <div class="nd-field-label nd-play-entry-card__label">Experience</div>
+                  <div
+                    class="nd-field-control nd-play-entry-card__content nd-richtext nd-play-inline-editor"
+                    data-playbook="experience"
+                    data-placeholder="Add XP or reward..."
+                    role="textbox"
+                    aria-label="Experience"
+                  ></div>
+                </section>
               </section>
 
-              <section class="nd-play-entry-card" data-playbook-field-block="setup">
-                <div class="nd-play-entry-card__label">Setup</div>
-                <div class="nd-play-entry-card__content nd-richtext" data-playbook="setup"></div>
-              </section>
+              <section class="nd-play-entry-column" aria-labelledby="nd-play-response-notes">
+                <h3 class="nd-section-title" id="nd-play-response-notes">Response &amp; Notes</h3>
 
-              <section class="nd-play-entry-card nd-play-entry-card--objective" data-playbook-field-block="objective">
-                <header class="nd-play-entry-card__header">
-                  <div class="nd-play-entry-card__label">Objectives</div>
-                  <button type="button" data-objective-add aria-label="Add objective">+ Objective</button>
-                </header>
-                <div
-                  class="nd-play-entry-card__content nd-richtext nd-play-inline-editor"
-                  data-playbook="objective"
-                  data-placeholder="Add an objective..."
-                  role="textbox"
-                  aria-label="Objectives"
-                ></div>
-              </section>
+                <section class="nd-panel-card nd-play-entry-card" data-playbook-field-block="twist">
+                  <div class="nd-field-label nd-play-entry-card__label">Twist</div>
+                  <div class="nd-play-entry-card__content nd-richtext" data-playbook="twist"></div>
+                </section>
 
-              <section class="nd-play-entry-card nd-play-entry-card--experience" data-playbook-field-block="experience">
-                <div class="nd-play-entry-card__label">Experience</div>
-                <div
-                  class="nd-play-entry-card__content nd-richtext nd-play-inline-editor"
-                  data-playbook="experience"
-                  data-placeholder="Add XP or reward..."
-                  role="textbox"
-                  aria-label="Experience"
-                ></div>
-              </section>
+                <section class="nd-panel-card nd-play-entry-card" data-playbook-field-block="possibleOutcomes">
+                  <div class="nd-field-label nd-play-entry-card__label">Possible Outcomes</div>
+                  <div class="nd-play-entry-card__content nd-richtext" data-playbook="possibleOutcomes"></div>
+                </section>
 
-              <section class="nd-play-entry-card" data-playbook-field-block="twist">
-                <div class="nd-play-entry-card__label">Twist</div>
-                <div class="nd-play-entry-card__content nd-richtext" data-playbook="twist"></div>
-              </section>
+                <section class="nd-panel-card nd-play-entry-card nd-play-entry-card--notes" data-playbook-field-block="gmNotes">
+                  <div class="nd-field-label nd-play-entry-card__label">Notes</div>
+                  <div
+                    class="nd-field-control nd-play-entry-card__content nd-richtext nd-play-inline-editor"
+                    data-playbook="gmNotes"
+                    data-placeholder="Add live entry notes..."
+                    role="textbox"
+                    aria-label="Entry Notes"
+                  ></div>
+                </section>
 
-              <section class="nd-play-entry-card" data-playbook-field-block="possibleOutcomes">
-                <div class="nd-play-entry-card__label">Possible Outcomes</div>
-                <div class="nd-play-entry-card__content nd-richtext" data-playbook="possibleOutcomes"></div>
-              </section>
-
-              <section class="nd-play-entry-card nd-play-entry-card--notes" data-playbook-field-block="gmNotes">
-                <div class="nd-play-entry-card__label">Notes</div>
-                <div
-                  class="nd-play-entry-card__content nd-richtext nd-play-inline-editor"
-                  data-playbook="gmNotes"
-                  data-placeholder="Add live entry notes..."
-                  role="textbox"
-                  aria-label="Entry Notes"
-                ></div>
-              </section>
-
-              <section class="nd-play-entry-card nd-play-entry-card--references" data-playbook-field-block="entities">
-                <div class="nd-play-entry-card__label">Related References</div>
-                <div class="nd-playbook-card__chips" data-playbook="entities"></div>
+                <section class="nd-panel-card nd-play-entry-card nd-play-entry-card--references" data-playbook-field-block="entities">
+                  <div class="nd-field-label nd-play-entry-card__label">References</div>
+                  <div class="nd-playbook-card__chips" data-playbook="entities"></div>
+                </section>
               </section>
             </div>
           </div>
