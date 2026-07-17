@@ -32,6 +32,7 @@
   --nd-blue-hover: rgba(91, 142, 255, 0.5);
   --nd-context-accent: #8f82bb;
   --nd-group-accent: #829bd1;
+  --nd-tertiary-accent: var(--nd-purple);
 
   /* ── Color: semantic ───────────────────────────────────────────────────── */
   --nd-danger: #ef4444;

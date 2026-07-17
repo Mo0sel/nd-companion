@@ -1,6 +1,6 @@
 # N&D Companion
 
-Version: 0.2.7
+Version: 0.2.8
 
 ## Vision
 
@@ -146,7 +146,7 @@ Campaign is the source of truth.
 2. Page context — subtle accent.
 3. Primary object — largest and highest emphasis.
 4. Section group — muted color with a subtle divider.
-5. Card title — consistent uppercase micro-label.
+5. Card title — tertiary accent, bold uppercase label, and increased tracking.
 
 Use hierarchy before adding color or decoration.
 

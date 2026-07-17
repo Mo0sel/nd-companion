@@ -75,12 +75,18 @@
 
 .nd-field-label,
 .nd-hierarchy-card,
-.nd-companion .nd-hierarchy-card {
-  color: var(--nd-text-3);
+.nd-playbook__field-label,
+.nd-campaign-field > span,
+.nd-campaign-references > h3,
+.nd-companion .nd-hierarchy-card,
+.nd-companion .nd-playbook__field-label,
+.nd-companion .nd-campaign-field > span,
+.nd-companion .nd-campaign-references > h3 {
+  color: var(--nd-tertiary-accent);
   font-family: var(--nd-font-mono);
-  font-size: var(--nd-text-micro);
-  font-weight: var(--nd-weight-semibold);
-  letter-spacing: var(--nd-tracking-label);
+  font-size: var(--nd-text-label);
+  font-weight: var(--nd-weight-bold);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
