@@ -418,6 +418,15 @@
   color: var(--nd-danger);
 }
 
+.nd-explorer-quest__unload:hover:not(:disabled) {
+  color: var(--nd-danger);
+}
+
+.nd-explorer-quest.is-live .nd-explorer-quest__name {
+  color: var(--nd-text-1);
+  font-weight: var(--nd-weight-semibold);
+}
+
 .nd-quest-sidebar__quest > span:first-child {
   flex: 1;
   min-width: 0;

@@ -151,9 +151,27 @@ export class Playbook {
     const accent = panel.querySelector("[data-playbook=\"accent\"]");
     if (accent) accent.dataset.status = status;
 
-    if (snapshot.total <= 0) {
+    const empty = panel.querySelector("[data-play-empty]");
+    const content = panel.querySelector("[data-play-content]");
+    const entryNav = panel.querySelector(".nd-play-entry-nav");
+    const hasQuest = snapshot.total > 0;
+
+    if (empty instanceof HTMLElement) empty.hidden = hasQuest;
+    if (content instanceof HTMLElement) {
+      content.classList.toggle("is-empty", !hasQuest);
+    }
+    if (entryNav instanceof HTMLElement) {
+      entryNav.hidden = !hasQuest;
+    }
+    panel.querySelectorAll(
+      ".nd-play-section-title, .nd-play-entry-grid, [data-playbook-field-block=\"npcs\"]"
+    ).forEach((el) => {
+      if (el instanceof HTMLElement) el.hidden = !hasQuest;
+    });
+
+    if (!hasQuest) {
       setCounter(0, 0);
-      setText("title", "No entries");
+      setText("title", "No Quest Loaded");
       for (const field of [
         "speechNotes",
         "setup",
@@ -163,12 +181,12 @@ export class Playbook {
         "possibleOutcomes",
         "gmNotes"
       ]) {
-        setTextField(field, "", { alwaysVisible: true });
+        setTextField(field, "");
       }
       Playbook.#paintEntities(panel, null);
     } else {
       setCounter(snapshot.index + 1, snapshot.total);
-      setText("title", snapshot.beat.title?.trim() || "Untitled Entry");
+      setText("title", snapshot.beat.title?.trim() || "Untitled Quest");
       for (const field of [
         "speechNotes",
         "setup",
@@ -183,7 +201,7 @@ export class Playbook {
       Playbook.#paintEntities(panel, snapshot.beat);
     }
 
-    Playbook.#paintStatus(panel, snapshot.total > 0 ? status : "idle");
+    Playbook.#paintStatus(panel, hasQuest ? status : "idle");
     Playbook.#paintRunControls(root);
 
     const prevBtn = panel.querySelector("[data-playbook-nav=\"prev\"]");
@@ -295,7 +313,11 @@ export class Playbook {
     if (state instanceof HTMLElement) state.dataset.state = status;
     if (accent instanceof HTMLElement) accent.dataset.status = status;
     if (value) {
-      value.textContent = status === "done" ? "Completed" : status === "active" ? "Active" : "No Entry";
+      value.textContent = status === "done"
+        ? "Completed"
+        : status === "active"
+          ? "Active"
+          : "No Quest Loaded";
     }
   }
 
@@ -315,7 +337,7 @@ export class Playbook {
     if (!playbookDoc.beats.length) {
       const empty = document.createElement("p");
       empty.className = "nd-campaign-empty";
-      empty.textContent = "No entries prepared for this session.";
+      empty.textContent = "No Quest Loaded. Select a Quest from the Campaign Explorer.";
       list.append(empty);
       return;
     }

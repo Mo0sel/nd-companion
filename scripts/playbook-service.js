@@ -181,7 +181,7 @@ export class PlaybookService {
   static getDocument() {
     return {
       currentIndex: PlaybookService.#doc.currentIndex,
-      beats: PlaybookService.#doc.beats.map((beat) => PlaybookService.#cloneBeat(beat))
+      beats: PlaybookService.#doc.beats.map((beat) => PlaybookService.#resolveBeat(beat))
     };
   }
 
@@ -203,7 +203,9 @@ export class PlaybookService {
       total,
       canPrevious: index > 0,
       canNext: index < total - 1,
-      beat: PlaybookService.#cloneBeat(PlaybookService.#doc.beats[index] ?? PlaybookService.#emptyBeat())
+      beat: PlaybookService.#resolveBeat(
+        PlaybookService.#doc.beats[index] ?? PlaybookService.#emptyBeat()
+      )
     };
   }
 
@@ -214,7 +216,28 @@ export class PlaybookService {
   static getBeat(index) {
     const i = index === undefined ? PlaybookService.#doc.currentIndex : index;
     const beat = PlaybookService.#doc.beats[i];
-    return beat ? PlaybookService.#cloneBeat(beat) : null;
+    return beat ? PlaybookService.#resolveBeat(beat) : null;
+  }
+
+  /**
+   * Whether a Quest is currently loaded into the Play playlist.
+   * @param {string} sourceEntryId
+   * @returns {boolean}
+   */
+  static isLoaded(sourceEntryId) {
+    if (!sourceEntryId) return false;
+    return PlaybookService.#doc.beats.some(
+      (beat) => beat.sourceStoryEntryId === sourceEntryId
+    );
+  }
+
+  /**
+   * Quest id of the Beat currently shown in Play, if any.
+   * @returns {string}
+   */
+  static getLiveSourceEntryId() {
+    const beat = PlaybookService.#doc.beats[PlaybookService.getIndex()];
+    return beat?.sourceStoryEntryId ?? "";
   }
 
   /** @returns {number} */
@@ -232,11 +255,14 @@ export class PlaybookService {
    */
   static listBeats() {
     const current = PlaybookService.getIndex();
-    return PlaybookService.#doc.beats.map((beat, index) => ({
-      index,
-      title: beat.title?.trim() ? beat.title : "Untitled Entry",
-      isCurrent: index === current
-    }));
+    return PlaybookService.#doc.beats.map((beat, index) => {
+      const resolved = PlaybookService.#resolveBeat(beat);
+      return {
+        index,
+        title: resolved.title?.trim() ? resolved.title : "Untitled Quest",
+        isCurrent: index === current
+      };
+    });
   }
 
   /**
@@ -295,6 +321,44 @@ export class PlaybookService {
     const beat = PlaybookService.#doc.beats[index];
     if (!beat || !patch) return false;
 
+    let beatChanged = false;
+    if ("sceneUuid" in patch) {
+      beat.sceneUuid = PlaybookService.#normalizeSceneUuid(patch.sceneUuid);
+      beatChanged = true;
+    }
+    if (Array.isArray(patch.keyNpcUuids)) {
+      beat.keyNpcUuids = PlaybookService.#normalizeActorUuids(patch.keyNpcUuids);
+      beatChanged = true;
+    }
+
+    if (beat.sourceStoryEntryId) {
+      const questPatch = {};
+      if (typeof patch.title === "string") questPatch.title = patch.title;
+      if (typeof patch.objective === "string") questPatch.objective = patch.objective;
+      if (typeof patch.gmNotes === "string") questPatch.notes = patch.gmNotes;
+      if (typeof patch.experience === "string") questPatch.reward = patch.experience;
+      if (typeof patch.speechNotes === "string") questPatch.speechNotes = patch.speechNotes;
+      if (typeof patch.setup === "string") questPatch.setup = patch.setup;
+      if (typeof patch.twist === "string") questPatch.twist = patch.twist;
+      if (typeof patch.possibleOutcomes === "string") {
+        questPatch.possibleOutcomes = patch.possibleOutcomes;
+      }
+      for (const field of [
+        "relatedBeatIds",
+        "relatedCharacterIds",
+        "relatedLocationIds",
+        "relatedItemIds"
+      ]) {
+        if (Array.isArray(patch[field])) questPatch[field] = patch[field];
+      }
+      if (Object.keys(questPatch).length) {
+        await PlaybookService.#updateSourceEntry(beat.sourceStoryEntryId, questPatch);
+      }
+      if (beatChanged) await PlaybookService.#persist();
+      return true;
+    }
+
+    // Legacy / manually created beats without a Quest source.
     if (typeof patch.title === "string") beat.title = patch.title;
     if (typeof patch.objective === "string") beat.objective = patch.objective;
     if (typeof patch.gmNotes === "string") beat.gmNotes = patch.gmNotes;
@@ -313,13 +377,6 @@ export class PlaybookService {
         beat[field] = [...new Set(patch[field].filter((value) => typeof value === "string" && value))];
       }
     }
-    if ("sceneUuid" in patch) {
-      beat.sceneUuid = PlaybookService.#normalizeSceneUuid(patch.sceneUuid);
-    }
-    if (Array.isArray(patch.keyNpcUuids)) {
-      beat.keyNpcUuids = PlaybookService.#normalizeActorUuids(patch.keyNpcUuids);
-    }
-
     await PlaybookService.#persist();
     return true;
   }
@@ -349,48 +406,61 @@ export class PlaybookService {
   }
 
   /**
-   * Clone campaign Story Entries into independent Session Beats.
-   * Existing imports from the same source entry are skipped.
+   * Load Quests into Play as thin live pointers (no content copy).
+   * Existing loads from the same Quest are reused.
    * @param {import("./campaign-document.js").CampaignQuestEntry[]} entries
-   * @returns {Promise<number[]>} Imported beat indices
+   * @returns {Promise<number[]>} Beat indices for the requested Quests
    */
   static async importStoryEntries(entries) {
     if (!Array.isArray(entries)) return [];
-    const importedSources = new Set(
-      PlaybookService.#doc.beats.map((beat) => beat.sourceStoryEntryId).filter(Boolean)
-    );
     const indices = [];
+    let changed = false;
 
     for (const entry of entries) {
-      if (!entry?.id || importedSources.has(entry.id)) continue;
-      const beat = PlaybookService.#normalizeBeat({
-        title: entry.title,
-        objective: entry.objective,
-        gmNotes: entry.notes,
-        experience: entry.reward,
-        speechNotes: entry.speechNotes,
-        setup: entry.setup,
-        twist: entry.twist,
-        possibleOutcomes: entry.possibleOutcomes,
-        sourceStoryThreadId: entry.storyThreadId,
-        sourceStoryEntryId: entry.id,
-        relatedBeatIds: entry.relatedBeatIds,
-        relatedCharacterIds: entry.relatedCharacterIds,
-        relatedLocationIds: entry.relatedLocationIds,
-        relatedItemIds: entry.relatedItemIds
-      });
-      PlaybookService.#doc.beats.push(beat);
+      if (!entry?.id) continue;
+      const existing = PlaybookService.#doc.beats.findIndex(
+        (beat) => beat.sourceStoryEntryId === entry.id
+      );
+      if (existing >= 0) {
+        const beat = PlaybookService.#doc.beats[existing];
+        if (entry.storyThreadId && beat.sourceStoryThreadId !== entry.storyThreadId) {
+          beat.sourceStoryThreadId = entry.storyThreadId;
+          changed = true;
+        }
+        indices.push(existing);
+        continue;
+      }
+      PlaybookService.#doc.beats.push(PlaybookService.#normalizeBeat({
+        sourceStoryThreadId: entry.storyThreadId ?? "",
+        sourceStoryEntryId: entry.id
+      }));
       indices.push(PlaybookService.#doc.beats.length - 1);
-      importedSources.add(entry.id);
+      changed = true;
     }
 
-    if (indices.length) await PlaybookService.#persist();
+    if (indices.length) {
+      const focus = indices[indices.length - 1];
+      if (PlaybookService.#doc.currentIndex !== focus) {
+        PlaybookService.#doc.currentIndex = focus;
+        changed = true;
+      }
+    }
+    if (changed) await PlaybookService.#persist();
     return indices;
   }
 
   // Compatibility alias for pre-v0.3.10 integrations.
   static importQuestEntries(entries) {
     return PlaybookService.importStoryEntries(entries);
+  }
+
+  /**
+   * Remove a Quest from the Play playlist without deleting Campaign data.
+   * @param {string} sourceEntryId
+   * @returns {Promise<number>} Removed beat count
+   */
+  static async removeFromPlay(sourceEntryId) {
+    return PlaybookService.purgeSourceEntry(sourceEntryId);
   }
 
   /**
@@ -496,6 +566,78 @@ export class PlaybookService {
       beats: PlaybookService.#doc.beats.map((beat) => PlaybookService.#cloneBeat(beat))
     });
     await PlaybookService.#syncSessionBeatIds();
+  }
+
+  /**
+   * Play renders live Quest content. Beat storage only keeps Play overlays
+   * (scene/NPC) plus the source pointer when a Quest is loaded.
+   * @param {PlaybookBeat} beat
+   * @returns {PlaybookBeat}
+   */
+  static #resolveBeat(beat) {
+    const resolved = PlaybookService.#cloneBeat(beat);
+    const entry = PlaybookService.#sourceEntry(beat);
+    if (!entry) return resolved;
+    resolved.title = entry.title ?? "";
+    resolved.objective = entry.objective ?? "";
+    resolved.gmNotes = entry.notes ?? "";
+    resolved.experience = entry.reward ?? "";
+    resolved.speechNotes = entry.speechNotes ?? "";
+    resolved.setup = entry.setup ?? "";
+    resolved.twist = entry.twist ?? "";
+    resolved.possibleOutcomes = entry.possibleOutcomes ?? "";
+    resolved.sourceStoryThreadId = entry.storyThreadId ?? resolved.sourceStoryThreadId;
+    resolved.relatedBeatIds = [...(entry.relatedBeatIds ?? [])];
+    resolved.relatedCharacterIds = [...(entry.relatedCharacterIds ?? [])];
+    resolved.relatedLocationIds = [...(entry.relatedLocationIds ?? [])];
+    resolved.relatedItemIds = [...(entry.relatedItemIds ?? [])];
+    return resolved;
+  }
+
+  /**
+   * @param {PlaybookBeat} beat
+   * @returns {import("./campaign-document.js").CampaignQuestEntry|null}
+   */
+  static #sourceEntry(beat) {
+    if (!beat?.sourceStoryEntryId) return null;
+    return CampaignDocument.get().storyEntries.find(
+      (entry) => entry.id === beat.sourceStoryEntryId
+    ) ?? null;
+  }
+
+  /**
+   * Write narrative Play edits back to the canonical Quest.
+   * Avoids importing QuestEntryService (circular with purge).
+   * @param {string} id
+   * @param {Record<string, unknown>} patch
+   */
+  static async #updateSourceEntry(id, patch) {
+    await CampaignDocument.update((doc) => {
+      const entry = doc.storyEntries.find((item) => item.id === id);
+      if (!entry) return;
+      if (typeof patch.title === "string") entry.title = patch.title;
+      if (typeof patch.objective === "string") entry.objective = patch.objective;
+      if (typeof patch.notes === "string") entry.notes = patch.notes;
+      if (typeof patch.reward === "string") entry.reward = patch.reward;
+      if (typeof patch.speechNotes === "string") entry.speechNotes = patch.speechNotes;
+      if (typeof patch.setup === "string") entry.setup = patch.setup;
+      if (typeof patch.twist === "string") entry.twist = patch.twist;
+      if (typeof patch.possibleOutcomes === "string") {
+        entry.possibleOutcomes = patch.possibleOutcomes;
+      }
+      for (const field of [
+        "relatedBeatIds",
+        "relatedCharacterIds",
+        "relatedLocationIds",
+        "relatedItemIds"
+      ]) {
+        if (!Array.isArray(patch[field])) continue;
+        entry[field] = [...new Set(
+          patch[field].filter((value) => typeof value === "string" && value)
+        )];
+      }
+      entry.updated = Date.now();
+    });
   }
 
   /**

@@ -9,7 +9,7 @@ import { StoryThreadService } from "./story-thread-service.js";
 /**
  * Campaign-owned Quests stored as Story Entries under a Story Thread.
  * The legacy class name remains as a compatibility API for existing callers.
- * Imported Session copies are created separately by PlaybookService.
+ * Play loads Quests as live pointers — content is never cloned into the playbook.
  */
 export class QuestEntryService {
   /** @returns {import("./campaign-document.js").CampaignQuestEntry[]} */

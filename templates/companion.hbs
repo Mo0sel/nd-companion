@@ -110,14 +110,19 @@
             <span class="nd-play-entry-nav__counter-sep">/</span>
             <span class="nd-play-entry-nav__counter-total" data-playbook-counter="total">0</span>
           </span>
-          <span class="nd-play-entry-nav__eyebrow">Current Entry</span>
+          <span class="nd-play-entry-nav__eyebrow">Current Quest</span>
           <h2 class="nd-play-entry-nav__title" data-playbook="title"></h2>
         </div>
         <button type="button" class="nd-button nd-button--nav" data-playbook-nav="next" aria-label="Next entry">→</button>
       </div>
 
+      <div class="nd-play-empty" data-play-empty hidden>
+        <h3>No Quest Loaded</h3>
+        <p>Select a Quest from the Campaign Explorer to begin running the session.</p>
+      </div>
+
       {{!-- Scrollable dashboard content --}}
-      <div class="nd-play-content">
+      <div class="nd-play-content" data-play-content>
 
         <details class="nd-play-story-threads" data-play-story-threads hidden open>
           <summary>

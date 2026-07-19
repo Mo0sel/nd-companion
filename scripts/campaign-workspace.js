@@ -5,6 +5,7 @@ import { EntityMentions } from "./entity-mentions.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { FactionService } from "./faction-service.js";
 import { LiveNotes } from "./live-notes.js";
+import { Playbook } from "./playbook.js";
 import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
 import { RichText } from "./rich-text.js";
@@ -428,6 +429,13 @@ export class CampaignWorkspace {
           return;
         }
 
+        const unloadStoryEntry = target.closest("[data-unload-story-entry]");
+        if (unloadStoryEntry) {
+          const id = unloadStoryEntry.getAttribute("data-unload-story-entry");
+          if (id) void CampaignWorkspace.#unloadStoryEntry(root, id);
+          return;
+        }
+
         const deleteQuest = target.closest("[data-delete-story-entry]");
         if (deleteQuest) {
           const id = deleteQuest.getAttribute("data-delete-story-entry");
@@ -637,11 +645,12 @@ export class CampaignWorkspace {
       .slice()
       .sort((a, b) => a.title.localeCompare(b.title));
     const entries = QuestEntryService.list();
-    const playbook = PlaybookService.getDocument();
     const loadedIds = new Set(
-      playbook.beats.map((beat) => beat.sourceStoryEntryId).filter(Boolean)
+      PlaybookService.getDocument().beats
+        .map((beat) => beat.sourceStoryEntryId)
+        .filter(Boolean)
     );
-    const liveId = PlaybookService.getCurrent().beat?.sourceStoryEntryId ?? "";
+    const liveId = PlaybookService.getLiveSourceEntryId();
     const liveEntry = entries.find((entry) => entry.id === liveId);
     if (liveEntry?.storyThreadId) {
       CampaignWorkspace.#expandedStoryThreads.add(liveEntry.storyThreadId);
@@ -733,6 +742,7 @@ export class CampaignWorkspace {
     const row = document.createElement("div");
     row.className = "nd-explorer-quest";
     row.classList.toggle("is-active", entry.id === CampaignWorkspace.#openEntryId);
+    row.classList.toggle("is-live", live);
 
     const open = document.createElement("button");
     open.type = "button";
@@ -744,16 +754,23 @@ export class CampaignWorkspace {
     const state = document.createElement("span");
     state.className = "nd-explorer-quest__state";
     state.classList.toggle("is-live", live);
-    state.textContent = live ? "● LIVE" : loaded ? "✓ Loaded" : entry.status;
+    state.textContent = live ? "● LIVE" : "";
 
-    const load = document.createElement("button");
-    load.type = "button";
-    load.className = "nd-explorer-quest__action";
-    load.dataset.explorerLoadEntry = entry.id;
-    load.disabled = loaded;
-    load.title = loaded ? "Already loaded into Play" : "Load into Play";
-    load.setAttribute("aria-label", load.title);
-    load.textContent = loaded ? "✓" : "▶";
+    const playAction = document.createElement("button");
+    playAction.type = "button";
+    playAction.className = "nd-explorer-quest__action";
+    if (loaded) {
+      playAction.dataset.unloadStoryEntry = entry.id;
+      playAction.title = "Remove from Play";
+      playAction.setAttribute("aria-label", "Remove from Play");
+      playAction.textContent = "✕";
+      playAction.classList.add("nd-explorer-quest__unload");
+    } else {
+      playAction.dataset.explorerLoadEntry = entry.id;
+      playAction.title = "Load into Play";
+      playAction.setAttribute("aria-label", "Load into Play");
+      playAction.textContent = "▶";
+    }
 
     const remove = document.createElement("button");
     remove.type = "button";
@@ -763,7 +780,7 @@ export class CampaignWorkspace {
     remove.setAttribute("aria-label", "Delete Quest");
     remove.textContent = "×";
 
-    row.append(open, state, load, remove);
+    row.append(open, state, playAction, remove);
     return row;
   }
 
@@ -1268,14 +1285,17 @@ export class CampaignWorkspace {
 
     const playActions = document.createElement("div");
     playActions.className = "nd-quest-entry__actions";
+    const isLoaded = PlaybookService.isLoaded(entry.id);
+    const isLive = PlaybookService.getLiveSourceEntryId() === entry.id;
     const load = document.createElement("button");
     load.type = "button";
-    load.dataset.loadStoryEntry = entry.id;
-    const isLoaded = PlaybookService.getDocument().beats.some(
-      (beat) => beat.sourceStoryEntryId === entry.id
-    );
-    load.disabled = isLoaded;
-    load.textContent = isLoaded ? "Loaded into Play" : "Load into Play";
+    if (isLoaded) {
+      load.dataset.unloadStoryEntry = entry.id;
+      load.textContent = isLive ? "Remove from Play (LIVE)" : "Remove from Play";
+    } else {
+      load.dataset.loadStoryEntry = entry.id;
+      load.textContent = "Load into Play";
+    }
     const remove = document.createElement("button");
     remove.type = "button";
     remove.className = "nd-quest-entry__delete";
@@ -1713,6 +1733,7 @@ export class CampaignWorkspace {
       CampaignWorkspace.#lastSelections.delete("storyThreads");
     }
     CampaignWorkspace.paint(root);
+    Playbook.refreshOpen();
   }
 
   static async #saveStoryThread(root, repaint = true) {
@@ -1815,6 +1836,7 @@ export class CampaignWorkspace {
     if (!removed) return;
     if (CampaignWorkspace.#openEntryId === id) CampaignWorkspace.#openEntryId = null;
     CampaignWorkspace.paint(root);
+    Playbook.refreshOpen();
   }
 
   static async #loadStoryEntry(root, id, open = false) {
@@ -1828,6 +1850,15 @@ export class CampaignWorkspace {
       CampaignWorkspace.#openEntryId = id;
     }
     CampaignWorkspace.paint(root);
+    Playbook.refreshOpen();
+  }
+
+  static async #unloadStoryEntry(root, id) {
+    if (!PlaybookService.isLoaded(id)) return;
+    await CampaignWorkspace.flush(root).catch(() => {});
+    await PlaybookService.removeFromPlay(id);
+    CampaignWorkspace.paint(root);
+    Playbook.refreshOpen();
   }
 
   static async #saveEntry(root, id, repaint = true) {
@@ -1851,6 +1882,7 @@ export class CampaignWorkspace {
     ));
     await QuestEntryService.update(id, patch);
     CampaignWorkspace.#openEntryId = id;
+    if (PlaybookService.isLoaded(id)) Playbook.refreshOpen();
     if (repaint) CampaignWorkspace.paint(root);
   }
 
