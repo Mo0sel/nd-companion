@@ -623,9 +623,9 @@ export class CampaignWorkspace {
     const heading = document.createElement("h3");
     heading.className = "nd-hierarchy-group";
     heading.textContent = "History";
-    const summary = document.createElement("p");
-    summary.className = "nd-object-history__summary";
-    summary.textContent = history.mentionCount > 0
+    const historySummary = document.createElement("p");
+    historySummary.className = "nd-object-history__summary";
+    historySummary.textContent = history.mentionCount > 0
       ? `First seen ${history.firstAppearance?.label}; ` +
         `last seen ${history.lastAppearance?.label}.`
       : "No Chronicle appearances yet.";
@@ -641,7 +641,7 @@ export class CampaignWorkspace {
         appearances.append(button);
       }
     }
-    historySection.append(heading, summary, appearances);
+    historySection.append(heading, historySummary, appearances);
     body.append(historySection);
 
     const actions = document.createElement("div");
