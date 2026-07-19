@@ -394,6 +394,28 @@ export class PlaybookService {
   }
 
   /**
+   * Remove prepared Session Beats that were imported from a deleted Quest.
+   * @param {string} sourceEntryId
+   * @returns {Promise<number>} Removed beat count
+   */
+  static async purgeSourceEntry(sourceEntryId) {
+    if (!sourceEntryId) return 0;
+    const before = PlaybookService.#doc.beats.length;
+    const currentId = PlaybookService.#doc.beats[PlaybookService.getIndex()]?.id ?? "";
+    PlaybookService.#doc.beats = PlaybookService.#doc.beats.filter(
+      (beat) => beat.sourceStoryEntryId !== sourceEntryId
+    );
+    const removed = before - PlaybookService.#doc.beats.length;
+    if (!removed) return 0;
+    const nextIndex = PlaybookService.#doc.beats.findIndex((beat) => beat.id === currentId);
+    PlaybookService.#doc.currentIndex = nextIndex >= 0
+      ? nextIndex
+      : PlaybookService.#clampIndex(PlaybookService.#doc.currentIndex);
+    await PlaybookService.#persist();
+    return removed;
+  }
+
+  /**
    * Remove a beat and clamp currentIndex.
    * @param {number} index
    * @returns {Promise<{ ok: boolean, nextEditIndex: number|null }>}

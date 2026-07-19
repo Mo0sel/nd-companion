@@ -1,11 +1,13 @@
 import {
   CampaignDocument,
+  QUEST_CATEGORIES,
   QUEST_ENTRY_STATUSES
 } from "./campaign-document.js";
+import { PlaybookService } from "./playbook-service.js";
 import { StoryThreadService } from "./story-thread-service.js";
 
 /**
- * Campaign-owned Story Entry CRUD.
+ * Campaign-owned Quests stored as Story Entries under a Story Thread.
  * The legacy class name remains as a compatibility API for existing callers.
  * Imported Session copies are created separately by PlaybookService.
  */
@@ -27,7 +29,7 @@ export class QuestEntryService {
   }
 
   /**
-   * Compatibility lookup for integrations that still ask by Quest.
+   * Compatibility lookup for integrations that still ask by legacy Quest Thread.
    * @param {string} questId
    */
   static listForQuest(questId) {
@@ -57,8 +59,9 @@ export class QuestEntryService {
     const entry = CampaignDocument.normalizeQuestEntry({
       id: foundry.utils.randomID(),
       storyThreadId,
-      title: "Untitled Entry",
+      title: "Untitled Quest",
       status: "PLANNED",
+      category: "SIDE",
       created: Date.now(),
       updated: Date.now()
     });
@@ -84,6 +87,9 @@ export class QuestEntryService {
 
       if (typeof patch.title === "string") entry.title = patch.title;
       if (patch.status && QUEST_ENTRY_STATUSES.includes(patch.status)) entry.status = patch.status;
+      if (patch.category && QUEST_CATEGORIES.includes(patch.category)) {
+        entry.category = patch.category;
+      }
       for (const field of [
         "speechNotes",
         "objective",
@@ -112,6 +118,7 @@ export class QuestEntryService {
   }
 
   /**
+   * Delete a Quest and clean campaign + playbook references.
    * @param {string} id
    * @returns {Promise<boolean>}
    */
@@ -122,8 +129,19 @@ export class QuestEntryService {
       const index = doc.storyEntries.findIndex((entry) => entry.id === id);
       if (index < 0) return;
       doc.storyEntries.splice(index, 1);
+      for (const entry of doc.storyEntries) {
+        entry.relatedBeatIds = (entry.relatedBeatIds ?? []).filter((entryId) => entryId !== id);
+      }
+      for (const quest of doc.threads) {
+        quest.relatedBeatIds = (quest.relatedBeatIds ?? []).filter((entryId) => entryId !== id);
+      }
+      for (const session of doc.sessions) {
+        session.relatedQuestEntries = (session.relatedQuestEntries ?? [])
+          .filter((entryId) => entryId !== id);
+      }
       removed = true;
     });
+    if (removed) await PlaybookService.purgeSourceEntry(id);
     return removed;
   }
 }

@@ -55,6 +55,7 @@ import { CompanionStorage } from "./storage.js";
  * @property {string} storyThreadId
  * @property {string} title
  * @property {QuestEntryStatus} status
+ * @property {QuestCategory} category
  * @property {string} speechNotes
  * @property {string} objective
  * @property {string} setup
@@ -557,6 +558,7 @@ export class CampaignDocument {
   static normalizeQuestEntry(entry) {
     const now = Date.now();
     const status = QUEST_ENTRY_STATUSES.includes(entry?.status) ? entry.status : "PLANNED";
+    const category = QUEST_CATEGORIES.includes(entry?.category) ? entry.category : "SIDE";
     const idList = (value) =>
       Array.isArray(value)
         ? [...new Set(value.filter((id) => typeof id === "string" && id))]
@@ -568,6 +570,7 @@ export class CampaignDocument {
         typeof entry?.storyThreadId === "string" ? entry.storyThreadId : "",
       title: typeof entry?.title === "string" ? entry.title : "",
       status,
+      category,
       speechNotes: typeof entry?.speechNotes === "string" ? entry.speechNotes : "",
       objective: typeof entry?.objective === "string" ? entry.objective : "",
       setup: typeof entry?.setup === "string" ? entry.setup : "",

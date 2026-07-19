@@ -95,6 +95,12 @@
   margin-top: 12px;
 }
 
+.nd-campaign-nav__divider {
+  height: 1px;
+  margin: 8px 4px;
+  background: var(--nd-border);
+}
+
 .nd-campaign-nav button {
   width: 100%;
   margin: 0;
@@ -180,9 +186,10 @@
 
 /* Quest row: status dot + title */
 .nd-quest-sidebar__quest {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 8px;
+  gap: 4px 8px;
   width: 100%;
   margin: 0 0 2px;
   padding: 7px 10px;
@@ -195,6 +202,19 @@
   text-align: left;
   cursor: pointer;
   transition: background 0.1s;
+}
+
+.nd-quest-sidebar__quest > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nd-quest-sidebar__quest small {
+  grid-column: 1 / -1;
+  color: var(--nd-text-3);
+  font-size: var(--nd-text-micro);
 }
 
 .nd-quest-sidebar__quest:hover {
@@ -446,11 +466,46 @@
   margin-bottom: var(--nd-space-3);
 }
 
-.nd-story-scenes__actions {
+.nd-story-quests__actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--nd-space-2);
+}
+
+.nd-quest-sidebar__hint {
+  margin: 0 2px 8px;
+  color: var(--nd-text-3);
+  font-size: var(--nd-text-caption);
+  line-height: 1.4;
+}
+
+.nd-quest-entry__owner {
+  display: grid;
+  gap: 2px;
+  margin-bottom: var(--nd-space-3);
+}
+
+.nd-quest-entry__owner-label {
+  color: var(--nd-text-3);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nd-quest-entry__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--nd-space-2);
+  margin-top: var(--nd-space-3);
+}
+
+.nd-quest-entry__delete {
+  color: var(--nd-danger);
+  background: transparent;
+  border: 1px solid var(--nd-border);
 }
 
 .nd-quest-entries h3 {

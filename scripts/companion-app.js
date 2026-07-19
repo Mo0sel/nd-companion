@@ -199,7 +199,6 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       campaign.campaignName
     ].find((value) => typeof value === "string" && value.trim())?.trim() ?? "";
     const sessions = Array.isArray(campaign.sessions) ? campaign.sessions.length : 0;
-    const threads = Array.isArray(campaign.threads) ? campaign.threads.length : 0;
     const storyEntries = Array.isArray(campaign.storyEntries)
       ? campaign.storyEntries.length
       : Array.isArray(campaign.questEntries) ? campaign.questEntries.length : 0;
@@ -216,10 +215,9 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       row("Schema Version", payload.schemaVersion),
       row("Export Date", payload.exportedAt || "Not provided"),
       row("Sessions", sessions),
-      row("Quests", threads),
       row("Story Threads", storyThreads),
-      row("Factions", factions),
-      row("Scenes", storyEntries)
+      row("Quests", storyEntries),
+      row("Factions", factions)
     ].join("");
 
     return foundry.applications.api.DialogV2.confirm({

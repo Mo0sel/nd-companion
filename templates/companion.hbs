@@ -307,45 +307,33 @@
         <aside class="nd-quest-sidebar" aria-label="Quest navigation">
           <div class="nd-quest-sidebar__head">
             <div class="nd-quest-sidebar__title">Campaign</div>
-            <p class="nd-quest-sidebar__session" data-campaign-current-session>Session 1</p>
             <span class="nd-campaign-autosave" data-campaign-autosave-status hidden></span>
             <nav class="nd-campaign-nav" aria-label="Campaign sections">
-              <button type="button" data-campaign-section="storyThreads">Story Threads</button>
-              <button type="button" data-campaign-section="factions">Factions</button>
-              <button type="button" data-campaign-section="actors">Actors</button>
-              <button type="button" data-campaign-section="locations">Locations</button>
-              <button type="button" data-campaign-section="items">Items</button>
-              <button type="button" class="is-active" data-campaign-section="quests">Quests</button>
+              <button type="button" class="is-active" data-campaign-section="storyThreads">Story Threads</button>
+              <button type="button" data-campaign-section="quests">Quests</button>
               <button type="button" data-campaign-section="chronicle">Chronicle</button>
+              <div class="nd-campaign-nav__divider" aria-hidden="true"></div>
+              <button type="button" data-campaign-section="actors">Actors</button>
+              <button type="button" data-campaign-section="factions">Factions</button>
+              <button type="button" data-campaign-section="items">Items</button>
+              <button type="button" data-campaign-section="locations">Locations</button>
             </nav>
           </div>
 
           <div class="nd-quest-sidebar__scroll">
-            <div data-campaign-nav-panel="quests">
-              <div class="nd-quest-sidebar__section" data-quest-category="MAIN">
+            <div data-campaign-nav-panel="quests" hidden>
+              <div class="nd-quest-sidebar__section">
                 <div class="nd-quest-sidebar__heading">
-                  <span>Main Quests</span>
-                  <button type="button" data-new-quest="MAIN" aria-label="New Main Quest">+</button>
+                  <span>All Quests</span>
                 </div>
-                <div data-quest-list="MAIN"></div>
-              </div>
-              <div class="nd-quest-sidebar__section" data-quest-category="SIDE">
-                <div class="nd-quest-sidebar__heading">
-                  <span>Side Quests</span>
-                  <button type="button" data-new-quest="SIDE" aria-label="New Side Quest">+</button>
-                </div>
-                <div data-quest-list="SIDE"></div>
-              </div>
-              <div class="nd-quest-sidebar__section" data-quest-category="COMPANION">
-                <div class="nd-quest-sidebar__heading">
-                  <span>Companion Quests</span>
-                  <button type="button" data-new-quest="COMPANION" aria-label="New Companion Quest">+</button>
-                </div>
-                <div data-quest-list="COMPANION"></div>
+                <p class="nd-quest-sidebar__hint">
+                  Quests are created inside Story Threads.
+                </p>
+                <div data-quest-index-list></div>
               </div>
             </div>
 
-            <div data-campaign-nav-panel="storyThreads" hidden>
+            <div data-campaign-nav-panel="storyThreads">
               <div class="nd-quest-sidebar__section">
                 <div class="nd-quest-sidebar__heading">
                   <span>Story Threads</span>
@@ -392,7 +380,7 @@
 
         <main class="nd-quest-panel">
           <div class="nd-quest-empty" data-quest-empty>
-            Select a Quest or create one to begin writing your campaign.
+            Select a Quest from the index, or create one inside a Story Thread.
           </div>
 
           <section data-quest-editor hidden>
@@ -507,16 +495,16 @@
               ></div>
             </div>
 
-            <section class="nd-quest-entries nd-story-scenes">
+            <section class="nd-quest-entries nd-story-quests">
               <header>
                 <div>
                   <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Playable Content</div>
-                  <h3 class="nd-hierarchy-group">Scenes</h3>
+                  <h3 class="nd-hierarchy-group">Quests</h3>
                 </div>
-                <div class="nd-story-scenes__actions">
+                <div class="nd-story-quests__actions">
                   <button type="button" data-load-story-entries>Load into Play</button>
                   <button type="button" class="nd-campaign-new-thread" data-add-story-entry>
-                    + New Scene
+                    + New Quest
                   </button>
                 </div>
               </header>

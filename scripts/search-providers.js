@@ -7,7 +7,6 @@ import { QuestEntryService } from "./quest-entry-service.js";
 import { SearchService } from "./search-service.js";
 import { SessionService } from "./session-service.js";
 import { StoryThreadService } from "./story-thread-service.js";
-import { ThreadService } from "./thread-service.js";
 
 const ENTITY_GROUPS = Object.freeze({
   actor: "ACTOR",
@@ -80,25 +79,26 @@ export function registerSearchProviders() {
     id: "quests",
     label: "Quests",
     getItems: () =>
-      ThreadService.list().map((thread) => ({
-        id: thread.id,
-        title: thread.title?.trim() || "Untitled Quest",
-        subtitle: thread.category || thread.status,
+      QuestEntryService.list().map((entry) => ({
+        id: entry.id,
+        title: entry.title?.trim() || "Untitled Quest",
+        subtitle:
+          StoryThreadService.getById(entry.storyThreadId)?.title || "Quest",
         group: "QUEST"
       })),
     getQuickAccess: () => {
-      const id = CampaignWorkspace.getSelectedThreadId();
-      const thread = id ? ThreadService.getById(id) : null;
-      return thread
+      const id = CampaignWorkspace.getSelectedQuestEntryId?.();
+      const entry = id ? QuestEntryService.getById(id) : null;
+      return entry
         ? [{
-            id: thread.id,
-            title: thread.title?.trim() || "Untitled Quest",
+            id: entry.id,
+            title: entry.title?.trim() || "Untitled Quest",
             subtitle: "Current Quest"
           }]
         : [];
     },
     open: (id, context) => {
-      context.openThread(id);
+      context.openQuestEntry(id);
       return true;
     }
   });
@@ -131,23 +131,6 @@ export function registerSearchProviders() {
       })),
     open: (id, context) => {
       context.openFaction(id);
-      return true;
-    }
-  });
-
-  SearchService.registerProvider({
-    id: "story-entries",
-    label: "Scenes",
-    getItems: () =>
-      QuestEntryService.list().map((entry) => ({
-        id: entry.id,
-        title: entry.title?.trim() || "Untitled Scene",
-        subtitle:
-          StoryThreadService.getById(entry.storyThreadId)?.title || "Scene",
-        group: "SCENE"
-      })),
-    open: (id, context) => {
-      context.openQuestEntry(id);
       return true;
     }
   });

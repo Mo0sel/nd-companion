@@ -9,7 +9,7 @@ const GROUP_LABELS = Object.freeze({
   scene: "Locations",
   journal: "Journals",
   rollTable: "Roll Tables",
-  beat: "Scenes",
+  beat: "Quests",
   quest: "Quests",
   session: "Chronicle Sessions",
   storyThread: "Story Threads",
