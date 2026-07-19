@@ -13,6 +13,7 @@ import { PlaybookService } from "./playbook-service.js";
 import { RichText } from "./rich-text.js";
 import { SessionBuilder } from "./session-builder.js";
 import { SessionService } from "./session-service.js";
+import { CompanionStorage } from "./storage.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -39,7 +40,8 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       height: 720
     },
     actions: {
-      setWorkspace: CompanionApp.#onSetWorkspace
+      setWorkspace: CompanionApp.#onSetWorkspace,
+      exportCampaign: CompanionApp.#onExportCampaign
     }
   };
 
@@ -66,6 +68,64 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   static #onSetWorkspace(_event, target) {
     this.setWorkspace(target.dataset.workspace);
+  }
+
+  /**
+   * Export the read-only serialization payload as formatted JSON.
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} target
+   */
+  static #onExportCampaign(_event, target) {
+    try {
+      const payload = CompanionStorage.serializeCampaign();
+      const json = JSON.stringify(payload, null, 2);
+      const campaignName = game.world?.title?.trim() || "Campaign";
+      const date = new Date().toISOString().slice(0, 10);
+      const filename = `${CompanionApp.#safeFilenamePart(campaignName)}_${date}.ndcompanion.json`;
+      const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      anchor.hidden = true;
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+
+      const sessions = Array.isArray(payload.campaign?.sessions)
+        ? payload.campaign.sessions.length
+        : 0;
+      // CampaignThread is the persisted model presented to the user as a Quest.
+      const quests = Array.isArray(payload.campaign?.threads)
+        ? payload.campaign.threads.length
+        : 0;
+      ui.notifications?.info(
+        `Campaign exported successfully. Sessions: ${sessions} · ` +
+        `Quests (Threads): ${quests}`
+      );
+      target.closest("details")?.removeAttribute("open");
+    } catch (error) {
+      console.error("N&D Companion: campaign export failed", error);
+      ui.notifications?.error("Campaign export failed. See the console for details.");
+    }
+  }
+
+  /**
+   * Produce a filename component valid on Windows and macOS.
+   * @param {string} value
+   * @returns {string}
+   */
+  static #safeFilenamePart(value) {
+    const safe = String(value ?? "")
+      .replace(/[<>:"/\\|?*\u0000-\u001F]/g, "-")
+      .replace(/\s+/g, "_")
+      .replace(/^[.\s]+|[.\s]+$/g, "")
+      .slice(0, 120);
+    if (!safe || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(safe)) {
+      return "Campaign";
+    }
+    return safe;
   }
 
   #applyWorkspace() {

@@ -256,4 +256,133 @@ export class CompanionStorage {
       foundry.utils.duplicate(value ?? { currentIndex: 0, beats: [] })
     );
   }
+
+  /* ── Serialization layer (Sprint 30A) ─────────────────────────────────
+   * Internal API for every future persistence feature (export, import,
+   * snapshots, health check). Read-only: nothing here writes to storage.
+   */
+
+  /**
+   * Serialize the entire Companion state into one payload.
+   * @returns {CampaignPayload}
+   */
+  static serializeCampaign() {
+    const campaign = CompanionStorage.getCampaign();
+    return {
+      moduleVersion: game.modules.get(MODULE_ID)?.version ?? "",
+      schemaVersion: Number.isFinite(campaign.schemaVersion) ? campaign.schemaVersion : 0,
+      foundryVersion: game.version ?? "",
+      exportedAt: new Date().toISOString(),
+
+      campaign,
+      playbook: CompanionStorage.getPlaybook(),
+      campaignMemory: foundry.utils.duplicate(
+        game.settings.get(MODULE_ID, MEMORY_SETTING) ?? {}
+      )
+    };
+  }
+
+  /**
+   * Validate an external payload without normalizing or importing it.
+   * @param {unknown} payload
+   * @returns {{ valid: boolean, errors: string[] }}
+   */
+  static validateCampaignPayload(payload) {
+    /** @type {string[]} */
+    const errors = [];
+
+    if (payload === null || payload === undefined) {
+      errors.push("Payload is missing.");
+      return { valid: false, errors };
+    }
+    if (typeof payload !== "object" || Array.isArray(payload)) {
+      errors.push("Payload must be a plain object.");
+      return { valid: false, errors };
+    }
+
+    if (payload.moduleVersion === undefined || payload.moduleVersion === null) {
+      errors.push("Payload is missing \"moduleVersion\".");
+    }
+    if (payload.schemaVersion === undefined || payload.schemaVersion === null) {
+      errors.push("Payload is missing \"schemaVersion\".");
+    }
+    if (!payload.campaign || typeof payload.campaign !== "object") {
+      errors.push("Payload is missing \"campaign\".");
+    }
+    if (!payload.playbook || typeof payload.playbook !== "object") {
+      errors.push("Payload is missing \"playbook\".");
+    }
+    if (!payload.campaignMemory || typeof payload.campaignMemory !== "object") {
+      errors.push("Payload is missing \"campaignMemory\".");
+    }
+
+    return { valid: errors.length === 0, errors };
+  }
+
+  /**
+   * Validate and normalize a payload. Does NOT write to storage or import.
+   * @param {unknown} payload
+   * @returns {CampaignPayload} Normalized copy, detached from the input
+   * @throws {Error} Descriptive error when the payload is invalid
+   */
+  static deserializeCampaign(payload) {
+    const { valid, errors } = CompanionStorage.validateCampaignPayload(payload);
+    if (!valid) {
+      throw new Error(`Invalid Companion campaign payload: ${errors.join(" ")}`);
+    }
+
+    const schemaVersion = Number(payload.schemaVersion);
+    if (!Number.isFinite(schemaVersion) || schemaVersion < 0) {
+      throw new Error(
+        `Invalid Companion campaign payload: "schemaVersion" must be a non-negative number, got ${JSON.stringify(payload.schemaVersion)}.`
+      );
+    }
+
+    const campaign = foundry.utils.duplicate(payload.campaign);
+    campaign.activeSessionId =
+      typeof campaign.activeSessionId === "string" ? campaign.activeSessionId : "";
+    campaign.sessions = Array.isArray(campaign.sessions) ? campaign.sessions : [];
+    campaign.threads = Array.isArray(campaign.threads) ? campaign.threads : [];
+    campaign.questEntries = Array.isArray(campaign.questEntries) ? campaign.questEntries : [];
+    campaign.schemaVersion = Number.isFinite(campaign.schemaVersion)
+      ? campaign.schemaVersion
+      : schemaVersion;
+
+    const playbook = foundry.utils.duplicate(payload.playbook);
+    playbook.currentIndex = Number.isInteger(playbook.currentIndex) && playbook.currentIndex >= 0
+      ? playbook.currentIndex
+      : 0;
+    playbook.beats = Array.isArray(playbook.beats) ? playbook.beats : [];
+
+    /** @type {Record<string, string>} */
+    const campaignMemory = {};
+    for (const [key, value] of Object.entries(foundry.utils.duplicate(payload.campaignMemory))) {
+      if (typeof key === "string" && key && typeof value === "string") {
+        campaignMemory[key] = value;
+      }
+    }
+
+    return {
+      moduleVersion: String(payload.moduleVersion),
+      schemaVersion,
+      foundryVersion: typeof payload.foundryVersion === "string" ? payload.foundryVersion : "",
+      exportedAt: typeof payload.exportedAt === "string" ? payload.exportedAt : "",
+
+      campaign,
+      playbook,
+      campaignMemory
+    };
+  }
 }
+
+/**
+ * Complete Companion state for persistence features.
+ * @typedef {object} CampaignPayload
+ * @property {string} moduleVersion
+ * @property {number} schemaVersion
+ * @property {string} foundryVersion
+ * @property {string} exportedAt
+ * @property {object} campaign Campaign document (sessions, threads, quest entries)
+ * @property {{ currentIndex: number, beats: object[] }} playbook
+ * @property {Record<string, string>} campaignMemory Per-document memory bag
+ */
