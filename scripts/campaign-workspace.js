@@ -3,6 +3,7 @@ import { ContextEngine } from "./context-engine.js";
 import { ContextPanel } from "./context-panel.js";
 import { EntityMentions } from "./entity-mentions.js";
 import { EntityRegistry } from "./entity-registry.js";
+import { FactionService } from "./faction-service.js";
 import { LiveNotes } from "./live-notes.js";
 import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
@@ -33,10 +34,10 @@ const ENTRY_FIELDS = Object.freeze([
  * Threads are presented as Quests; Quest Entries are campaign-owned sources.
  */
 export class CampaignWorkspace {
-  /** @type {"quest"|"storyThread"|"memory"|"entity"} */
+  /** @type {"quest"|"storyThread"|"faction"|"memory"|"entity"} */
   static #view = "quest";
 
-  /** @type {"quests"|"storyThreads"|"actors"|"locations"|"items"|"chronicle"} */
+  /** @type {"quests"|"storyThreads"|"factions"|"actors"|"locations"|"items"|"chronicle"} */
   static #section = "quests";
 
   /** @type {string|null} */
@@ -47,6 +48,9 @@ export class CampaignWorkspace {
 
   /** @type {string|null} */
   static #storyThreadId = null;
+
+  /** @type {string|null} */
+  static #factionId = null;
 
   /** @type {"actor"|"scene"|"item"|null} */
   static #entityKind = null;
@@ -143,6 +147,17 @@ export class CampaignWorkspace {
     return true;
   }
 
+  static selectFaction(root, id) {
+    if (!FactionService.getById(id)) return false;
+    CampaignWorkspace.#captureScroll(root);
+    CampaignWorkspace.#view = "faction";
+    CampaignWorkspace.#section = "factions";
+    CampaignWorkspace.#factionId = id;
+    CampaignWorkspace.#lastSelections.set("factions", id);
+    CampaignWorkspace.paint(root);
+    return true;
+  }
+
   /**
    * Search compatibility: current Session remains reachable without occupying
    * one of the visible Quest sections.
@@ -195,6 +210,7 @@ export class CampaignWorkspace {
     const quests = ThreadService.list().sort((a, b) => a.title.localeCompare(b.title));
     CampaignWorkspace.#paintQuestLists(panel, quests);
     CampaignWorkspace.#paintStoryThreadList(panel);
+    CampaignWorkspace.#paintFactionList(panel);
     CampaignWorkspace.#paintMemoryList(panel);
     CampaignWorkspace.#paintCampaignNavigation(panel);
     CampaignWorkspace.#paintEntityList(panel);
@@ -225,6 +241,13 @@ export class CampaignWorkspace {
       CampaignWorkspace.#lastSelections.delete("storyThreads");
       CampaignWorkspace.#storyThreadId = null;
     }
+    const faction = CampaignWorkspace.#factionId
+      ? FactionService.getById(CampaignWorkspace.#factionId)
+      : null;
+    if (CampaignWorkspace.#view === "faction" && CampaignWorkspace.#factionId && !faction) {
+      CampaignWorkspace.#lastSelections.delete("factions");
+      CampaignWorkspace.#factionId = null;
+    }
 
     CampaignWorkspace.#paintQuest(
       panel,
@@ -238,8 +261,12 @@ export class CampaignWorkspace {
       panel,
       CampaignWorkspace.#view === "storyThread" ? storyThread : null
     );
+    CampaignWorkspace.#paintFaction(
+      panel,
+      CampaignWorkspace.#view === "faction" ? faction : null
+    );
     CampaignWorkspace.#paintEntity(panel);
-    CampaignWorkspace.#applyView(panel, quest, memory, storyThread);
+    CampaignWorkspace.#applyView(panel, quest, memory, storyThread, faction);
     CampaignWorkspace.#attachRichEditors(panel);
     CampaignWorkspace.#restoreScroll(panel);
   }
@@ -313,6 +340,56 @@ export class CampaignWorkspace {
         if (storyThreadButton) {
           const id = storyThreadButton.getAttribute("data-story-thread-nav-id");
           if (id) CampaignWorkspace.selectStoryThread(root, id);
+          return;
+        }
+
+        if (target.closest("[data-new-faction]")) {
+          void CampaignWorkspace.#createFaction(root);
+          return;
+        }
+
+        if (target.closest("[data-save-faction]")) {
+          void CampaignWorkspace.#saveFaction(root);
+          return;
+        }
+
+        const factionButton = target.closest("[data-faction-nav-id]");
+        if (factionButton) {
+          const id = factionButton.getAttribute("data-faction-nav-id");
+          if (id) CampaignWorkspace.selectFaction(root, id);
+          return;
+        }
+
+        if (target.closest("[data-add-faction-objective]")) {
+          const list = panel.querySelector("[data-faction-objectives]");
+          if (list instanceof HTMLElement) {
+            list.append(CampaignWorkspace.#factionObjectiveElement(""));
+            CampaignWorkspace.#attachRichEditors(panel);
+            list.lastElementChild?.querySelector("[data-faction-objective]")?.focus();
+          }
+          return;
+        }
+
+        const removeObjective = target.closest("[data-remove-faction-objective]");
+        if (removeObjective) {
+          removeObjective.closest("[data-faction-objective-row]")?.remove();
+          return;
+        }
+
+        if (target.closest("[data-add-faction-leader]")) {
+          const picker = panel.querySelector("[data-faction-leader-picker]");
+          const list = panel.querySelector("[data-faction-leadership]");
+          if (picker instanceof HTMLSelectElement && list instanceof HTMLElement && picker.value) {
+            const exists = [...list.querySelectorAll("[data-faction-leader-id]")]
+              .some((row) => row.getAttribute("data-faction-leader-id") === picker.value);
+            if (!exists) list.append(CampaignWorkspace.#factionLeaderElement(picker.value));
+          }
+          return;
+        }
+
+        const removeLeader = target.closest("[data-remove-faction-leader]");
+        if (removeLeader) {
+          removeLeader.closest("[data-faction-leader-id]")?.remove();
           return;
         }
 
@@ -542,10 +619,170 @@ export class CampaignWorkspace {
     return row;
   }
 
+  static #paintFactionList(panel) {
+    const list = panel.querySelector("[data-faction-list]");
+    if (!(list instanceof HTMLElement)) return;
+    list.replaceChildren();
+    const factions = FactionService.list()
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name));
+    if (!factions.length) {
+      const empty = document.createElement("div");
+      empty.className = "nd-quest-sidebar__empty";
+      empty.textContent = "No Factions";
+      list.append(empty);
+      return;
+    }
+    for (const faction of factions) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "nd-quest-sidebar__quest";
+      button.dataset.factionNavId = faction.id;
+      button.classList.toggle(
+        "is-active",
+        CampaignWorkspace.#view === "faction" &&
+          faction.id === CampaignWorkspace.#factionId
+      );
+      const name = document.createElement("span");
+      name.textContent = faction.name?.trim() || "Untitled Faction";
+      const reputation = document.createElement("span");
+      reputation.className = "nd-campaign-status";
+      reputation.dataset.status = faction.playerReputation;
+      reputation.textContent = faction.playerReputation;
+      button.append(name, reputation);
+      list.append(button);
+    }
+  }
+
+  static #paintFaction(panel, faction) {
+    const view = panel.querySelector("[data-faction-view]");
+    if (!(view instanceof HTMLElement)) return;
+    view.hidden = !faction;
+    if (!faction) return;
+
+    view.dataset.factionId = faction.id;
+    const name = view.querySelector("[data-faction-name]");
+    const icon = view.querySelector("[data-faction-icon]");
+    const iconPreview = view.querySelector("[data-faction-icon-preview]");
+    const description = view.querySelector("[data-faction-description]");
+    const currentStatus = view.querySelector("[data-faction-current-status]");
+    const resources = view.querySelector("[data-faction-resources]");
+    const reputation = view.querySelector("[data-faction-reputation]");
+    if (name instanceof HTMLInputElement) name.value = faction.name ?? "";
+    if (icon instanceof HTMLInputElement) icon.value = faction.icon ?? "";
+    if (iconPreview instanceof HTMLImageElement) {
+      iconPreview.hidden = !faction.icon;
+      if (faction.icon) iconPreview.src = faction.icon;
+    }
+    if (description instanceof HTMLElement) {
+      description.innerHTML = RichText.sanitize(faction.description ?? "");
+    }
+    if (currentStatus instanceof HTMLElement) {
+      currentStatus.innerHTML = RichText.sanitize(faction.currentStatus ?? "");
+    }
+    if (resources instanceof HTMLElement) {
+      resources.innerHTML = RichText.sanitize(faction.resources ?? "");
+    }
+    if (reputation instanceof HTMLSelectElement) {
+      reputation.value = faction.playerReputation ?? "NEUTRAL";
+    }
+
+    const objectives = view.querySelector("[data-faction-objectives]");
+    if (objectives instanceof HTMLElement) {
+      objectives.replaceChildren();
+      for (const objective of faction.currentObjectives ?? []) {
+        objectives.append(CampaignWorkspace.#factionObjectiveElement(objective));
+      }
+    }
+
+    const leadership = view.querySelector("[data-faction-leadership]");
+    if (leadership instanceof HTMLElement) {
+      leadership.replaceChildren();
+      for (const actorId of faction.leadershipActorIds ?? []) {
+        leadership.append(CampaignWorkspace.#factionLeaderElement(actorId));
+      }
+    }
+    const picker = view.querySelector("[data-faction-leader-picker]");
+    if (picker instanceof HTMLSelectElement) {
+      picker.replaceChildren(new Option("Select an Actor…", ""));
+      for (const actor of EntityRegistry.all("actor").sort((a, b) => a.name.localeCompare(b.name))) {
+        picker.add(new Option(actor.name, actor.uuid));
+      }
+    }
+
+    ContextPanel.paint(
+      view.querySelector("[data-context-panel=\"faction\"]"),
+      ContextEngine.getContext({ kind: "faction", id: faction.id }),
+      {
+        showCampaignMemory: false,
+        showCurrentStatus: false,
+        showHeader: false
+      }
+    );
+
+    const notes = view.querySelector("[data-faction-notes]");
+    if (notes instanceof HTMLElement) {
+      LiveNotes.attach(notes, `faction:${faction.id}`, {
+        memory: true,
+        html: true,
+        sanitize: RichText.sanitize
+      });
+    }
+  }
+
+  static #factionObjectiveElement(objective) {
+    const row = document.createElement("div");
+    row.className = "nd-faction-objective";
+    row.dataset.factionObjectiveRow = "";
+    const editor = document.createElement("div");
+    editor.className = "nd-richtext nd-faction-objective__editor";
+    editor.dataset.factionObjective = "";
+    editor.dataset.richtextEditor = "";
+    editor.dataset.placeholder = "What does this Faction want?";
+    editor.contentEditable = "true";
+    editor.setAttribute("role", "textbox");
+    editor.setAttribute("aria-label", "Faction Objective");
+    editor.innerHTML = RichText.sanitize(objective ?? "");
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "nd-faction-objective__remove";
+    remove.dataset.removeFactionObjective = "";
+    remove.setAttribute("aria-label", "Remove objective");
+    remove.textContent = "×";
+    row.append(editor, remove);
+    return row;
+  }
+
+  static #factionLeaderElement(actorId) {
+    const row = document.createElement("div");
+    row.className = "nd-faction-leader";
+    row.dataset.factionLeaderId = actorId;
+    const actor = EntityRegistry.findByUUID(actorId);
+    const link = document.createElement("button");
+    link.type = "button";
+    link.className = "nd-context-panel__link";
+    link.textContent = actor?.name ?? "Missing Actor";
+    if (actor) {
+      link.dataset.contextKind = "actor";
+      link.dataset.contextId = actor.uuid;
+    } else {
+      link.disabled = true;
+    }
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "nd-faction-objective__remove";
+    remove.dataset.removeFactionLeader = "";
+    remove.setAttribute("aria-label", "Remove leader");
+    remove.textContent = "×";
+    row.append(link, remove);
+    return row;
+  }
+
   static #selectSection(root, section) {
     const allowed = new Set([
       "quests",
       "storyThreads",
+      "factions",
       "actors",
       "locations",
       "items",
@@ -562,6 +799,9 @@ export class CampaignWorkspace {
       CampaignWorkspace.#view = "storyThread";
       CampaignWorkspace.#storyThreadId =
         CampaignWorkspace.#lastSelections.get(section) ?? null;
+    } else if (section === "factions") {
+      CampaignWorkspace.#view = "faction";
+      CampaignWorkspace.#factionId = CampaignWorkspace.#lastSelections.get(section) ?? null;
     } else if (section === "chronicle") {
       CampaignWorkspace.#view = "memory";
       CampaignWorkspace.#memoryId = CampaignWorkspace.#lastSelections.get(section) ?? null;
@@ -597,11 +837,15 @@ export class CampaignWorkspace {
     });
     const quests = panel.querySelector("[data-campaign-nav-panel=\"quests\"]");
     const storyThreads = panel.querySelector("[data-campaign-nav-panel=\"storyThreads\"]");
+    const factions = panel.querySelector("[data-campaign-nav-panel=\"factions\"]");
     const entities = panel.querySelector("[data-campaign-nav-panel=\"entities\"]");
     const chronicle = panel.querySelector("[data-campaign-nav-panel=\"chronicle\"]");
     if (quests instanceof HTMLElement) quests.hidden = CampaignWorkspace.#section !== "quests";
     if (storyThreads instanceof HTMLElement) {
       storyThreads.hidden = CampaignWorkspace.#section !== "storyThreads";
+    }
+    if (factions instanceof HTMLElement) {
+      factions.hidden = CampaignWorkspace.#section !== "factions";
     }
     if (entities instanceof HTMLElement) {
       entities.hidden = !["actors", "locations", "items"].includes(CampaignWorkspace.#section);
@@ -930,12 +1174,13 @@ export class CampaignWorkspace {
     return section;
   }
 
-  static #applyView(panel, quest, memory, storyThread) {
+  static #applyView(panel, quest, memory, storyThread, faction) {
     const questLayout = panel.querySelector("[data-quest-editor]");
     const questEmpty = panel.querySelector("[data-quest-empty]");
     const memoryView = panel.querySelector("[data-memory-view]");
     const entityView = panel.querySelector("[data-campaign-entity-view]");
     const storyThreadView = panel.querySelector("[data-story-thread-view]");
+    const factionView = panel.querySelector("[data-faction-view]");
     if (memoryView instanceof HTMLElement) {
       memoryView.hidden = CampaignWorkspace.#view !== "memory" || !memory;
     }
@@ -945,6 +1190,9 @@ export class CampaignWorkspace {
     if (storyThreadView instanceof HTMLElement) {
       storyThreadView.hidden =
         CampaignWorkspace.#view !== "storyThread" || !storyThread;
+    }
+    if (factionView instanceof HTMLElement) {
+      factionView.hidden = CampaignWorkspace.#view !== "faction" || !faction;
     }
     if (questLayout instanceof HTMLElement) {
       questLayout.hidden = CampaignWorkspace.#view !== "quest" || !quest;
@@ -960,6 +1208,9 @@ export class CampaignWorkspace {
       } else if (CampaignWorkspace.#view === "storyThread" && !storyThread) {
         questEmpty.hidden = false;
         questEmpty.textContent = "Select a Story Thread or create one.";
+      } else if (CampaignWorkspace.#view === "faction" && !faction) {
+        questEmpty.hidden = false;
+        questEmpty.textContent = "Select a Faction or create one.";
       } else if (CampaignWorkspace.#view === "quest" && !quest) {
         questEmpty.hidden = false;
         questEmpty.textContent = "Select a Quest or create one to begin writing your campaign.";
@@ -1082,6 +1333,93 @@ export class CampaignWorkspace {
     return RichText.sanitize(
       foundry.utils.escapeHTML(raw).replace(/\r\n|\r|\n/g, "<br>")
     );
+  }
+
+  static async #createFaction(root) {
+    const faction = await FactionService.create({
+      name: "Untitled Faction",
+      playerReputation: "NEUTRAL"
+    });
+    CampaignWorkspace.#captureScroll(root);
+    CampaignWorkspace.#view = "faction";
+    CampaignWorkspace.#section = "factions";
+    CampaignWorkspace.#factionId = faction.id;
+    CampaignWorkspace.#lastSelections.set("factions", faction.id);
+    CampaignWorkspace.paint(root);
+    requestAnimationFrame(() => root.querySelector("[data-faction-name]")?.focus());
+  }
+
+  static async #saveFaction(root) {
+    const view = root.querySelector("[data-faction-view]");
+    if (!(view instanceof HTMLElement)) return;
+    const id = view.dataset.factionId;
+    if (!id) return;
+    const name = view.querySelector("[data-faction-name]");
+    const icon = view.querySelector("[data-faction-icon]");
+    const description = view.querySelector("[data-faction-description]");
+    const currentStatus = view.querySelector("[data-faction-current-status]");
+    const resources = view.querySelector("[data-faction-resources]");
+    const reputation = view.querySelector("[data-faction-reputation]");
+    const notes = view.querySelector("[data-faction-notes]");
+    const safeDescription = description instanceof HTMLElement
+      ? RichText.sanitize(description.innerHTML)
+      : "";
+    const safeStatus = currentStatus instanceof HTMLElement
+      ? RichText.sanitize(currentStatus.innerHTML)
+      : "";
+    const safeResources = resources instanceof HTMLElement
+      ? RichText.sanitize(resources.innerHTML)
+      : "";
+    const currentObjectives = [...view.querySelectorAll("[data-faction-objective]")]
+      .filter((objective) => objective instanceof HTMLElement)
+      .map((objective) => RichText.sanitize(objective.innerHTML))
+      .filter((objective) => RichText.hasContent(objective));
+    const leadershipActorIds = [...view.querySelectorAll("[data-faction-leader-id]")]
+      .map((row) => row.getAttribute("data-faction-leader-id"))
+      .filter(Boolean);
+    const mentionHtml = [
+      safeDescription,
+      safeStatus,
+      safeResources,
+      notes instanceof HTMLElement ? RichText.sanitize(notes.innerHTML) : "",
+      ...currentObjectives
+    ].join("");
+    await FactionService.update(id, {
+      name: name instanceof HTMLInputElement ? name.value.trim() : "",
+      icon: icon instanceof HTMLInputElement ? icon.value.trim() : "",
+      description: safeDescription,
+      currentStatus: safeStatus,
+      currentObjectives,
+      resources: safeResources,
+      playerReputation: reputation instanceof HTMLSelectElement
+        ? reputation.value
+        : "NEUTRAL",
+      leadershipActorIds,
+      ...CampaignWorkspace.#factionReferencePatch(
+        EntityMentions.extract(mentionHtml),
+        id,
+        leadershipActorIds
+      )
+    });
+    CampaignWorkspace.paint(root);
+  }
+
+  static #factionReferencePatch(mentions, factionId, leadershipActorIds) {
+    const ids = (kind, preferUuid) =>
+      mentions
+        .filter((mention) => mention.kind === kind)
+        .map((mention) => (preferUuid ? mention.uuid : mention.id) || mention.id)
+        .filter(Boolean);
+    const leaders = new Set(leadershipActorIds);
+    return {
+      relatedActorIds: ids("actor", true).filter((id) => !leaders.has(id)),
+      relatedStoryThreadIds: ids("storyThread", false),
+      relatedItemIds: ids("item", true),
+      relatedLocationIds: ids("scene", true),
+      relatedQuestIds: ids("quest", false),
+      relatedSessionIds: ids("session", false),
+      relatedFactionIds: ids("faction", false).filter((id) => id !== factionId)
+    };
   }
 
   static async #createStoryThread(root) {

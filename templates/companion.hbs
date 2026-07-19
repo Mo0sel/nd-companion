@@ -133,6 +133,14 @@
           <div class="nd-play-story-threads__list" data-play-story-thread-list></div>
         </section>
 
+        <section class="nd-play-factions" data-play-factions hidden>
+          <header>
+            <span class="nd-play-card__label">Faction Status</span>
+            <span class="nd-play-story-threads__count" data-play-faction-count></span>
+          </header>
+          <div class="nd-play-factions__list" data-play-faction-list></div>
+        </section>
+
         {{!-- Scene Flow group --}}
         <h3 class="nd-play-section-title nd-play-section-title--scene-flow">Scene Flow</h3>
         <div class="nd-play-entry-grid nd-play-entry-grid--scene-flow">
@@ -299,11 +307,12 @@
             <div class="nd-quest-sidebar__title">Campaign</div>
             <p class="nd-quest-sidebar__session" data-campaign-current-session>Session 1</p>
             <nav class="nd-campaign-nav" aria-label="Campaign sections">
-              <button type="button" class="is-active" data-campaign-section="quests">Quests</button>
               <button type="button" data-campaign-section="storyThreads">Story Threads</button>
+              <button type="button" data-campaign-section="factions">Factions</button>
               <button type="button" data-campaign-section="actors">Actors</button>
               <button type="button" data-campaign-section="locations">Locations</button>
               <button type="button" data-campaign-section="items">Items</button>
+              <button type="button" class="is-active" data-campaign-section="quests">Quests</button>
               <button type="button" data-campaign-section="chronicle">Chronicle</button>
             </nav>
           </div>
@@ -340,6 +349,16 @@
                   <button type="button" data-new-story-thread aria-label="New Story Thread">+</button>
                 </div>
                 <div data-story-thread-list></div>
+              </div>
+            </div>
+
+            <div data-campaign-nav-panel="factions" hidden>
+              <div class="nd-quest-sidebar__section">
+                <div class="nd-quest-sidebar__heading">
+                  <span>Factions</span>
+                  <button type="button" data-new-faction aria-label="New Faction">+</button>
+                </div>
+                <div data-faction-list></div>
               </div>
             </div>
 
@@ -538,6 +557,131 @@
                 data-placeholder="Private notes about this Story Thread..."
                 role="textbox"
                 aria-label="Story Thread DM Notes"
+              ></div>
+            </section>
+          </section>
+
+          <section class="nd-faction-view" data-faction-view hidden>
+            <header class="nd-campaign-panel__header">
+              <div class="nd-faction-heading">
+                <img data-faction-icon-preview alt="" hidden>
+                <div class="nd-campaign-panel__headline">
+                  <div class="nd-campaign-panel__eyebrow">Faction</div>
+                  <input
+                    class="nd-quest-title-input"
+                    type="text"
+                    data-faction-name
+                    placeholder="Faction name"
+                  >
+                </div>
+              </div>
+              <label class="nd-campaign-field nd-campaign-field--compact">
+                <span>Player Reputation</span>
+                <select data-faction-reputation>
+                  <option value="ALLIED">ALLIED</option>
+                  <option value="FRIENDLY">FRIENDLY</option>
+                  <option value="NEUTRAL">NEUTRAL</option>
+                  <option value="DISTRUSTED">DISTRUSTED</option>
+                  <option value="HOSTILE">HOSTILE</option>
+                  <option value="HUNTED">HUNTED</option>
+                </select>
+              </label>
+            </header>
+
+            <label class="nd-campaign-field">
+              <span>Icon (optional)</span>
+              <input type="text" data-faction-icon placeholder="icons/svg/eye.svg">
+            </label>
+
+            <div class="nd-campaign-field nd-campaign-field--notes">
+              <span>Description</span>
+              <div
+                class="nd-richtext nd-richtext--editor nd-faction-editor"
+                data-faction-description
+                data-richtext-editor
+                contenteditable="true"
+                data-placeholder="Describe this organization. Use @ to link campaign knowledge..."
+                role="textbox"
+                aria-label="Faction Description"
+              ></div>
+            </div>
+
+            <div class="nd-campaign-field nd-campaign-field--notes">
+              <span>Current Status</span>
+              <div
+                class="nd-richtext nd-richtext--editor nd-faction-editor"
+                data-faction-current-status
+                data-richtext-editor
+                contenteditable="true"
+                data-placeholder="Friendly, hostile, collapsing, secretly active..."
+                role="textbox"
+                aria-label="Faction Current Status"
+              ></div>
+            </div>
+
+            <section class="nd-faction-section">
+              <header>
+                <div>
+                  <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Present Goals</div>
+                  <h3 class="nd-hierarchy-group">Current Objectives</h3>
+                </div>
+                <button type="button" class="nd-campaign-new-thread" data-add-faction-objective>
+                  + Add Objective
+                </button>
+              </header>
+              <div data-faction-objectives></div>
+            </section>
+
+            <div class="nd-campaign-field nd-campaign-field--notes">
+              <span>Resources</span>
+              <div
+                class="nd-richtext nd-richtext--editor nd-faction-editor"
+                data-faction-resources
+                data-richtext-editor
+                contenteditable="true"
+                data-placeholder="Assets, influence, armies, artifacts, networks..."
+                role="textbox"
+                aria-label="Faction Resources"
+              ></div>
+            </div>
+
+            <section class="nd-faction-section">
+              <header>
+                <div>
+                  <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Actors</div>
+                  <h3 class="nd-hierarchy-group">Leadership</h3>
+                </div>
+              </header>
+              <div class="nd-faction-leadership" data-faction-leadership></div>
+              <div class="nd-faction-leader-picker">
+                <select data-faction-leader-picker aria-label="Select a Faction leader"></select>
+                <button type="button" data-add-faction-leader>Add Leader</button>
+              </div>
+            </section>
+
+            <div class="nd-quest-actions">
+              <button type="button" class="nd-campaign-save" data-save-faction>
+                Save Faction
+              </button>
+            </div>
+
+            <section data-context-panel="faction" hidden></section>
+
+            <section class="nd-faction-section" data-live-notes-root>
+              <header>
+                <div>
+                  <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Private</div>
+                  <h3 class="nd-hierarchy-group">DM Notes</h3>
+                </div>
+                <span class="nd-live-notes__status" data-live-notes-status hidden></span>
+              </header>
+              <div
+                class="nd-richtext nd-richtext--editor nd-faction-editor"
+                data-faction-notes
+                data-richtext-editor
+                data-placeholder="Private notes about this Faction..."
+                role="textbox"
+                aria-label="Faction DM Notes"
               ></div>
             </section>
           </section>

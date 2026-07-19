@@ -201,6 +201,7 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const storyThreads = Array.isArray(campaign.storyThreads)
       ? campaign.storyThreads.length
       : 0;
+    const factions = Array.isArray(campaign.factions) ? campaign.factions.length : 0;
     const row = (label, value) =>
       `<div><dt>${foundry.utils.escapeHTML(label)}</dt>` +
       `<dd>${foundry.utils.escapeHTML(String(value))}</dd></div>`;
@@ -212,6 +213,7 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       row("Sessions", sessions),
       row("Quests", threads),
       row("Story Threads", storyThreads),
+      row("Factions", factions),
       row("Quest Entries", questEntries)
     ].join("");
 
@@ -278,6 +280,12 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
     if (target.kind === "storyThread") {
       if (CampaignWorkspace.selectStoryThread(this.element, target.id)) {
+        this.setWorkspace("campaign");
+      }
+      return;
+    }
+    if (target.kind === "faction") {
+      if (CampaignWorkspace.selectFaction(this.element, target.id)) {
         this.setWorkspace("campaign");
       }
       return;
@@ -360,6 +368,11 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     Playbook.attach(this.element, {
       onOpenStoryThread: (id) => {
         if (CampaignWorkspace.selectStoryThread(this.element, id)) {
+          this.setWorkspace("campaign");
+        }
+      },
+      onOpenFaction: (id) => {
+        if (CampaignWorkspace.selectFaction(this.element, id)) {
           this.setWorkspace("campaign");
         }
       },
@@ -451,6 +464,10 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       },
       openStoryThread: (id) => {
         if (!CampaignWorkspace.selectStoryThread(this.element, id)) return;
+        this.setWorkspace("campaign");
+      },
+      openFaction: (id) => {
+        if (!CampaignWorkspace.selectFaction(this.element, id)) return;
         this.setWorkspace("campaign");
       },
       openQuestEntry: (id) => {

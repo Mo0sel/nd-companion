@@ -27,6 +27,9 @@ export class ContextEngine {
   /** @type {Map<string, object>} */
   static #storyThreads = new Map();
 
+  /** @type {Map<string, object>} */
+  static #factions = new Map();
+
   /**
    * @param {object} entity Actor, Quest, Location, Item, or Chronicle Session
    * @returns {ContextResult}
@@ -73,9 +76,14 @@ export class ContextEngine {
       storyThreads: unique(
         related.filter((node) => node.kind === "storyThread")
       ).sort(byLabel),
+      factions: unique(
+        related.filter((node) => node.kind === "faction")
+      ).sort(byLabel),
       currentStatus: target.kind === "storyThread"
         ? ContextEngine.#storyThreads.get(target.id)?.currentState ?? ""
-        : CompanionStorage.getMemory(ContextEngine.currentStatusKey(target)),
+        : target.kind === "faction"
+          ? ContextEngine.#factions.get(target.id)?.currentStatus ?? ""
+          : CompanionStorage.getMemory(ContextEngine.currentStatusKey(target)),
       campaignMemory: CompanionStorage.getMemory(
         `${ContextEngine.#storageKind(target.kind)}:${target.id}`
       )
@@ -114,6 +122,9 @@ export class ContextEngine {
     ContextEngine.#entries = new Map(doc.questEntries.map((entry) => [entry.id, entry]));
     ContextEngine.#storyThreads = new Map(
       doc.storyThreads.map((thread) => [thread.id, thread])
+    );
+    ContextEngine.#factions = new Map(
+      doc.factions.map((faction) => [faction.id, faction])
     );
 
     for (const session of ContextEngine.#sessions.values()) {
@@ -170,6 +181,25 @@ export class ContextEngine {
       ]);
     }
 
+    for (const faction of ContextEngine.#factions.values()) {
+      const actors = [
+        ...(faction.leadershipActorIds ?? []),
+        ...(faction.relatedActorIds ?? [])
+      ];
+      ContextEngine.#connectGroup([
+        { kind: "faction", id: faction.id },
+        ...(faction.relatedFactionIds ?? []).map((id) => ({ kind: "faction", id })),
+        ...(faction.relatedStoryThreadIds ?? []).map(
+          (id) => ({ kind: "storyThread", id })
+        ),
+        ...(faction.relatedSessionIds ?? []).map((id) => ({ kind: "session", id })),
+        ...actors.map((id) => ({ kind: "actor", id })),
+        ...(faction.relatedLocationIds ?? []).map((id) => ({ kind: "location", id })),
+        ...(faction.relatedItemIds ?? []).map((id) => ({ kind: "item", id })),
+        ...(faction.relatedQuestIds ?? []).map((id) => ({ kind: "quest", id }))
+      ]);
+    }
+
     ContextEngine.#revision = CampaignDocument.revision;
   }
 
@@ -209,6 +239,7 @@ export class ContextEngine {
         "quest",
         "questEntry",
         "storyThread",
+        "faction",
         "location",
         "item",
         "session"
@@ -260,6 +291,12 @@ export class ContextEngine {
         ? { kind, id, label: thread.title?.trim() || "Untitled Story Thread" }
         : null;
     }
+    if (kind === "faction") {
+      const faction = ContextEngine.#factions.get(id);
+      return faction
+        ? { kind, id, label: faction.name?.trim() || "Untitled Faction" }
+        : null;
+    }
     const registryKind = ContextEngine.#storageKind(kind);
     const entity = EntityRegistry.findByUUID(id);
     if (!entity || entity.kind !== registryKind) return null;
@@ -291,6 +328,7 @@ export class ContextEngine {
       locations: [],
       items: [],
       storyThreads: [],
+      factions: [],
       currentStatus: "",
       campaignMemory: ""
     };
@@ -299,7 +337,7 @@ export class ContextEngine {
 
 /**
  * @typedef {object} ContextNode
- * @property {"actor"|"quest"|"questEntry"|"storyThread"|"location"|"item"|"session"} kind
+ * @property {"actor"|"quest"|"questEntry"|"storyThread"|"faction"|"location"|"item"|"session"} kind
  * @property {string} id
  * @property {string} label
  * @property {number} [sessionNumber]
@@ -319,6 +357,7 @@ export class ContextEngine {
  * @property {ContextNode[]} locations
  * @property {ContextNode[]} items
  * @property {ContextNode[]} storyThreads
+ * @property {ContextNode[]} factions
  * @property {string} currentStatus
  * @property {string} campaignMemory
  */

@@ -95,7 +95,8 @@ export class CompanionStorage {
         sessions: [],
         threads: [],
         questEntries: [],
-        storyThreads: []
+        storyThreads: [],
+        factions: []
       }
     });
   }
@@ -180,7 +181,7 @@ export class CompanionStorage {
   }
 
   /**
-   * @returns {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], questEntries: object[], storyThreads: object[] }}
+   * @returns {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], questEntries: object[], storyThreads: object[], factions: object[] }}
    */
   static getCampaign() {
     const doc = game.settings.get(MODULE_ID, CAMPAIGN_SETTING);
@@ -191,13 +192,14 @@ export class CompanionStorage {
         sessions: [],
         threads: [],
         questEntries: [],
-        storyThreads: []
+        storyThreads: [],
+        factions: []
       }
     );
   }
 
   /**
-   * @param {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], questEntries: object[], storyThreads: object[] }} value
+   * @param {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], questEntries: object[], storyThreads: object[], factions: object[] }} value
    * @returns {Promise<object>}
    */
   static async setCampaign(value) {
@@ -211,7 +213,8 @@ export class CompanionStorage {
           sessions: [],
           threads: [],
           questEntries: [],
-          storyThreads: []
+          storyThreads: [],
+          factions: []
         }
       )
     );
@@ -348,6 +351,7 @@ export class CompanionStorage {
     campaign.threads = Array.isArray(campaign.threads) ? campaign.threads : [];
     campaign.questEntries = Array.isArray(campaign.questEntries) ? campaign.questEntries : [];
     campaign.storyThreads = Array.isArray(campaign.storyThreads) ? campaign.storyThreads : [];
+    campaign.factions = Array.isArray(campaign.factions) ? campaign.factions : [];
     campaign.schemaVersion = Number.isFinite(campaign.schemaVersion)
       ? campaign.schemaVersion
       : schemaVersion;

@@ -235,6 +235,7 @@ export class SearchService {
  * @property {(id: string) => Promise<void>|void} openBeat
  * @property {(id: string) => Promise<void>|void} openThread
  * @property {(id: string) => Promise<void>|void} openStoryThread
+ * @property {(id: string) => Promise<void>|void} openFaction
  * @property {(id: string) => Promise<void>|void} openQuestEntry
  * @property {(id: string) => Promise<void>|void} [openMemory]
  * @property {(uuid: string, kind: string) => Promise<boolean>|boolean} openEntity

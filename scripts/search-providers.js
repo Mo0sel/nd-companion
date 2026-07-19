@@ -1,6 +1,7 @@
 import { CampaignMemoryService } from "./campaign-memory-service.js";
 import { CampaignWorkspace } from "./campaign-workspace.js";
 import { EntityRegistry } from "./entity-registry.js";
+import { FactionService } from "./faction-service.js";
 import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
 import { SearchService } from "./search-service.js";
@@ -114,6 +115,22 @@ export function registerSearchProviders() {
       })),
     open: (id, context) => {
       context.openStoryThread(id);
+      return true;
+    }
+  });
+
+  SearchService.registerProvider({
+    id: "factions",
+    label: "Factions",
+    getItems: () =>
+      FactionService.list().map((faction) => ({
+        id: faction.id,
+        title: faction.name?.trim() || "Untitled Faction",
+        subtitle: faction.playerReputation,
+        group: "FACTION"
+      })),
+    open: (id, context) => {
+      context.openFaction(id);
       return true;
     }
   });

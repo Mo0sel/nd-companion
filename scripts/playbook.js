@@ -1,4 +1,5 @@
 import { EntityRegistry } from "./entity-registry.js";
+import { FactionService } from "./faction-service.js";
 import { LiveNotes } from "./live-notes.js";
 import { Navigation } from "./navigation.js";
 import { PlaybookEntities } from "./playbook-entities.js";
@@ -191,6 +192,7 @@ export class Playbook {
     Playbook.#attachInlineEditors(root, snapshot);
     Playbook.#paintSessionNpcs(root, snapshot);
     Playbook.#paintStoryThreads(root);
+    Playbook.#paintFactions(root);
   }
 
   static #paintStoryThreads(root) {
@@ -214,6 +216,31 @@ export class Playbook {
       const state = document.createElement("span");
       state.textContent = RichText.plainText(thread.currentState ?? "") || "No current state";
       button.append(title, state);
+      list.append(button);
+    }
+  }
+
+  static #paintFactions(root) {
+    const card = root.querySelector("[data-play-factions]");
+    const list = root.querySelector("[data-play-faction-list]");
+    const count = root.querySelector("[data-play-faction-count]");
+    if (!(card instanceof HTMLElement) || !(list instanceof HTMLElement)) return;
+    const factions = FactionService.list().sort((a, b) => a.name.localeCompare(b.name));
+    card.hidden = factions.length === 0;
+    list.replaceChildren();
+    if (count) count.textContent = String(factions.length);
+    for (const faction of factions) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "nd-play-faction";
+      button.dataset.playFactionId = faction.id;
+      const name = document.createElement("strong");
+      name.textContent = faction.name?.trim() || "Untitled Faction";
+      const status = document.createElement("span");
+      status.textContent = RichText.plainText(faction.currentStatus ?? "") || "Unknown";
+      const reputation = document.createElement("small");
+      reputation.textContent = faction.playerReputation;
+      button.append(name, reputation, status);
       list.append(button);
     }
   }
@@ -498,7 +525,8 @@ export class Playbook {
    * @param {HTMLElement} root
    * @param {{
    *   onEndSession?: () => Promise<void>|void,
-   *   onOpenStoryThread?: (id: string) => Promise<void>|void
+   *   onOpenStoryThread?: (id: string) => Promise<void>|void,
+   *   onOpenFaction?: (id: string) => Promise<void>|void
    * }} [options]
    */
   static attach(root, options = {}) {
@@ -537,6 +565,13 @@ export class Playbook {
         if (storyThread) {
           const id = storyThread.getAttribute("data-play-story-thread-id");
           if (id) void Promise.resolve(options.onOpenStoryThread?.(id));
+          return;
+        }
+
+        const faction = target.closest("[data-play-faction-id]");
+        if (faction) {
+          const id = faction.getAttribute("data-play-faction-id");
+          if (id) void Promise.resolve(options.onOpenFaction?.(id));
           return;
         }
 

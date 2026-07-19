@@ -12,7 +12,8 @@ const GROUP_LABELS = Object.freeze({
   beat: "Entries",
   quest: "Quests",
   session: "Chronicle Sessions",
-  storyThread: "Story Threads"
+  storyThread: "Story Threads",
+  faction: "Factions"
 });
 
 /**
@@ -50,6 +51,11 @@ export class MentionProvider {
 
     const campaign = CampaignDocument.get();
     const campaignGroups = [
+      {
+        kind: "faction",
+        values: campaign.factions,
+        name: (faction) => faction.name?.trim() || "Untitled Faction"
+      },
       {
         kind: "storyThread",
         values: campaign.storyThreads,

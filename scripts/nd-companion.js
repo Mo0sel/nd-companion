@@ -4,6 +4,7 @@ import { CampaignDocument } from "./campaign-document.js";
 import { CampaignMemoryService } from "./campaign-memory-service.js";
 import { ContextEngine } from "./context-engine.js";
 import { EntityRegistry } from "./entity-registry.js";
+import { FactionService } from "./faction-service.js";
 import { FocusManager } from "./focus-manager.js";
 import { Navigation } from "./navigation.js";
 import { PlaybookService } from "./playbook-service.js";
@@ -33,6 +34,7 @@ Hooks.once("ready", async () => {
   window.nd ??= {};
   window.nd.EntityRegistry = EntityRegistry;
   window.nd.FocusManager = FocusManager;
+  window.nd.FactionService = FactionService;
   window.nd.Navigation = Navigation;
   window.nd.QuestEntryService = QuestEntryService;
   window.nd.SessionService = SessionService;

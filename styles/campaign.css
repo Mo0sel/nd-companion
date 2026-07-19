@@ -621,6 +621,125 @@
   border-color: var(--nd-border);
 }
 
+/* ── Factions ────────────────────────────────────────────────────────── */
+.nd-faction-view {
+  min-width: 0;
+}
+
+.nd-faction-heading {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--nd-space-3);
+  min-width: 0;
+}
+
+.nd-faction-heading img {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  object-fit: cover;
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-lg);
+}
+
+.nd-faction-editor {
+  min-height: 88px;
+  padding: 10px 12px;
+}
+
+.nd-faction-section {
+  margin-top: var(--nd-space-6);
+  padding-top: var(--nd-space-4);
+  border-top: 1px solid var(--nd-border);
+}
+
+.nd-faction-section > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nd-space-3);
+  margin-bottom: var(--nd-space-3);
+}
+
+.nd-faction-section h3 {
+  margin: 2px 0 0;
+}
+
+.nd-faction-objective {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--nd-space-2);
+  margin-top: var(--nd-space-2);
+}
+
+.nd-faction-objective__editor {
+  min-height: 38px;
+  padding: 8px 10px;
+  overflow-wrap: anywhere;
+  background: var(--nd-surface-2);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-md);
+}
+
+.nd-faction-objective__remove {
+  width: 28px;
+  height: 28px;
+  margin: 5px 0 0;
+  padding: 0;
+  color: var(--nd-text-3);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--nd-radius-md);
+  box-shadow: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.nd-faction-objective__remove:hover {
+  color: var(--nd-danger);
+  border-color: var(--nd-border);
+}
+
+.nd-faction-leadership {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--nd-space-2);
+}
+
+.nd-faction-leader {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.nd-faction-leader .nd-faction-objective__remove {
+  margin: 0;
+}
+
+.nd-faction-leader-picker {
+  display: flex;
+  gap: var(--nd-space-2);
+  margin-top: var(--nd-space-3);
+}
+
+.nd-faction-leader-picker select {
+  min-width: 0;
+  flex: 1;
+}
+
+.nd-quest-sidebar__quest .nd-campaign-status[data-status="ALLIED"],
+.nd-quest-sidebar__quest .nd-campaign-status[data-status="FRIENDLY"] {
+  background: var(--nd-status-done-color);
+}
+
+.nd-quest-sidebar__quest .nd-campaign-status[data-status="DISTRUSTED"],
+.nd-quest-sidebar__quest .nd-campaign-status[data-status="HOSTILE"],
+.nd-quest-sidebar__quest .nd-campaign-status[data-status="HUNTED"] {
+  background: var(--nd-danger);
+}
+
 /* ── Session view (search compatibility) ──────────────────────────────── */
 .nd-campaign-content-block {
   padding: 12px 0;

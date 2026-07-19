@@ -40,7 +40,8 @@ export class ContextPanel {
       context.actors.length ||
       context.locations.length ||
       context.items.length ||
-      context.storyThreads.length
+      context.storyThreads.length ||
+      context.factions.length
     );
     const hasContent = hasStatus || hasKnowledge || hasMemory;
     container.hidden = !hasContent;
@@ -169,6 +170,7 @@ export class ContextPanel {
   static #appendRelationships(container, context) {
     const groups = [
       ["Story Threads", context.storyThreads],
+      ["Factions", context.factions],
       ["Actors", context.actors],
       ["Locations", context.locations],
       ["Items", context.items],

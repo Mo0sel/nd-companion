@@ -5,6 +5,7 @@ import { CompanionStorage } from "./storage.js";
 /** @typedef {"MAIN"|"SIDE"|"COMPANION"} QuestCategory */
 /** @typedef {"PLANNED"|"ACTIVE"|"COMPLETED"} QuestEntryStatus */
 /** @typedef {"ACTIVE"|"DORMANT"|"RESOLVED"|"HIDDEN"} StoryThreadStatus */
+/** @typedef {"ALLIED"|"FRIENDLY"|"NEUTRAL"|"DISTRUSTED"|"HOSTILE"|"HUNTED"} FactionReputation */
 
 /**
  * @typedef {object} CampaignSession
@@ -89,6 +90,29 @@ import { CompanionStorage } from "./storage.js";
  */
 
 /**
+ * GM-authored political organization.
+ * @typedef {object} CampaignFaction
+ * @property {string} id
+ * @property {string} name
+ * @property {string} icon
+ * @property {string} description
+ * @property {string} currentStatus
+ * @property {string[]} currentObjectives
+ * @property {string} resources
+ * @property {FactionReputation} playerReputation
+ * @property {string[]} leadershipActorIds
+ * @property {string[]} relatedActorIds
+ * @property {string[]} relatedStoryThreadIds
+ * @property {string[]} relatedItemIds
+ * @property {string[]} relatedLocationIds
+ * @property {string[]} relatedQuestIds
+ * @property {string[]} relatedSessionIds
+ * @property {string[]} relatedFactionIds
+ * @property {number} created
+ * @property {number} updated
+ */
+
+/**
  * @typedef {object} CampaignDocumentData
  * @property {number} schemaVersion
  * @property {string} activeSessionId
@@ -96,6 +120,7 @@ import { CompanionStorage } from "./storage.js";
  * @property {CampaignThread[]} threads
  * @property {CampaignQuestEntry[]} questEntries
  * @property {CampaignStoryThread[]} storyThreads
+ * @property {CampaignFaction[]} factions
  */
 
 export const CAMPAIGN_SCHEMA_VERSION = 4;
@@ -105,6 +130,14 @@ export const THREAD_STATUSES = Object.freeze(["OPEN", "ACTIVE", "RESOLVED"]);
 export const QUEST_CATEGORIES = Object.freeze(["MAIN", "SIDE", "COMPANION"]);
 export const QUEST_ENTRY_STATUSES = Object.freeze(["PLANNED", "ACTIVE", "COMPLETED"]);
 export const STORY_THREAD_STATUSES = Object.freeze(["ACTIVE", "DORMANT", "RESOLVED", "HIDDEN"]);
+export const FACTION_REPUTATIONS = Object.freeze([
+  "ALLIED",
+  "FRIENDLY",
+  "NEUTRAL",
+  "DISTRUSTED",
+  "HOSTILE",
+  "HUNTED"
+]);
 
 /**
  * In-memory campaign document (sessions + threads).
@@ -198,6 +231,7 @@ export class CampaignDocument {
         threads: stored?.threads,
         questEntries: stored?.questEntries,
         storyThreads: stored?.storyThreads,
+        factions: stored?.factions,
         memoryRecords: stored?.memoryRecords
       });
       return normalized;
@@ -233,6 +267,7 @@ export class CampaignDocument {
       threads: CampaignDocument.#normalizeThreads(stored?.threads),
       questEntries: CampaignDocument.#normalizeQuestEntries(stored?.questEntries),
       storyThreads: CampaignDocument.#normalizeStoryThreads(stored?.storyThreads),
+      factions: CampaignDocument.#normalizeFactions(stored?.factions),
       memoryRecords: stored?.memoryRecords
     });
   }
@@ -263,7 +298,8 @@ export class CampaignDocument {
       sessions,
       threads: CampaignDocument.#normalizeThreads(stored?.threads),
       questEntries: CampaignDocument.#normalizeQuestEntries(stored?.questEntries),
-      storyThreads: CampaignDocument.#normalizeStoryThreads(stored?.storyThreads)
+      storyThreads: CampaignDocument.#normalizeStoryThreads(stored?.storyThreads),
+      factions: CampaignDocument.#normalizeFactions(stored?.factions)
     };
   }
 
@@ -301,6 +337,15 @@ export class CampaignDocument {
   static #normalizeStoryThreads(value) {
     if (!Array.isArray(value)) return [];
     return value.map((thread) => CampaignDocument.normalizeStoryThread(thread));
+  }
+
+  /**
+   * @param {unknown} value
+   * @returns {CampaignFaction[]}
+   */
+  static #normalizeFactions(value) {
+    if (!Array.isArray(value)) return [];
+    return value.map((faction) => CampaignDocument.normalizeFaction(faction));
   }
 
   static #normalizeMemorySessions(value) {
@@ -488,6 +533,44 @@ export class CampaignDocument {
     };
   }
 
+  /**
+   * @param {unknown} faction
+   * @returns {CampaignFaction}
+   */
+  static normalizeFaction(faction) {
+    const now = Date.now();
+    const idList = (value) =>
+      Array.isArray(value)
+        ? [...new Set(value.filter((id) => typeof id === "string" && id))]
+        : [];
+    return {
+      id: typeof faction?.id === "string" && faction.id
+        ? faction.id
+        : foundry.utils.randomID(),
+      name: typeof faction?.name === "string" ? faction.name : "",
+      icon: typeof faction?.icon === "string" ? faction.icon : "",
+      description: typeof faction?.description === "string" ? faction.description : "",
+      currentStatus: typeof faction?.currentStatus === "string" ? faction.currentStatus : "",
+      currentObjectives: Array.isArray(faction?.currentObjectives)
+        ? faction.currentObjectives.filter((objective) => typeof objective === "string")
+        : [],
+      resources: typeof faction?.resources === "string" ? faction.resources : "",
+      playerReputation: FACTION_REPUTATIONS.includes(faction?.playerReputation)
+        ? faction.playerReputation
+        : "NEUTRAL",
+      leadershipActorIds: idList(faction?.leadershipActorIds),
+      relatedActorIds: idList(faction?.relatedActorIds),
+      relatedStoryThreadIds: idList(faction?.relatedStoryThreadIds),
+      relatedItemIds: idList(faction?.relatedItemIds),
+      relatedLocationIds: idList(faction?.relatedLocationIds),
+      relatedQuestIds: idList(faction?.relatedQuestIds),
+      relatedSessionIds: idList(faction?.relatedSessionIds),
+      relatedFactionIds: idList(faction?.relatedFactionIds),
+      created: Number.isFinite(faction?.created) ? faction.created : now,
+      updated: Number.isFinite(faction?.updated) ? faction.updated : now
+    };
+  }
+
   /** @returns {CampaignDocumentData} */
   static #empty() {
     return {
@@ -496,7 +579,8 @@ export class CampaignDocument {
       sessions: [],
       threads: [],
       questEntries: [],
-      storyThreads: []
+      storyThreads: [],
+      factions: []
     };
   }
 
