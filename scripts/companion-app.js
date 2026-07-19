@@ -1,6 +1,7 @@
 import { CampaignAwareness, CampaignContext } from "./campaign-context.js";
 import { CampaignDocument } from "./campaign-document.js";
 import { CampaignWorkspace } from "./campaign-workspace.js";
+import { ContextPanel } from "./context-panel.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { FocusManager } from "./focus-manager.js";
 import { FocusPanel } from "./focus-panel.js";
@@ -252,6 +253,47 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /**
+   * Navigate directly between Context Panel entities without using Search.
+   * @param {{ kind: string, id: string }} target
+   */
+  async #openContextTarget(target) {
+    if (!target?.kind || !target?.id) return;
+
+    if (target.kind === "session") {
+      if (CampaignWorkspace.selectMemory(this.element, target.id)) {
+        this.setWorkspace("campaign");
+      }
+      return;
+    }
+    if (target.kind === "quest") {
+      if (CampaignWorkspace.selectQuest(this.element, target.id)) {
+        this.setWorkspace("campaign");
+      }
+      return;
+    }
+    if (target.kind === "questEntry") {
+      if (CampaignWorkspace.selectQuestEntry(this.element, target.id)) {
+        this.setWorkspace("campaign");
+      }
+      return;
+    }
+    if (target.kind === "actor") {
+      const actor = EntityRegistry.findByUUID(target.id);
+      if (!actor) return;
+      await Navigation.navigate(actor);
+      this.setWorkspace("notes");
+      FocusPanel.paint(this.element, FocusManager.get());
+      return;
+    }
+    if (target.kind === "location" || target.kind === "item") {
+      const kind = target.kind === "location" ? "scene" : "item";
+      if (CampaignWorkspace.selectEntity(this.element, kind, target.id)) {
+        this.setWorkspace("campaign");
+      }
+    }
+  }
+
+  /**
    * @param {ApplicationRenderContext} _context
    * @param {ApplicationRenderOptions} _options
    */
@@ -338,6 +380,7 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
         Playbook.paint(this.element, Playbook.get());
       }
     });
+    ContextPanel.attach(this.element, (target) => this.#openContextTarget(target));
     this.element.querySelectorAll("[data-storage]:not([data-memory-editor])").forEach((el) => {
       const html = el.hasAttribute("data-storage-html");
       LiveNotes.attach(el, el.dataset.storage, {

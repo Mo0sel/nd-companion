@@ -1,4 +1,6 @@
 import { CampaignMemoryService } from "./campaign-memory-service.js";
+import { ContextEngine } from "./context-engine.js";
+import { ContextPanel } from "./context-panel.js";
 import { EntityMentions } from "./entity-mentions.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { PlaybookService } from "./playbook-service.js";
@@ -121,6 +123,27 @@ export class CampaignWorkspace {
    */
   static selectSession(root, id) {
     return CampaignWorkspace.selectMemory(root, id);
+  }
+
+  /**
+   * Select an Actor, Location, or Item in the generic Campaign entity view.
+   * @param {HTMLElement} root
+   * @param {"actor"|"scene"|"item"} kind
+   * @param {string} id Registry UUID
+   */
+  static selectEntity(root, kind, id) {
+    const entity = EntityRegistry.findByUUID(id);
+    if (!entity || entity.kind !== kind || !["actor", "scene", "item"].includes(kind)) {
+      return false;
+    }
+    CampaignWorkspace.#section =
+      kind === "actor" ? "actors" : kind === "scene" ? "locations" : "items";
+    CampaignWorkspace.#entityKind = kind;
+    CampaignWorkspace.#entityId = id;
+    CampaignWorkspace.#memoryId = null;
+    CampaignWorkspace.#view = "entity";
+    CampaignWorkspace.paint(root);
+    return true;
   }
 
   /**
@@ -396,15 +419,9 @@ export class CampaignWorkspace {
     }
     const title = view.querySelector("[data-campaign-entity-title]");
     if (title) title.textContent = entity.name;
-    CampaignWorkspace.#paintObjectHistory(
-      view.querySelector("[data-campaign-entity-history]"),
-      CampaignMemoryService.historyFor({ kind: entity.kind, id: entity.uuid }),
-      {
-        first: "[data-entity-history-first]",
-        last: "[data-entity-history-last]",
-        count: "[data-entity-history-count]",
-        list: "[data-entity-history-list]"
-      }
+    ContextPanel.paint(
+      view.querySelector("[data-context-panel=\"entity\"]"),
+      ContextEngine.getContext({ kind: entity.kind, id: entity.uuid })
     );
   }
 
@@ -443,15 +460,9 @@ export class CampaignWorkspace {
       }
     }
 
-    CampaignWorkspace.#paintObjectHistory(
-      editor.querySelector("[data-quest-history]"),
-      CampaignMemoryService.historyFor({ kind: "quest", id: quest.id }),
-      {
-        first: "[data-quest-history-first]",
-        last: "[data-quest-history-last]",
-        count: "[data-quest-history-count]",
-        list: "[data-quest-history-list]"
-      }
+    ContextPanel.paint(
+      editor.querySelector("[data-context-panel=\"quest\"]"),
+      ContextEngine.getContext({ kind: "quest", id: quest.id })
     );
   }
 
@@ -512,67 +523,10 @@ export class CampaignWorkspace {
     if (log instanceof HTMLElement) {
       log.innerHTML = CampaignWorkspace.#sessionLogHtml(memory.sessionLog);
     }
-
-    const labels = CampaignMemoryService.relatedLabels(memory);
-    for (const kind of ["actor", "scene", "item", "quest", "beat"]) {
-      const related = view.querySelector(`[data-memory-related="${kind}"]`);
-      if (!related) continue;
-      related.replaceChildren();
-      const matches = labels.filter((item) => item.kind === kind);
-      if (!matches.length) {
-        const empty = document.createElement("span");
-        empty.className = "nd-campaign-reference-empty";
-        empty.textContent = "None detected";
-        related.append(empty);
-        continue;
-      }
-      for (const item of matches) {
-        const chip = document.createElement("span");
-        chip.className = "nd-campaign-reference";
-        chip.dataset.kind = item.kind;
-        chip.textContent = item.name;
-        related.append(chip);
-      }
-    }
-  }
-
-  /**
-   * @param {HTMLElement|null} section
-   * @param {import("./campaign-memory-service.js").ObjectHistory} history
-   * @param {{ first: string, last: string, count: string, list: string }} selectors
-   */
-  static #paintObjectHistory(section, history, selectors) {
-    if (!(section instanceof HTMLElement)) return;
-    const hasHistory = history.mentionCount > 0;
-    section.hidden = false;
-
-    const first = section.querySelector(selectors.first);
-    const last = section.querySelector(selectors.last);
-    const count = section.querySelector(selectors.count);
-    const list = section.querySelector(selectors.list);
-    if (first) first.textContent = history.firstAppearance?.label ?? "—";
-    if (last) last.textContent = history.lastAppearance?.label ?? "—";
-    if (count) {
-      count.textContent = `${history.mentionCount} ${history.mentionCount === 1 ? "session" : "sessions"}`;
-    }
-    if (!list) return;
-
-    list.replaceChildren();
-    if (!hasHistory) {
-      const empty = document.createElement("div");
-      empty.className = "nd-campaign-reference-empty";
-      empty.textContent = "No Chronicle appearances yet.";
-      list.append(empty);
-      return;
-    }
-    for (const appearance of history.appearsIn) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "nd-object-history__item";
-      button.dataset.openMemoryId = appearance.id;
-      button.textContent = appearance.label;
-      list.append(button);
-    }
+    ContextPanel.paint(
+      view.querySelector("[data-context-panel=\"session\"]"),
+      ContextEngine.getContext({ kind: "session", id: memory.id })
+    );
   }
 
   static #entryElement(entry) {
@@ -619,7 +573,7 @@ export class CampaignWorkspace {
     const references = CampaignWorkspace.#referencesElement(entry);
     body.append(references);
 
-    const history = CampaignMemoryService.historyFor({ kind: "beat", id: entry.id });
+    const entryContext = ContextEngine.getContext({ kind: "questEntry", id: entry.id });
     const historySection = document.createElement("section");
     historySection.className = "nd-object-history nd-object-history--entry";
     const heading = document.createElement("h3");
@@ -627,14 +581,14 @@ export class CampaignWorkspace {
     heading.textContent = "History";
     const historySummary = document.createElement("p");
     historySummary.className = "nd-object-history__summary";
-    historySummary.textContent = history.mentionCount > 0
-      ? `First seen ${history.firstAppearance?.label}; ` +
-        `last seen ${history.lastAppearance?.label}.`
+    historySummary.textContent = entryContext.sessions.length > 0
+      ? `First seen ${entryContext.sessions[0]?.label}; ` +
+        `last seen ${entryContext.lastSeen?.label}.`
       : "No Chronicle appearances yet.";
     const appearances = document.createElement("div");
     appearances.className = "nd-object-history__list";
-    if (history.mentionCount > 0) {
-      for (const appearance of history.appearsIn) {
+    if (entryContext.sessions.length > 0) {
+      for (const appearance of entryContext.sessions) {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "nd-object-history__item";

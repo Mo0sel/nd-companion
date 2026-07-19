@@ -432,27 +432,7 @@
               <div data-quest-entry-list></div>
             </section>
 
-            <section class="nd-object-history" data-quest-history hidden aria-label="Quest history">
-              <header>
-                <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Campaign Memory</div>
-                <h3 class="nd-hierarchy-group">History</h3>
-              </header>
-              <dl class="nd-object-history__meta">
-                <div>
-                  <dt>First Seen</dt>
-                  <dd data-quest-history-first>—</dd>
-                </div>
-                <div>
-                  <dt>Last Seen</dt>
-                  <dd data-quest-history-last>—</dd>
-                </div>
-                <div>
-                  <dt>Appeared In</dt>
-                  <dd data-quest-history-count>0</dd>
-                </div>
-              </dl>
-              <div class="nd-object-history__list" data-quest-history-list></div>
-            </section>
+            <section data-context-panel="quest" hidden></section>
           </section>
 
           <section data-campaign-entity-view hidden aria-label="Campaign object history">
@@ -462,23 +442,7 @@
                 <h2 class="nd-hierarchy-primary" data-campaign-entity-title>Object</h2>
               </div>
             </header>
-            <section class="nd-object-history" data-campaign-entity-history hidden>
-              <dl class="nd-object-history__meta">
-                <div>
-                  <dt>First Seen</dt>
-                  <dd data-entity-history-first>—</dd>
-                </div>
-                <div>
-                  <dt>Last Seen</dt>
-                  <dd data-entity-history-last>—</dd>
-                </div>
-                <div>
-                  <dt>Appeared In</dt>
-                  <dd data-entity-history-count>0 sessions</dd>
-                </div>
-              </dl>
-              <div class="nd-object-history__list" data-entity-history-list></div>
-            </section>
+            <section data-context-panel="entity" hidden></section>
           </section>
 
           <section data-memory-view hidden aria-label="Chronicle session">
@@ -531,16 +495,7 @@
                 </button>
               </div>
             </section>
-            <section class="nd-campaign-content-block">
-              <h3 class="nd-hierarchy-group">Detected Relationships</h3>
-              <div class="nd-chronicle-relationships">
-                <div><strong>Actors</strong><div data-memory-related="actor"></div></div>
-                <div><strong>Locations</strong><div data-memory-related="scene"></div></div>
-                <div><strong>Items</strong><div data-memory-related="item"></div></div>
-                <div><strong>Quests</strong><div data-memory-related="quest"></div></div>
-                <div><strong>Quest Entries</strong><div data-memory-related="beat"></div></div>
-              </div>
-            </section>
+            <section data-context-panel="session" hidden></section>
           </section>
         </main>
       </div>
@@ -617,27 +572,7 @@
               aria-label="Companion Memory"
               hidden
             ></div>
-            <section class="nd-object-history nd-object-history--compact" data-actor-history hidden aria-label="Actor history">
-              <header>
-                <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Campaign Memory</div>
-                <h3 class="nd-hierarchy-group">History</h3>
-              </header>
-              <dl class="nd-object-history__meta">
-                <div>
-                  <dt>First Seen</dt>
-                  <dd data-actor-history-first>—</dd>
-                </div>
-                <div>
-                  <dt>Last Seen</dt>
-                  <dd data-actor-history-last>—</dd>
-                </div>
-                <div>
-                  <dt>Appeared In</dt>
-                  <dd data-actor-history-count>0</dd>
-                </div>
-              </dl>
-              <div class="nd-object-history__list" data-actor-history-list></div>
-            </section>
+            <section data-context-panel="actor" data-context-memory-external hidden></section>
           </div>
         </section>
 

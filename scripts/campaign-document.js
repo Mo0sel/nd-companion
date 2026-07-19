@@ -95,9 +95,17 @@ export class CampaignDocument {
   /** @type {boolean} */
   static #ready = false;
 
+  /** @type {number} */
+  static #revision = 0;
+
   /** @returns {boolean} */
   static get isReady() {
     return CampaignDocument.#ready;
+  }
+
+  /** @returns {number} In-memory relationship graph revision. */
+  static get revision() {
+    return CampaignDocument.#revision;
   }
 
   /**
@@ -121,6 +129,7 @@ export class CampaignDocument {
     }
 
     CampaignDocument.#ready = true;
+    CampaignDocument.#revision += 1;
   }
 
   /**
@@ -138,6 +147,7 @@ export class CampaignDocument {
   static async update(mutator) {
     mutator(CampaignDocument.#doc);
     CampaignDocument.#doc.schemaVersion = CAMPAIGN_SCHEMA_VERSION;
+    CampaignDocument.#revision += 1;
     await CompanionStorage.setCampaign(CampaignDocument.#doc);
     return CampaignDocument.get();
   }

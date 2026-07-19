@@ -538,3 +538,104 @@ select.nd-playbook-prepare__select:focus-visible {
   letter-spacing: var(--nd-tracking-label);
   color: var(--nd-text-3);
 }
+
+/* ── Context Panel — shared campaign knowledge browser ───────────────── */
+.nd-context-panel {
+  margin-top: var(--nd-space-6);
+  padding-top: var(--nd-space-4);
+  border-top: 1px solid var(--nd-border);
+}
+
+.nd-context-panel[hidden] {
+  display: none !important;
+}
+
+.nd-context-panel > header {
+  margin-bottom: var(--nd-space-3);
+}
+
+.nd-context-panel > header h3 {
+  margin: 2px 0 0;
+}
+
+.nd-context-panel__section + .nd-context-panel__section {
+  margin-top: var(--nd-space-4);
+}
+
+.nd-context-panel__section > h4 {
+  margin: 0 0 var(--nd-space-2);
+  color: var(--nd-text-3);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nd-context-panel__last-seen {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--nd-space-2);
+  margin: 0 0 var(--nd-space-2);
+}
+
+.nd-context-panel__last-seen > div {
+  padding: 8px 10px;
+  background: var(--nd-surface-2);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-md);
+}
+
+.nd-context-panel__last-seen dt {
+  color: var(--nd-text-3);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  text-transform: uppercase;
+}
+
+.nd-context-panel__last-seen dd {
+  margin: 3px 0 0;
+  color: var(--nd-text-1);
+  font-size: var(--nd-text-body-sm);
+  font-weight: var(--nd-weight-semibold);
+}
+
+.nd-context-panel__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.nd-context-panel__link {
+  margin: 0;
+  padding: 5px 9px;
+  color: var(--nd-text-2);
+  background: var(--nd-surface-2);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-sm);
+  box-shadow: none;
+  font: inherit;
+  font-size: var(--nd-text-caption);
+  text-align: left;
+  cursor: pointer;
+}
+
+.nd-context-panel__link:hover {
+  color: var(--nd-blue);
+  background: var(--nd-blue-dim);
+  border-color: var(--nd-blue-border);
+}
+
+.nd-context-panel__memory {
+  padding: 10px 12px;
+  color: var(--nd-text-2);
+  background: var(--nd-surface-2);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-md);
+}
+
+@container nd-companion (max-width: 560px) {
+  .nd-context-panel__last-seen {
+    grid-template-columns: 1fr;
+  }
+}
