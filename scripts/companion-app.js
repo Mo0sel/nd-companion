@@ -12,6 +12,7 @@ import { PlaybookPrepare } from "./playbook-prepare.js";
 import { PlaybookService } from "./playbook-service.js";
 import { RichText } from "./rich-text.js";
 import { SessionBuilder } from "./session-builder.js";
+import { SessionService } from "./session-service.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -86,9 +87,26 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * @param {ApplicationRenderContext} _context
    * @param {ApplicationRenderOptions} _options
    */
+  #paintSessionBadge() {
+    const badge = this.element?.querySelector("[data-session-badge]");
+    const label = this.element?.querySelector("[data-session-badge-label]");
+    if (!(badge instanceof HTMLElement) || !(label instanceof HTMLElement)) return;
+
+    const session = SessionService.getActive();
+    if (!session) {
+      badge.hidden = true;
+      return;
+    }
+    badge.hidden = false;
+    const isActive = session.status === "active";
+    badge.toggleAttribute("data-idle", !isActive);
+    label.textContent = `${session.title?.trim() || "Session"}${isActive ? " · Live" : ""}`;
+  }
+
   async _onRender(_context, _options) {
     await super._onRender(_context, _options);
     this.#applyWorkspace();
+    this.#paintSessionBadge();
     CampaignAwareness.paint(this.element, CampaignContext.get());
     FocusPanel.paint(this.element, FocusManager.get());
     Playbook.paint(this.element, Playbook.get());

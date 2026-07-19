@@ -28,6 +28,16 @@ export class FocusPanel {
       nameEl.textContent = model.name;
     });
 
+    const initials = String(model.name ?? "")
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((word) => word[0].toUpperCase())
+      .join("");
+    root.querySelectorAll("[data-focus=\"initials\"]").forEach((el) => {
+      el.textContent = initials || "P";
+    });
+
     const portraitEl = root.querySelector("[data-focus=\"portrait\"]");
     const typeEl = root.querySelector("[data-focus=\"type\"]");
     const typeRow = root.querySelector("[data-focus-row=\"type\"]");

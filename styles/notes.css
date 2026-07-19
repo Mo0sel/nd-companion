@@ -1,10 +1,13 @@
 /**
  * Companion Memory workspace (internally retains the existing "notes" key).
- * This restores the existing focus-memory workflow without adding NPC systems.
+ * Sprint 28 deviation: the approved ActorsWorkspace design shows an NPC roster,
+ * which is not an implemented feature. The existing Companion Memory workflow
+ * is preserved and styled with the shared design system instead.
  */
 
 [data-workspace-panel="notes"] {
-  padding: var(--nd-space-4) var(--nd-page-x, 28px);
+  padding: var(--nd-space-4) var(--nd-page-x, 20px);
+  overflow-y: auto;
 }
 
 .nd-actors-grid {
@@ -19,10 +22,6 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
-}
-
-.nd-companion-memory-card .nd-card__accent {
-  background: var(--nd-tertiary-accent);
 }
 
 .nd-companion-memory-card__actor {
@@ -79,10 +78,6 @@
 
 .nd-reputation-card {
   min-height: 0;
-}
-
-.nd-reputation-card .nd-card__accent {
-  background: var(--nd-tertiary-accent);
 }
 
 .nd-reputation-card__empty {

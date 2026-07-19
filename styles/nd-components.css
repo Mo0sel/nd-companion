@@ -53,26 +53,42 @@
 .nd-companion .nd-hierarchy-primary {
   margin: 0;
   color: var(--nd-text-1);
-  font-size: var(--nd-text-h1);
+  font-size: var(--nd-text-display);
   font-weight: var(--nd-weight-bold);
   line-height: var(--nd-leading-tight);
   letter-spacing: -0.02em;
 }
 
+/* Section labels — design/current SectionLabel: purple tick + mono uppercase */
 .nd-section-title,
 .nd-hierarchy-group,
 .nd-companion .nd-hierarchy-group {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   margin: 0;
-  padding-bottom: var(--nd-space-2);
+  padding: 0;
+  border: none;
   color: var(--nd-group-accent);
-  border-bottom: 1px solid var(--nd-border-2);
-  font-size: var(--nd-text-caption);
-  font-weight: var(--nd-weight-semibold);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-bold);
   line-height: var(--nd-leading-snug);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 
+.nd-section-title::before,
+.nd-hierarchy-group::before {
+  content: "";
+  flex-shrink: 0;
+  width: 2px;
+  height: 11px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+/* Field labels — design/current Field: muted gray mono uppercase */
 .nd-field-label,
 .nd-hierarchy-card,
 .nd-playbook__field-label,
@@ -84,9 +100,9 @@
 .nd-companion .nd-campaign-references > h3 {
   color: var(--nd-tertiary-accent);
   font-family: var(--nd-font-mono);
-  font-size: var(--nd-text-label);
+  font-size: var(--nd-text-micro);
   font-weight: var(--nd-weight-bold);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 
@@ -132,35 +148,23 @@
   gap: var(--nd-space-2);
 }
 
+/* Card section headers — design/current SectionLabel (purple tick + label) */
 .nd-card__accent {
   flex-shrink: 0;
-  width: 3px;
-  height: 14px;
-  border-radius: 2px;
-  background: var(--nd-tertiary-accent);
-}
-
-.nd-card--playbook .nd-card__accent,
-.nd-card--playbook-prepare .nd-card__accent {
-  background: var(--nd-tertiary-accent);
-}
-
-.nd-card--threads .nd-card__accent {
-  background: var(--nd-tertiary-accent);
-}
-
-.nd-card--session-notes .nd-card__accent {
-  background: var(--nd-tertiary-accent);
+  width: 2px;
+  height: 11px;
+  border-radius: 1px;
+  background: var(--nd-group-accent);
 }
 
 .nd-card__label {
   margin: 0;
-  color: var(--nd-tertiary-accent);
+  color: var(--nd-group-accent);
   font-family: var(--nd-font-mono);
-  font-size: var(--nd-text-label);
+  font-size: var(--nd-text-micro);
   font-weight: var(--nd-weight-bold);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.09em;
 }
 
 .nd-card__text {
@@ -278,11 +282,11 @@
 }
 
 .nd-button--nav {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   padding: 0;
-  border-radius: var(--nd-radius-sm);
-  font-size: 16px;
+  border-radius: var(--nd-radius-md);
+  font-size: 13px;
   background: var(--nd-surface-2);
   border: 1px solid var(--nd-border);
   color: var(--nd-text-1);
@@ -291,6 +295,11 @@
 
 .nd-button--nav:hover:not(:disabled) {
   border-color: var(--nd-blue);
+}
+
+.nd-button--nav:disabled {
+  color: var(--nd-border);
+  background: transparent;
 }
 
 .nd-button--add-dashed {

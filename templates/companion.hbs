@@ -1,7 +1,14 @@
 <div class="nd-companion__shell">
 
   <header class="nd-global-header">
-    <div class="nd-global-header__brand">N&amp;D Companion</div>
+    <div class="nd-global-header__brand">
+      <div class="nd-global-header__logo" aria-hidden="true">N</div>
+      <div class="nd-global-header__brand-text">
+        <div class="nd-global-header__title">N&amp;D Companion</div>
+        <div class="nd-global-header__subtitle">Foundry VTT · GM Tools</div>
+      </div>
+    </div>
+    <div class="nd-global-header__divider" aria-hidden="true"></div>
     <div class="nd-global-search" data-global-search>
       <span class="nd-global-search__icon" aria-hidden="true">⌕</span>
       <input
@@ -22,224 +29,233 @@
         hidden
       ></div>
     </div>
+    <div class="nd-global-header__spacer" aria-hidden="true"></div>
+    <div class="nd-session-badge" data-session-badge>
+      <span class="nd-session-badge__dot" aria-hidden="true"></span>
+      <span data-session-badge-label>Session 1 · Live</span>
+    </div>
   </header>
 
-  <nav class="nd-workspace-switcher nd-hierarchy-nav" aria-label="Workspaces">
+  <nav class="nd-workspace-switcher" aria-label="Workspaces">
     <button
       type="button"
       class="nd-workspace-switcher__button"
       data-action="setWorkspace"
       data-workspace="play"
       aria-pressed="true"
-    >Play</button>
+    ><span class="nd-workspace-switcher__icon" aria-hidden="true">▶</span>Play</button>
     <button
       type="button"
       class="nd-workspace-switcher__button"
       data-action="setWorkspace"
       data-workspace="prepare"
       aria-pressed="false"
-    >Prepare</button>
+    ><span class="nd-workspace-switcher__icon" aria-hidden="true">✦</span>Prepare</button>
     <button
       type="button"
       class="nd-workspace-switcher__button"
       data-action="setWorkspace"
       data-workspace="campaign"
       aria-pressed="false"
-    >Campaign</button>
+    ><span class="nd-workspace-switcher__icon" aria-hidden="true">⬡</span>Campaign</button>
     <button
       type="button"
       class="nd-workspace-switcher__button"
       data-action="setWorkspace"
       data-workspace="notes"
       aria-pressed="false"
-    >Actors</button>
+    ><span class="nd-workspace-switcher__icon" aria-hidden="true">◎</span>Actors</button>
   </nav>
 
   <div class="nd-workspace-region">
 
-    {{!-- PLAY — stable live-session dashboard --}}
-    <section class="nd-workspace nd-play" data-workspace-panel="play" aria-label="Play workspace">
+    {{!-- PLAY — stable live-session dashboard (design/current PlayWorkspace) --}}
+    <section class="nd-workspace nd-play" data-workspace-panel="play" data-playbook aria-label="Play workspace">
 
-      {{!-- Stable campaign header: campaign-level information only --}}
-      <div class="nd-play__row nd-play__row--top">
-        <section class="nd-play-campaign" data-play-campaign aria-label="Campaign Context">
-          <div class="nd-play-campaign__main">
-            <div class="nd-play-campaign__title" data-context="campaign-title"></div>
-            <div class="nd-play-campaign__location" data-context="scene">
-              <span class="nd-play-campaign__location-label nd-hierarchy-context">Current Location</span>
-              <span class="nd-play-campaign__location-value" data-context-value>No active scene</span>
-            </div>
-          </div>
-          <div class="nd-play-campaign__focus">
-            <span class="nd-play-campaign__focus-label nd-hierarchy-context">Focused Character</span>
-            <span class="nd-play-campaign__focus-value" data-focus="name">Party</span>
-          </div>
-        </section>
-
+      {{!-- Context bar: campaign-level information + entry status --}}
+      <div class="nd-play-context" data-play-campaign aria-label="Campaign Context">
+        <div class="nd-play-context__campaign">
+          <span class="nd-play-context__eyebrow">Campaign</span>
+          <span class="nd-play-context__name" data-context="campaign-title"></span>
+        </div>
+        <div class="nd-play-context__divider" aria-hidden="true"></div>
+        <div class="nd-play-context__chip nd-play-context__chip--scene" data-context="scene">
+          <span class="nd-play-context__pin" aria-hidden="true">◆</span>
+          <span data-context-value>No active scene</span>
+        </div>
+        <div class="nd-play-context__chip nd-play-context__chip--focus">
+          <span class="nd-play-context__avatar" data-focus="initials" aria-hidden="true">P</span>
+          <span data-focus="name">Party</span>
+        </div>
+        <div class="nd-play-context__spacer" aria-hidden="true"></div>
+        <div class="nd-entry-status" data-playbook-state data-state="active" role="status" aria-label="Entry status">
+          <span class="nd-entry-status__pill nd-entry-status__pill--active">Active</span>
+          <span class="nd-entry-status__pill nd-entry-status__pill--done">Completed</span>
+        </div>
       </div>
 
-      {{!-- Row 2: Playbook hero --}}
-      <div class="nd-play__row nd-play__row--hero">
-        <article class="nd-playbook-card" data-playbook aria-label="Current Session Entry">
-          <div class="nd-playbook-card__accent" data-playbook="accent" aria-hidden="true"></div>
-          <div class="nd-playbook-card__body">
-            <header class="nd-playbook-card__header">
-              <div class="nd-playbook-card__identity">
-                <button type="button" class="nd-button nd-button--nav nd-playbook-card__nav" data-playbook-nav="prev" aria-label="Previous entry">←</button>
-                <div class="nd-playbook-card__counter nd-mono" data-playbook="counter" aria-label="Entry position">
-                  <span class="nd-playbook-card__counter-current" data-playbook-counter="current">0</span>
-                  <span class="nd-playbook-card__counter-sep">/</span>
-                  <span class="nd-playbook-card__counter-total" data-playbook-counter="total">0</span>
-                </div>
-                <div class="nd-playbook-card__title-block">
-                <div class="nd-playbook-card__eyebrow">Current Entry</div>
-                  <h2 class="nd-playbook-card__title nd-page-title" data-playbook="title"></h2>
-                </div>
-                <button type="button" class="nd-button nd-button--nav nd-playbook-card__nav" data-playbook-nav="next" aria-label="Next entry">→</button>
-              </div>
-              <div class="nd-entry-state" data-playbook-state data-state="active" role="status" aria-label="Entry status">
-                <span class="nd-entry-state__label">Entry State</span>
-                <span class="nd-entry-state__value">
-                  <span class="nd-entry-state__dot" aria-hidden="true"></span>
-                  <span data-playbook-state-value>Active</span>
-                </span>
+      {{!-- Entry navigation --}}
+      <div class="nd-play-entry-nav" aria-label="Entry navigation">
+        <span class="nd-play-entry-nav__accent" data-playbook="accent" aria-hidden="true"></span>
+        <button type="button" class="nd-button nd-button--nav" data-playbook-nav="prev" aria-label="Previous entry">←</button>
+        <div class="nd-play-entry-nav__meta">
+          <span class="nd-play-entry-nav__counter nd-mono" data-playbook="counter" aria-label="Entry position">
+            <span class="nd-play-entry-nav__counter-current" data-playbook-counter="current">0</span>
+            <span class="nd-play-entry-nav__counter-sep">/</span>
+            <span class="nd-play-entry-nav__counter-total" data-playbook-counter="total">0</span>
+          </span>
+          <span class="nd-play-entry-nav__eyebrow">Current Entry</span>
+          <h2 class="nd-play-entry-nav__title" data-playbook="title"></h2>
+        </div>
+        <button type="button" class="nd-button nd-button--nav" data-playbook-nav="next" aria-label="Next entry">→</button>
+      </div>
+
+      {{!-- Scrollable dashboard content --}}
+      <div class="nd-play-content">
+
+        {{!-- Scene Flow group --}}
+        <h3 class="nd-play-section-title nd-play-section-title--scene-flow">Scene Flow</h3>
+        <div class="nd-play-entry-grid nd-play-entry-grid--scene-flow">
+
+          <section class="nd-play-card" data-playbook-field-block="speechNotes">
+            <div class="nd-play-card__labelrow">
+              <span class="nd-play-card__label">Speech Notes</span>
+            </div>
+            <div
+              class="nd-play-card__content nd-richtext nd-play-inline-editor"
+              data-playbook="speechNotes"
+              data-placeholder="Dialogue, read-aloud text..."
+              role="textbox"
+              aria-label="Speech Notes"
+            ></div>
+          </section>
+
+          <details class="nd-play-card nd-play-card--setup" data-playbook-field-block="setup" open>
+            <summary>
+              <span class="nd-play-card__labelrow">
+                <span class="nd-play-card__label">Setup</span>
+              </span>
+              <span class="nd-play-card__collapse-label">Collapse</span>
+            </summary>
+            <div class="nd-play-card__content nd-richtext" data-playbook="setup"></div>
+            <div class="nd-play-card__references" data-playbook-field-block="entities">
+              <div class="nd-playbook-card__chips" data-playbook="entities"></div>
+            </div>
+          </details>
+
+          <section class="nd-play-card" data-playbook-field-block="objective">
+            <div class="nd-play-card__labelrow">
+              <span class="nd-play-card__label">Objectives</span>
+              <button type="button" class="nd-play-card__action" data-objective-add aria-label="Add objective">+ Add</button>
+            </div>
+            <div
+              class="nd-play-card__content nd-richtext nd-play-inline-editor nd-play-objectives"
+              data-playbook="objective"
+              data-placeholder="Add an objective..."
+              role="textbox"
+              aria-label="Objectives"
+            ></div>
+          </section>
+
+          <section class="nd-play-card" data-playbook-field-block="experience">
+            <div class="nd-play-card__labelrow">
+              <span class="nd-play-card__label">Experience &amp; Reward</span>
+            </div>
+            <div
+              class="nd-play-card__content nd-richtext nd-play-inline-editor"
+              data-playbook="experience"
+              data-placeholder="Not set."
+              role="textbox"
+              aria-label="Experience"
+            ></div>
+          </section>
+        </div>
+
+        {{!-- Response & Notes group --}}
+        <h3 class="nd-play-section-title nd-play-section-title--response">Response &amp; Notes</h3>
+        <div class="nd-play-entry-grid nd-play-entry-grid--response">
+
+          <section class="nd-play-card" data-playbook-field-block="twist">
+            <div class="nd-play-card__labelrow">
+              <span class="nd-play-card__label">Twist</span>
+            </div>
+            <div class="nd-play-card__content nd-richtext" data-playbook="twist"></div>
+          </section>
+
+          <section class="nd-play-card" data-playbook-field-block="possibleOutcomes">
+            <div class="nd-play-card__labelrow">
+              <span class="nd-play-card__label">Possible Outcomes</span>
+            </div>
+            <div class="nd-play-card__content nd-richtext" data-playbook="possibleOutcomes"></div>
+          </section>
+
+          <section class="nd-play-card nd-play-card--wide" data-playbook-field-block="gmNotes">
+            <div class="nd-play-card__labelrow">
+              <span class="nd-play-card__label">GM Notes</span>
+              <span class="nd-play-card__live-dot" aria-hidden="true"></span>
+            </div>
+            <div
+              class="nd-play-card__content nd-richtext nd-play-inline-editor"
+              data-playbook="gmNotes"
+              data-placeholder="Live GM notes for this entry..."
+              role="textbox"
+              aria-label="Entry Notes"
+            ></div>
+          </section>
+        </div>
+
+        {{!-- Session strip --}}
+        <div class="nd-play-session-strip">
+          <section
+            class="nd-play-notes"
+            data-live-notes-root
+            data-resizable-panel="play-session-notes"
+            data-resize-min="120"
+            aria-label="Session Notes"
+          >
+            <header class="nd-play-notes__header">
+              <span class="nd-play-notes__title">Session Notes</span>
+              <div class="nd-play-notes__saved">
+                <span class="nd-play-notes__dot" aria-hidden="true"></span>
+                <span>auto-saved</span>
+                <span class="nd-live-notes__status" data-live-notes-status hidden></span>
               </div>
             </header>
+            <div
+              class="nd-live-notes nd-play-notes__editor nd-richtext"
+              data-storage="sessionNotes"
+              data-storage-html
+              data-placeholder="Session Notes..."
+              role="textbox"
+              aria-label="Session Notes"
+            ></div>
+          </section>
 
-            <div class="nd-play-entry-grid">
-              <section class="nd-play-entry-column" aria-labelledby="nd-play-scene-flow">
-                <h3 class="nd-section-title" id="nd-play-scene-flow">Scene Flow</h3>
-
-                <section class="nd-panel-card nd-play-entry-card nd-play-entry-card--speech" data-playbook-field-block="speechNotes">
-                  <div class="nd-field-label nd-play-entry-card__label">Speech Notes</div>
-                  <div
-                    class="nd-field-control nd-play-entry-card__content nd-richtext nd-play-inline-editor"
-                    data-playbook="speechNotes"
-                    data-placeholder="Add dialogue or read-aloud text..."
-                    role="textbox"
-                    aria-label="Speech Notes"
-                  ></div>
-                </section>
-
-                <details class="nd-panel-card nd-play-entry-card nd-play-entry-card--setup" data-playbook-field-block="setup" open>
-                  <summary>
-                    <span class="nd-field-label">Setup</span>
-                    <span class="nd-play-entry-card__collapse-label">Collapse</span>
-                  </summary>
-                  <div class="nd-play-entry-card__content nd-richtext" data-playbook="setup"></div>
-                </details>
-
-                <section class="nd-panel-card nd-play-entry-card nd-play-entry-card--objective" data-playbook-field-block="objective">
-                  <header class="nd-play-entry-card__header">
-                    <div class="nd-field-label nd-play-entry-card__label">Objectives</div>
-                    <button type="button" class="nd-button nd-button--ghost" data-objective-add aria-label="Add objective">+ Objective</button>
-                  </header>
-                  <div
-                    class="nd-field-control nd-play-entry-card__content nd-richtext nd-play-inline-editor"
-                    data-playbook="objective"
-                    data-placeholder="Add an objective..."
-                    role="textbox"
-                    aria-label="Objectives"
-                  ></div>
-                </section>
-
-                <section class="nd-panel-card nd-play-entry-card nd-play-entry-card--experience" data-playbook-field-block="experience">
-                  <div class="nd-field-label nd-play-entry-card__label">Experience</div>
-                  <div
-                    class="nd-field-control nd-play-entry-card__content nd-richtext nd-play-inline-editor"
-                    data-playbook="experience"
-                    data-placeholder="Add XP or reward..."
-                    role="textbox"
-                    aria-label="Experience"
-                  ></div>
-                </section>
-              </section>
-
-              <section class="nd-play-entry-column" aria-labelledby="nd-play-response-notes">
-                <h3 class="nd-section-title" id="nd-play-response-notes">Response &amp; Notes</h3>
-
-                <section class="nd-panel-card nd-play-entry-card" data-playbook-field-block="twist">
-                  <div class="nd-field-label nd-play-entry-card__label">Twist</div>
-                  <div class="nd-play-entry-card__content nd-richtext" data-playbook="twist"></div>
-                </section>
-
-                <section class="nd-panel-card nd-play-entry-card" data-playbook-field-block="possibleOutcomes">
-                  <div class="nd-field-label nd-play-entry-card__label">Possible Outcomes</div>
-                  <div class="nd-play-entry-card__content nd-richtext" data-playbook="possibleOutcomes"></div>
-                </section>
-
-                <section class="nd-panel-card nd-play-entry-card nd-play-entry-card--notes" data-playbook-field-block="gmNotes">
-                  <div class="nd-field-label nd-play-entry-card__label">Notes</div>
-                  <div
-                    class="nd-field-control nd-play-entry-card__content nd-richtext nd-play-inline-editor"
-                    data-playbook="gmNotes"
-                    data-placeholder="Add live entry notes..."
-                    role="textbox"
-                    aria-label="Entry Notes"
-                  ></div>
-                </section>
-
-                <section class="nd-panel-card nd-play-entry-card nd-play-entry-card--references" data-playbook-field-block="entities">
-                  <div class="nd-field-label nd-play-entry-card__label">References</div>
-                  <div class="nd-playbook-card__chips" data-playbook="entities"></div>
-                </section>
-              </section>
-            </div>
-          </div>
-        </article>
-      </div>
-
-      {{!-- Session Notes and permanent Session Summary share remaining space --}}
-      <div class="nd-play__row nd-play__row--bottom">
-        <section
-          class="nd-play-notes"
-          data-live-notes-root
-          data-resizable-panel="play-session-notes"
-          data-resize-min="140"
-          aria-label="Session Notes"
-        >
-          <header class="nd-play-notes__header">
-            <span class="nd-play-notes__title nd-hierarchy-card">Session Notes</span>
-            <div class="nd-play-notes__saved">
-              <span class="nd-play-notes__dot" aria-hidden="true"></span>
-              <span>auto-saved</span>
-              <span class="nd-live-notes__status" data-live-notes-status hidden></span>
-            </div>
-          </header>
-          <div
-            class="nd-live-notes nd-play-notes__editor nd-richtext"
-            data-storage="sessionNotes"
-            data-storage-html
-            data-placeholder="Session Notes..."
-            role="textbox"
-            aria-label="Session Notes"
-          ></div>
-        </section>
-
-        <section
-          class="nd-play-notes nd-play-summary"
-          data-live-notes-root
-          data-resizable-panel="play-session-summary"
-          data-resize-min="140"
-          aria-label="Session Summary"
-        >
-          <header class="nd-play-notes__header">
-            <span class="nd-play-notes__title nd-hierarchy-card">Session Summary</span>
-            <div class="nd-play-notes__saved">
-              <span class="nd-play-notes__dot" aria-hidden="true"></span>
-              <span>auto-saved</span>
-              <span class="nd-live-notes__status" data-live-notes-status hidden></span>
-            </div>
-          </header>
-          <div
-            class="nd-live-notes nd-play-notes__editor nd-richtext"
-            data-storage="sessionSummary"
-            data-storage-html
-            data-placeholder="Write the permanent session summary..."
-            role="textbox"
+          <section
+            class="nd-play-notes nd-play-summary"
+            data-live-notes-root
+            data-resizable-panel="play-session-summary"
+            data-resize-min="120"
             aria-label="Session Summary"
-          ></div>
-        </section>
+          >
+            <header class="nd-play-notes__header">
+              <span class="nd-play-notes__title">Session Summary</span>
+              <div class="nd-play-notes__saved">
+                <span class="nd-play-notes__dot" aria-hidden="true"></span>
+                <span>auto-saved</span>
+                <span class="nd-live-notes__status" data-live-notes-status hidden></span>
+              </div>
+            </header>
+            <div
+              class="nd-live-notes nd-play-notes__editor nd-richtext"
+              data-storage="sessionSummary"
+              data-storage-html
+              data-placeholder="Permanent session summary..."
+              role="textbox"
+              aria-label="Session Summary"
+            ></div>
+          </section>
+        </div>
       </div>
     </section>
 
@@ -251,36 +267,35 @@
       aria-label="Campaign workspace"
       hidden
     >
-      <header class="nd-campaign-header">
-        <div class="nd-campaign-header__title nd-hierarchy-group">Campaign Information</div>
-        <div class="nd-campaign-header__current">
-          <span class="nd-hierarchy-context">Current Session</span>
-          <strong data-campaign-current-session>Session 1</strong>
-        </div>
-      </header>
-
       <div class="nd-quest-layout">
         <aside class="nd-quest-sidebar" aria-label="Quest navigation">
-          <div class="nd-quest-sidebar__section">
-            <div class="nd-quest-sidebar__heading nd-hierarchy-group">
-              <span>Main Quests</span>
-              <button type="button" data-new-quest="MAIN" aria-label="New Main Quest">+</button>
-            </div>
-            <div data-quest-list="MAIN"></div>
+          <div class="nd-quest-sidebar__head">
+            <div class="nd-quest-sidebar__title">Campaign</div>
+            <p class="nd-quest-sidebar__session" data-campaign-current-session>Session 1</p>
           </div>
-          <div class="nd-quest-sidebar__section">
-            <div class="nd-quest-sidebar__heading nd-hierarchy-group">
-              <span>Side Quests</span>
-              <button type="button" data-new-quest="SIDE" aria-label="New Side Quest">+</button>
+
+          <div class="nd-quest-sidebar__scroll">
+            <div class="nd-quest-sidebar__section" data-quest-category="MAIN">
+              <div class="nd-quest-sidebar__heading">
+                <span>Main Quests</span>
+                <button type="button" data-new-quest="MAIN" aria-label="New Main Quest">+</button>
+              </div>
+              <div data-quest-list="MAIN"></div>
             </div>
-            <div data-quest-list="SIDE"></div>
-          </div>
-          <div class="nd-quest-sidebar__section">
-            <div class="nd-quest-sidebar__heading nd-hierarchy-group">
-              <span>Companion Quests</span>
-              <button type="button" data-new-quest="COMPANION" aria-label="New Companion Quest">+</button>
+            <div class="nd-quest-sidebar__section" data-quest-category="SIDE">
+              <div class="nd-quest-sidebar__heading">
+                <span>Side Quests</span>
+                <button type="button" data-new-quest="SIDE" aria-label="New Side Quest">+</button>
+              </div>
+              <div data-quest-list="SIDE"></div>
             </div>
-            <div data-quest-list="COMPANION"></div>
+            <div class="nd-quest-sidebar__section" data-quest-category="COMPANION">
+              <div class="nd-quest-sidebar__heading">
+                <span>Companion Quests</span>
+                <button type="button" data-new-quest="COMPANION" aria-label="New Companion Quest">+</button>
+              </div>
+              <div data-quest-list="COMPANION"></div>
+            </div>
           </div>
         </aside>
 
@@ -291,35 +306,30 @@
 
           <section data-quest-editor hidden>
             <header class="nd-campaign-panel__header">
-              <div>
-                <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Campaign Quest</div>
-                <h2 class="nd-hierarchy-primary">Quest</h2>
+              <div class="nd-campaign-panel__headline">
+                <div class="nd-campaign-panel__eyebrow" data-quest-eyebrow>Campaign Quest</div>
+                <input class="nd-quest-title-input" type="text" data-quest-title placeholder="Quest title">
               </div>
-              <span class="nd-campaign-save-status" data-quest-saved hidden></span>
+              <div class="nd-campaign-panel__meta">
+                <span class="nd-campaign-save-status" data-quest-saved hidden></span>
+                <label class="nd-campaign-field nd-campaign-field--compact">
+                  <span>Status</span>
+                  <select data-quest-status>
+                    <option value="OPEN">OPEN</option>
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="RESOLVED">RESOLVED</option>
+                  </select>
+                </label>
+                <label class="nd-campaign-field nd-campaign-field--compact">
+                  <span>Category</span>
+                  <select data-quest-category>
+                    <option value="MAIN">MAIN QUEST</option>
+                    <option value="SIDE">SIDE QUEST</option>
+                    <option value="COMPANION">COMPANION QUEST</option>
+                  </select>
+                </label>
+              </div>
             </header>
-
-            <div class="nd-campaign-thread-fields">
-              <label class="nd-campaign-field nd-campaign-field--wide">
-                <span>Title</span>
-                <input class="nd-hierarchy-primary" type="text" data-quest-title placeholder="Quest title">
-              </label>
-              <label class="nd-campaign-field">
-                <span>Status</span>
-                <select data-quest-status>
-                  <option value="OPEN">OPEN</option>
-                  <option value="ACTIVE">ACTIVE</option>
-                  <option value="RESOLVED">RESOLVED</option>
-                </select>
-              </label>
-              <label class="nd-campaign-field">
-                <span>Category</span>
-                <select data-quest-category>
-                  <option value="MAIN">MAIN QUEST</option>
-                  <option value="SIDE">SIDE QUEST</option>
-                  <option value="COMPANION">COMPANION QUEST</option>
-                </select>
-              </label>
-            </div>
 
             <div class="nd-campaign-field nd-campaign-field--notes">
               <span>Overview</span>
@@ -397,199 +407,6 @@
         </main>
       </div>
 
-      <div class="nd-campaign-layout" hidden aria-hidden="true">
-        <aside class="nd-campaign-sidebar" aria-label="Campaign navigation">
-          <h2 class="nd-campaign-sidebar__title">Campaign</h2>
-
-          <div class="nd-campaign-sidebar__section">
-            <div class="nd-campaign-sidebar__label">Sessions</div>
-            <button
-              type="button"
-              class="nd-campaign-sidebar__item"
-              data-campaign-select-session
-            >Session 1</button>
-          </div>
-
-          <div class="nd-campaign-sidebar__section">
-            <button
-              type="button"
-              class="nd-campaign-sidebar__label nd-campaign-sidebar__label--button"
-              data-campaign-select-threads
-            >Threads</button>
-            <div class="nd-campaign-sidebar__threads" data-campaign-sidebar-threads></div>
-            <button type="button" class="nd-campaign-new-thread" data-campaign-new-thread>
-              + New Thread
-            </button>
-          </div>
-        </aside>
-
-        <main class="nd-campaign-panel">
-          <section data-campaign-view="session" aria-label="Session">
-            <header class="nd-campaign-panel__header">
-              <div>
-                <div class="nd-campaign-panel__eyebrow">Session</div>
-                <h2 data-campaign-session="title">Session 1</h2>
-              </div>
-              <span
-                class="nd-campaign-status nd-campaign-status--session"
-                data-campaign-session="status"
-              >active</span>
-            </header>
-
-            <dl class="nd-campaign-session-meta">
-              <div>
-                <dt>Session Number</dt>
-                <dd data-campaign-session="number">1</dd>
-              </div>
-              <div>
-                <dt>Real Date</dt>
-                <dd data-campaign-session="real-date">—</dd>
-              </div>
-              <div>
-                <dt>In-game Date</dt>
-                <dd data-campaign-session="in-game-date">—</dd>
-              </div>
-            </dl>
-
-            <section class="nd-campaign-content-block">
-              <h3>Session Summary</h3>
-              <div class="nd-richtext" data-campaign-session="summary"></div>
-            </section>
-
-            <section class="nd-campaign-content-block">
-              <h3>Session Notes</h3>
-              <div class="nd-richtext" data-campaign-session="notes"></div>
-            </section>
-
-            <section class="nd-campaign-content-block">
-              <h3>Beats</h3>
-              <div class="nd-campaign-beats" data-campaign-session-beats></div>
-            </section>
-          </section>
-
-          <section data-campaign-view="threads" aria-label="Threads" hidden>
-            <header class="nd-campaign-panel__header">
-              <div>
-                <div class="nd-campaign-panel__eyebrow">Campaign</div>
-                <h2>Threads</h2>
-              </div>
-              <button type="button" class="nd-campaign-new-thread" data-campaign-new-thread>
-                + New Thread
-              </button>
-            </header>
-            <div class="nd-campaign-thread-empty" data-campaign-thread-empty>
-              <p>No narrative threads yet.</p>
-              <button type="button" class="nd-campaign-new-thread" data-campaign-new-thread>
-                + New Thread
-              </button>
-            </div>
-            <div class="nd-campaign-thread-list" data-campaign-thread-list></div>
-          </section>
-
-          <section
-            data-campaign-view="thread"
-            data-campaign-thread-editor
-            aria-label="Thread editor"
-            hidden
-          >
-            <header class="nd-campaign-panel__header">
-              <div>
-                <div class="nd-campaign-panel__eyebrow">Narrative Thread</div>
-                <h2>Thread Editor</h2>
-              </div>
-              <span class="nd-campaign-save-status" data-campaign-thread-saved hidden></span>
-            </header>
-
-            <div class="nd-campaign-thread-fields">
-              <label class="nd-campaign-field nd-campaign-field--wide">
-                <span>Title</span>
-                <input type="text" data-campaign-thread-title placeholder="Thread title">
-              </label>
-              <label class="nd-campaign-field">
-                <span>Status</span>
-                <select data-campaign-thread-status>
-                  <option value="OPEN">OPEN</option>
-                  <option value="ACTIVE">ACTIVE</option>
-                  <option value="RESOLVED">RESOLVED</option>
-                </select>
-              </label>
-              <label class="nd-campaign-field">
-                <span>Type <small>Optional</small></span>
-                <input type="text" data-campaign-thread-type placeholder="Type">
-              </label>
-            </div>
-
-            <div class="nd-campaign-field nd-campaign-field--notes">
-              <span>Notes</span>
-              <div
-                class="nd-richtext-toolbar"
-                data-richtext-toolbar
-                role="toolbar"
-                aria-label="Thread Notes formatting"
-              >
-                <button type="button" data-richtext-command="bold" aria-label="Bold"><strong>B</strong></button>
-                <button type="button" data-richtext-command="italic" aria-label="Italic"><em>I</em></button>
-                <button type="button" data-richtext-command="underline" aria-label="Underline"><u>U</u></button>
-                <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
-                <button type="button" data-richtext-command="heading" data-richtext-value="h2" aria-label="Heading 2">H2</button>
-                <button type="button" data-richtext-command="heading" data-richtext-value="h3" aria-label="Heading 3">H3</button>
-                <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
-                <button type="button" data-richtext-command="list" data-richtext-value="ul" aria-label="Bullet list">• List</button>
-                <button type="button" data-richtext-command="list" data-richtext-value="ol" aria-label="Numbered list">1. List</button>
-                <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
-                <label class="nd-richtext-toolbar__color">
-                  <select data-richtext-color aria-label="Text color">
-                    <option value="default">Default</option>
-                    <option value="blue">Blue</option>
-                    <option value="green">Green</option>
-                    <option value="yellow">Yellow</option>
-                    <option value="orange">Orange</option>
-                    <option value="red">Red</option>
-                    <option value="purple">Purple</option>
-                    <option value="gray">Gray</option>
-                  </select>
-                </label>
-                <button type="button" data-richtext-command="clear" aria-label="Clear formatting">Clear</button>
-              </div>
-              <div
-                class="nd-richtext nd-richtext--editor nd-campaign-thread-notes"
-                data-richtext-editor
-                data-campaign-thread-notes
-                contenteditable="true"
-                data-placeholder="Thread notes..."
-                role="textbox"
-                aria-label="Thread Notes"
-              ></div>
-            </div>
-
-            <section class="nd-campaign-references" aria-label="References">
-              <h3>References</h3>
-              <details>
-                <summary>Beats</summary>
-                <div data-campaign-thread-refs="beats"></div>
-              </details>
-              <details>
-                <summary>Characters</summary>
-                <div data-campaign-thread-refs="characters"></div>
-              </details>
-              <details>
-                <summary>Locations</summary>
-                <div data-campaign-thread-refs="locations"></div>
-              </details>
-              <details>
-                <summary>Items</summary>
-                <div data-campaign-thread-refs="items"></div>
-              </details>
-            </section>
-
-            <div class="nd-campaign-thread-actions">
-              <button type="button" class="nd-campaign-save" data-campaign-save-thread>
-                Save
-              </button>
-            </div>
-          </section>
-        </main>
-      </div>
     </section>
 
     <section class="nd-workspace" data-workspace-panel="notes" aria-label="Actors workspace" hidden>
@@ -597,7 +414,7 @@
         <section class="nd-companion-memory-card nd-card" data-companion-memory data-live-notes-root aria-label="Companion Memory">
           <header class="nd-card__header">
             <span class="nd-card__accent" aria-hidden="true"></span>
-            <h2 class="nd-card__label nd-hierarchy-card">Companion Memory</h2>
+            <h2 class="nd-card__label">Companion Memory</h2>
             <span class="nd-companion-memory-card__actor">
               <span class="nd-hierarchy-context">Focused Actor</span>
               <strong class="nd-companion-memory-card__focus nd-hierarchy-primary" data-focus="name">Party</strong>
@@ -634,7 +451,7 @@
         <section class="nd-reputation-card nd-card" aria-label="Reputation">
           <header class="nd-card__header">
             <span class="nd-card__accent" aria-hidden="true"></span>
-            <h2 class="nd-card__label nd-hierarchy-card">Reputation</h2>
+            <h2 class="nd-card__label">Reputation</h2>
           </header>
           <div class="nd-reputation-card__empty">
             <strong>No reputation network yet.</strong>
@@ -646,26 +463,14 @@
 
     <section class="nd-workspace" data-workspace-panel="prepare" aria-label="Prepare workspace" hidden>
       <article class="nd-card nd-card--playbook-prepare" data-playbook-prepare data-live-notes-root aria-label="Session Builder">
-        <header class="nd-card__header">
-          <span class="nd-card__accent" aria-hidden="true"></span>
-          <h2 class="nd-card__label nd-hierarchy-context">Session Builder</h2>
-          <span class="nd-live-notes__status" data-live-notes-status hidden></span>
-        </header>
-
         <div class="nd-playbook-prepare">
-          <div class="nd-playbook-prepare__sidebar">
-            <div class="nd-playbook-prepare__section-title nd-hierarchy-group">Prepared Entries</div>
-            <button type="button" class="nd-session-import__open" data-open-campaign-import>
-              Import from Campaign
-            </button>
-            <button type="button" class="nd-playbook-prepare__add" data-playbook-add-beat>
-              + Add Entry
-            </button>
-            <div class="nd-playbook-prepare__list" data-playbook-prepare-list role="list"></div>
-          </div>
-
           <div class="nd-playbook-prepare__main">
-            <div class="nd-playbook-prepare__section-title nd-hierarchy-group">Current Entry</div>
+            <header class="nd-card__header nd-playbook-prepare__heading">
+              <span class="nd-card__accent" aria-hidden="true"></span>
+              <h2 class="nd-card__label">Session Builder</h2>
+              <span class="nd-live-notes__status" data-live-notes-status hidden></span>
+            </header>
+
             <div class="nd-playbook-prepare__empty" data-playbook-prepare-empty hidden>
               <p class="nd-card__text nd-workspace__placeholder">
                 No entries yet. Import from Campaign or add an entry.
@@ -676,21 +481,17 @@
             </div>
 
             <div class="nd-playbook-prepare__editor" data-playbook-prepare-editor>
-              <div class="nd-playbook-prepare__actions">
-                <button type="button" class="nd-playbook-prepare__current-button" data-playbook-set-current>
-                  Set as Current Entry
-                </button>
-              </div>
-
-              <div class="nd-playbook__field">
-                <span class="nd-playbook__field-label">Title</span>
+              <div class="nd-playbook__field nd-playbook-prepare__title-field">
                 <div
-                  class="nd-card__text nd-live-notes nd-playbook-prepare__field nd-hierarchy-primary"
+                  class="nd-card__text nd-live-notes nd-playbook-prepare__field nd-playbook-prepare__title"
                   data-playbook-field="title"
                   data-placeholder="Entry title..."
                   role="textbox"
                   aria-label="Entry title"
                 ></div>
+                <button type="button" class="nd-playbook-prepare__current-button" data-playbook-set-current>
+                  Set as Current Entry
+                </button>
               </div>
 
               <div class="nd-playbook__field">
@@ -819,6 +620,19 @@
                 ></div>
               </div>
             </div>
+          </div>
+
+          <div class="nd-playbook-prepare__sidebar">
+            <div class="nd-playbook-prepare__sidebar-head">
+              <div class="nd-playbook-prepare__section-title nd-hierarchy-group">Prepared Entries</div>
+              <button type="button" class="nd-session-import__open" data-open-campaign-import>
+                Import from Campaign
+              </button>
+              <button type="button" class="nd-playbook-prepare__add" data-playbook-add-beat>
+                + Add Entry
+              </button>
+            </div>
+            <div class="nd-playbook-prepare__list" data-playbook-prepare-list role="list"></div>
           </div>
         </div>
 

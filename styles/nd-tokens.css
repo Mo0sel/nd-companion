@@ -1,6 +1,6 @@
 /**
  * N&D Companion — Design tokens
- * Source: design/figma-source/src/index.css (approved Figma)
+ * Source: design/current/src/index.css + ds.ts (approved design, Sprint 28)
  * Scoped to the Companion app root so Foundry chrome is not restyled globally.
  *
  * Foundry loads module CSS as constructable stylesheets.
@@ -30,10 +30,22 @@
   --nd-blue-tint: rgba(91, 142, 255, 0.05);
   --nd-blue-border: rgba(91, 142, 255, 0.15);
   --nd-blue-hover: rgba(91, 142, 255, 0.5);
-  /* ── Semantic hierarchy: role, never decoration ───────────────────────── */
+
+  /* ── Semantic hierarchy (approved design): role, never decoration ──────── */
+  /* Context labels (CURRENT LOCATION, FOCUSED CHARACTER…) — muted gray */
   --nd-context-accent: var(--nd-text-3);
-  --nd-group-accent: #8da7d6;
-  --nd-tertiary-accent: #b8d8bf;
+  /* Section labels with tick bar (SESSION BUILDER, CAMPAIGN…) — purple */
+  --nd-group-accent: var(--nd-purple);
+  /* Field/card labels default — muted gray (PLAY sections override locally) */
+  --nd-tertiary-accent: var(--nd-text-3);
+  /* PLAY section group accents (design/current PlayWorkspace) */
+  --nd-accent-scene-flow: rgba(175, 100, 100, 1);
+  --nd-accent-scene-flow-soft: rgba(175, 100, 100, 0.7);
+  --nd-accent-response: rgba(180, 130, 75, 1);
+  --nd-accent-response-soft: rgba(180, 130, 75, 0.7);
+  --nd-accent-session: rgba(110, 164, 68, 0.72);
+  /* PLAY card tinted surface */
+  --nd-card-tint: rgba(91, 142, 255, 0.045);
 
   /* ── Color: semantic ───────────────────────────────────────────────────── */
   --nd-danger: #ef4444;
@@ -48,19 +60,19 @@
   --nd-border: #1e1e26;
   --nd-border-2: rgba(255, 255, 255, 0.06);
 
-  /* ── Status only: active green, in-progress blue, completed gray ───────── */
+  /* ── Status only (design/current): planned gray, active blue, done green ── */
   --nd-status-planned-color: #6b6b7e;
   --nd-status-planned-bg: rgba(107, 107, 126, 0.1);
   --nd-status-planned-border: rgba(107, 107, 126, 0.25);
-  --nd-status-active-color: #63d47f;
-  --nd-status-active-bg: rgba(99, 212, 127, 0.12);
-  --nd-status-active-border: rgba(99, 212, 127, 0.3);
-  --nd-status-in-progress-color: #6f9fe8;
-  --nd-status-in-progress-bg: rgba(111, 159, 232, 0.12);
-  --nd-status-in-progress-border: rgba(111, 159, 232, 0.3);
-  --nd-status-done-color: #858899;
-  --nd-status-done-bg: rgba(133, 136, 153, 0.1);
-  --nd-status-done-border: rgba(133, 136, 153, 0.25);
+  --nd-status-active-color: #5b8eff;
+  --nd-status-active-bg: rgba(91, 142, 255, 0.12);
+  --nd-status-active-border: rgba(91, 142, 255, 0.3);
+  --nd-status-in-progress-color: var(--nd-status-active-color);
+  --nd-status-in-progress-bg: var(--nd-status-active-bg);
+  --nd-status-in-progress-border: var(--nd-status-active-border);
+  --nd-status-done-color: #22c55e;
+  --nd-status-done-bg: rgba(34, 197, 94, 0.1);
+  --nd-status-done-border: rgba(34, 197, 94, 0.25);
   --nd-status-skipped-color: #f59e0b;
   --nd-status-skipped-bg: rgba(245, 158, 11, 0.1);
   --nd-status-skipped-border: rgba(245, 158, 11, 0.25);
@@ -134,14 +146,15 @@
   --nd-transition-fast: all 0.1s ease;
   --nd-transition-base: all 0.15s ease;
 
-  /* ── Layout constants (reference; workspace CSS opts in) ────────────────── */
-  --nd-header-h: 48px;
+  /* ── Layout constants (design/current App.tsx / PlayWorkspace.tsx) ──────── */
+  --nd-header-h: 56px;
+  --nd-context-bar-h: 44px;
   --nd-sidebar-w: 260px;
-  --nd-page-x: 28px;
-  --nd-card-gap: 16px;
+  --nd-page-x: 20px;
+  --nd-card-gap: 10px;
   --nd-card-pad: 14px;
-  --nd-panel-gap: 12px;
-  --nd-control-h: 32px;
+  --nd-panel-gap: 10px;
+  --nd-control-h: 28px;
   --nd-control-pad-x: 10px;
 
   /* ── Legacy aliases (existing Foundry CSS) ─────────────────────────────── */

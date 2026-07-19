@@ -7,6 +7,12 @@ import { RichTextToolbar } from "./rich-text-toolbar.js";
 import { SessionService } from "./session-service.js";
 import { ThreadService } from "./thread-service.js";
 
+const CATEGORY_LABELS = Object.freeze({
+  MAIN: "Main Quests",
+  SIDE: "Side Quests",
+  COMPANION: "Companion Quests"
+});
+
 const ENTRY_FIELDS = Object.freeze([
   ["speechNotes", "Speech Notes"],
   ["objective", "Objective"],
@@ -219,6 +225,9 @@ export class CampaignWorkspace {
     if (!quest) return;
 
     editor.dataset.questId = quest.id;
+    editor.dataset.questCategory = quest.category ?? "SIDE";
+    const eyebrow = editor.querySelector("[data-quest-eyebrow]");
+    if (eyebrow) eyebrow.textContent = CATEGORY_LABELS[quest.category] ?? "Campaign Quest";
     const title = editor.querySelector("[data-quest-title]");
     const status = editor.querySelector("[data-quest-status]");
     const category = editor.querySelector("[data-quest-category]");
