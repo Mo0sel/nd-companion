@@ -399,14 +399,35 @@ export class PlaybookService {
    * @returns {Promise<number>} Removed beat count
    */
   static async purgeSourceEntry(sourceEntryId) {
-    if (!sourceEntryId) return 0;
+    return PlaybookService.purgeSourceEntries([sourceEntryId]);
+  }
+
+  /**
+   * Remove prepared Session Beats imported from deleted Quests.
+   * @param {string[]} sourceEntryIds
+   * @returns {Promise<number>} Removed beat count
+   */
+  static async purgeSourceEntries(sourceEntryIds) {
+    const sources = new Set(
+      (Array.isArray(sourceEntryIds) ? sourceEntryIds : [])
+        .filter((id) => typeof id === "string" && id)
+    );
+    if (!sources.size) return 0;
     const before = PlaybookService.#doc.beats.length;
     const currentId = PlaybookService.#doc.beats[PlaybookService.getIndex()]?.id ?? "";
     PlaybookService.#doc.beats = PlaybookService.#doc.beats.filter(
-      (beat) => beat.sourceStoryEntryId !== sourceEntryId
+      (beat) => !sources.has(beat.sourceStoryEntryId)
     );
     const removed = before - PlaybookService.#doc.beats.length;
-    if (!removed) return 0;
+    let referencesChanged = false;
+    for (const beat of PlaybookService.#doc.beats) {
+      const related = beat.relatedBeatIds ?? [];
+      const filtered = related.filter((entryId) => !sources.has(entryId));
+      if (filtered.length === related.length) continue;
+      beat.relatedBeatIds = filtered;
+      referencesChanged = true;
+    }
+    if (!removed && !referencesChanged) return 0;
     const nextIndex = PlaybookService.#doc.beats.findIndex((beat) => beat.id === currentId);
     PlaybookService.#doc.currentIndex = nextIndex >= 0
       ? nextIndex

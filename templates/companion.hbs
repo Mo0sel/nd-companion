@@ -304,13 +304,12 @@
       hidden
     >
       <div class="nd-quest-layout">
-        <aside class="nd-quest-sidebar" aria-label="Quest navigation">
+        <aside class="nd-quest-sidebar" aria-label="Campaign Explorer">
           <div class="nd-quest-sidebar__head">
             <div class="nd-quest-sidebar__title">Campaign</div>
             <span class="nd-campaign-autosave" data-campaign-autosave-status hidden></span>
             <nav class="nd-campaign-nav" aria-label="Campaign sections">
               <button type="button" class="is-active" data-campaign-section="storyThreads">Story Threads</button>
-              <button type="button" data-campaign-section="quests">Quests</button>
               <button type="button" data-campaign-section="chronicle">Chronicle</button>
               <div class="nd-campaign-nav__divider" aria-hidden="true"></div>
               <button type="button" data-campaign-section="actors">Actors</button>
@@ -321,22 +320,10 @@
           </div>
 
           <div class="nd-quest-sidebar__scroll">
-            <div data-campaign-nav-panel="quests" hidden>
-              <div class="nd-quest-sidebar__section">
-                <div class="nd-quest-sidebar__heading">
-                  <span>All Quests</span>
-                </div>
-                <p class="nd-quest-sidebar__hint">
-                  Quests are created inside Story Threads.
-                </p>
-                <div data-quest-index-list></div>
-              </div>
-            </div>
-
             <div data-campaign-nav-panel="storyThreads">
               <div class="nd-quest-sidebar__section">
                 <div class="nd-quest-sidebar__heading">
-                  <span>Story Threads</span>
+                  <span>Campaign Explorer</span>
                   <button type="button" data-new-story-thread aria-label="New Story Thread">+</button>
                 </div>
                 <div data-story-thread-list></div>
@@ -380,72 +367,8 @@
 
         <main class="nd-quest-panel">
           <div class="nd-quest-empty" data-quest-empty>
-            Select a Quest from the index, or create one inside a Story Thread.
+            Select a Story Thread in the Campaign Explorer.
           </div>
-
-          <section data-quest-editor hidden>
-            <header class="nd-campaign-panel__header">
-              <div class="nd-campaign-panel__headline">
-                <div class="nd-campaign-panel__eyebrow" data-quest-eyebrow>Campaign Quest</div>
-                <input class="nd-quest-title-input" type="text" data-quest-title placeholder="Quest title">
-              </div>
-              <div class="nd-campaign-panel__meta">
-                <span class="nd-campaign-save-status" data-quest-saved hidden></span>
-                <label class="nd-campaign-field nd-campaign-field--compact">
-                  <span>Status</span>
-                  <select data-quest-status>
-                    <option value="OPEN">OPEN</option>
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="RESOLVED">RESOLVED</option>
-                  </select>
-                </label>
-                <label class="nd-campaign-field nd-campaign-field--compact">
-                  <span>Category</span>
-                  <select data-quest-category>
-                    <option value="MAIN">MAIN QUEST</option>
-                    <option value="SIDE">SIDE QUEST</option>
-                    <option value="COMPANION">COMPANION QUEST</option>
-                  </select>
-                </label>
-              </div>
-            </header>
-
-            <div class="nd-campaign-field nd-campaign-field--notes">
-              <span>Overview</span>
-              <div class="nd-richtext-toolbar" data-richtext-toolbar role="toolbar" aria-label="Quest formatting">
-                <button type="button" data-richtext-command="bold" aria-label="Bold"><strong>B</strong></button>
-                <button type="button" data-richtext-command="italic" aria-label="Italic"><em>I</em></button>
-                <button type="button" data-richtext-command="underline" aria-label="Underline"><u>U</u></button>
-                <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
-                <button type="button" data-richtext-command="heading" data-richtext-value="h2" aria-label="Heading 2">H2</button>
-                <button type="button" data-richtext-command="heading" data-richtext-value="h3" aria-label="Heading 3">H3</button>
-                <button type="button" data-richtext-command="list" data-richtext-value="ul" aria-label="Bullet list">• List</button>
-                <button type="button" data-richtext-command="list" data-richtext-value="ol" aria-label="Numbered list">1. List</button>
-                <label class="nd-richtext-toolbar__color">
-                  <select data-richtext-color aria-label="Text color">
-                    <option value="default">Default</option>
-                    <option value="blue">Blue</option>
-                    <option value="green">Green</option>
-                    <option value="yellow">Yellow</option>
-                    <option value="orange">Orange</option>
-                    <option value="red">Red</option>
-                    <option value="purple">Purple</option>
-                    <option value="gray">Gray</option>
-                  </select>
-                </label>
-                <button type="button" data-richtext-command="clear" aria-label="Clear formatting">Clear</button>
-              </div>
-              <div
-                class="nd-richtext nd-richtext--editor nd-quest-overview"
-                data-quest-overview
-                data-richtext-editor
-                contenteditable="true"
-                data-placeholder="Write the long-form campaign overview..."
-              ></div>
-            </div>
-
-            <section data-context-panel="quest" hidden></section>
-          </section>
 
           <section class="nd-story-thread-view" data-story-thread-view hidden>
             <header class="nd-campaign-panel__header">
@@ -502,13 +425,13 @@
                   <h3 class="nd-hierarchy-group">Quests</h3>
                 </div>
                 <div class="nd-story-quests__actions">
-                  <button type="button" data-load-story-entries>Load into Play</button>
                   <button type="button" class="nd-campaign-new-thread" data-add-story-entry>
                     + New Quest
                   </button>
                 </div>
               </header>
               <div data-story-entry-list></div>
+              <div data-story-quest-editor></div>
             </section>
 
             <section data-context-panel="storyThread" hidden></section>

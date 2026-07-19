@@ -2,6 +2,7 @@ import {
   CampaignDocument,
   STORY_THREAD_STATUSES
 } from "./campaign-document.js";
+import { PlaybookService } from "./playbook-service.js";
 
 /**
  * CRUD facade for long-running narrative arcs stored in CampaignDocument.
@@ -87,15 +88,39 @@ export class StoryThreadService {
   static async delete(id) {
     if (!id) return false;
     let removed = false;
+    let questIds = [];
     await CampaignDocument.update((doc) => {
       const index = doc.storyThreads.findIndex((thread) => thread.id === id);
       if (index < 0) return;
       doc.storyThreads.splice(index, 1);
+      questIds = doc.storyEntries
+        .filter((entry) => entry.storyThreadId === id)
+        .map((entry) => entry.id);
+      const deleted = new Set(questIds);
       doc.storyEntries = doc.storyEntries.filter(
         (entry) => entry.storyThreadId !== id
       );
+      for (const entry of doc.storyEntries) {
+        entry.relatedBeatIds = (entry.relatedBeatIds ?? [])
+          .filter((entryId) => !deleted.has(entryId));
+      }
+      for (const quest of doc.threads) {
+        quest.relatedBeatIds = (quest.relatedBeatIds ?? [])
+          .filter((entryId) => !deleted.has(entryId));
+      }
+      for (const session of doc.sessions) {
+        session.relatedQuestEntries = (session.relatedQuestEntries ?? [])
+          .filter((entryId) => !deleted.has(entryId));
+      }
+      for (const faction of doc.factions) {
+        faction.relatedStoryThreadIds = (faction.relatedStoryThreadIds ?? [])
+          .filter((threadId) => threadId !== id);
+      }
       removed = true;
     });
+    if (removed && questIds.length) {
+      await PlaybookService.purgeSourceEntries(questIds);
+    }
     return removed;
   }
 }
