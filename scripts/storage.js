@@ -373,6 +373,40 @@ export class CompanionStorage {
       campaignMemory
     };
   }
+
+  /**
+   * Apply an already validated and normalized campaign payload.
+   * All writes use existing CompanionStorage APIs. If a write fails, the
+   * previous stored values are restored before the error is rethrown.
+   * @param {CampaignPayload} payload
+   * @returns {Promise<void>}
+   */
+  static async applyCampaignPayload(payload) {
+    const previous = {
+      campaign: CompanionStorage.getCampaign(),
+      playbook: CompanionStorage.getPlaybook(),
+      campaignMemory: foundry.utils.duplicate(
+        game.settings.get(MODULE_ID, MEMORY_SETTING) ?? {}
+      )
+    };
+
+    try {
+      await CompanionStorage.setCampaign(foundry.utils.duplicate(payload.campaign));
+      await CompanionStorage.setPlaybook(foundry.utils.duplicate(payload.playbook));
+      await CompanionStorage.set(
+        MEMORY_SETTING,
+        foundry.utils.duplicate(payload.campaignMemory)
+      );
+    } catch (error) {
+      await Promise.allSettled([
+        CompanionStorage.setCampaign(previous.campaign),
+        CompanionStorage.setPlaybook(previous.playbook),
+        CompanionStorage.set(MEMORY_SETTING, previous.campaignMemory)
+      ]);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Campaign import failed: ${message}`);
+    }
+  }
 }
 
 /**

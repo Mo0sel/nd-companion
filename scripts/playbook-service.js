@@ -146,6 +146,15 @@ export class PlaybookService {
   }
 
   /**
+   * Reload imported state without seeding or rewriting an intentionally empty
+   * playbook.
+   * @returns {void}
+   */
+  static reload() {
+    PlaybookService.#doc = PlaybookService.#normalize(CompanionStorage.getPlaybook());
+  }
+
+  /**
    * @returns {PlaybookDocument}
    */
   static getDocument() {

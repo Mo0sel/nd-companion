@@ -1,0 +1,458 @@
+{
+  "moduleVersion": "0.3.2",
+  "schemaVersion": 4,
+  "foundryVersion": "14.364",
+  "exportedAt": "2026-07-19T03:54:19.018Z",
+  "campaign": {
+    "schemaVersion": 4,
+    "activeSessionId": "S0etxGoUjL7OMqg1",
+    "sessions": [
+      {
+        "id": "lDA7r1JysWrp6YHY",
+        "title": "Session 1",
+        "sessionNumber": 1,
+        "status": "completed",
+        "inGameDate": "",
+        "realDate": "2026-07-17",
+        "notes": "Party helped Prof. Mizzix to clear the house. He'll study resonance abnormalities for 7 days.Party owns own a bastion. Granted the bastion’s meditation-room benefit: advantage on Charisma saving throws until the next long rest after a rest there.Friendly toward Nico after the Red Wastes performance. Wants to recruit him for a future spectacle.",
+        "sessionLog": "<strong>Session 1 — Blind Pit</strong><br><br>The party participated in the illegal fights at the <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"scene\" data-mention-id=\"f9o4ryw59F9BHk0P\" data-mention-uuid=\"Scene.f9o4ryw59F9BHk0P\" contenteditable=\"false\">@Blind Pit</span>&nbsp; when a mysterious explosion orchestrated by the Rakdos went off while <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"xrpg5csrfyF8bkoy\" data-mention-uuid=\"Actor.xrpg5csrfyF8bkoy\" contenteditable=\"false\">@Lavinia of the Tenth</span>&nbsp;was raiding the place, destroying the arena.&nbsp;<br><br>During the chaos they recovered:<br><br>The unconscious Dimir agent <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"KtUG0Wlb74NQH5B7\" data-mention-uuid=\"Actor.KtUG0Wlb74NQH5B7\" contenteditable=\"false\">@Sable, Dimir Informant</span>&nbsp;<br>An <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"JXAj1bY05R1LfpKG\" data-mention-uuid=\"Item.JXAj1bY05R1LfpKG\" contenteditable=\"false\">@Orzhov Crystal</span>&nbsp;<br><br>Escaping through the sewers, they were intercepted by mysterious flying <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"pEa04U6tcWbTxsAh\" data-mention-uuid=\"Actor.pEa04U6tcWbTxsAh\" contenteditable=\"false\">@Thopter</span>, monitored by Lazav",
+        "createdDate": "2026-07-17",
+        "source": "live",
+        "relatedActors": [
+          "Actor.xrpg5csrfyF8bkoy",
+          "Actor.KtUG0Wlb74NQH5B7",
+          "Actor.pEa04U6tcWbTxsAh"
+        ],
+        "relatedLocations": [
+          "Scene.f9o4ryw59F9BHk0P"
+        ],
+        "relatedItems": [
+          "Item.JXAj1bY05R1LfpKG"
+        ],
+        "relatedQuests": [],
+        "relatedQuestEntries": [],
+        "beatIds": [
+          "xQXOfa2joc3dMlnS",
+          "RiQS6JyTbAFZs2L1",
+          "qBLGwlLafhmsTqG7",
+          "nEQDpJveAklU6eSH",
+          "WRyNWbYxLLIEAU9b"
+        ],
+        "created": 1784259486601,
+        "updated": 1784431662569
+      },
+      {
+        "id": "NnShqPiEmUu5LLeT",
+        "title": "",
+        "sessionNumber": 2,
+        "status": "completed",
+        "inGameDate": "",
+        "realDate": "",
+        "notes": "",
+        "sessionLog": "Session 2 — Loose Ends<br><br>The party destroyed the <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"pEa04U6tcWbTxsAh\" data-mention-uuid=\"Actor.pEa04U6tcWbTxsAh\" contenteditable=\"false\">@Thopter</span>&nbsp;<br><br><span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"KtUG0Wlb74NQH5B7\" data-mention-uuid=\"Actor.KtUG0Wlb74NQH5B7\" contenteditable=\"false\">@Sable, Dimir Informant</span>&nbsp;regained consciousness and revealed that several factions were searching for the <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"JXAj1bY05R1LfpKG\" data-mention-uuid=\"Item.JXAj1bY05R1LfpKG\" contenteditable=\"false\">@Orzhov Crystal</span>&nbsp;. She hid at the <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"scene\" data-mention-id=\"SOlKba3PwfoEZbwU\" data-mention-uuid=\"Scene.SOlKba3PwfoEZbwU\" contenteditable=\"false\">@Edgewall Small Tavern</span>&nbsp;, asking the party to decide whether they would return it to her superior, Vethis.<br><br>While considering their options, they accepted a job from <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"TVmFW8umyCeSrLNd\" data-mention-uuid=\"Actor.TVmFW8umyCeSrLNd\" contenteditable=\"false\">@Guttersnipe</span>&nbsp;to investigate a <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"scene\" data-mention-id=\"ZlPePvYVO9ejGr53\" data-mention-uuid=\"Scene.ZlPePvYVO9ejGr53\" contenteditable=\"false\">@Simic Warehouse</span>&nbsp;.<br><br>The mission went terribly.<br><br>The party fled...<br><br>...leaving dangerous Simic creatures loose in the district.<br><br>The consequences would return later.",
+        "createdDate": "2026-07-19T02:43:33.640Z",
+        "source": "live",
+        "relatedActors": [
+          "Actor.pEa04U6tcWbTxsAh",
+          "Actor.KtUG0Wlb74NQH5B7",
+          "Actor.TVmFW8umyCeSrLNd"
+        ],
+        "relatedLocations": [
+          "Scene.SOlKba3PwfoEZbwU",
+          "Scene.ZlPePvYVO9ejGr53"
+        ],
+        "relatedItems": [
+          "Item.JXAj1bY05R1LfpKG"
+        ],
+        "relatedQuests": [],
+        "relatedQuestEntries": [],
+        "beatIds": [],
+        "created": 1784429013640,
+        "updated": 1784431851514
+      },
+      {
+        "id": "G2T9Ti70wbLVXJfo",
+        "title": "",
+        "sessionNumber": 3,
+        "status": "completed",
+        "inGameDate": "",
+        "realDate": "",
+        "notes": "",
+        "sessionLog": "Session 3 — Murder at Ismeri Library<br><br>The party chose not to return the <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"JXAj1bY05R1LfpKG\" data-mention-uuid=\"Item.JXAj1bY05R1LfpKG\" contenteditable=\"false\">@Orzhov Crystal</span>&nbsp;to <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"KtUG0Wlb74NQH5B7\" data-mention-uuid=\"Actor.KtUG0Wlb74NQH5B7\" contenteditable=\"false\">@Sable, Dimir Informant</span>&nbsp;.<br><br>Instead, they arranged a meeting with Vethis inside the <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"scene\" data-mention-id=\"bhlZHSWETMa9p1LT\" data-mention-uuid=\"Scene.bhlZHSWETMa9p1LT\" contenteditable=\"false\">@Ismeri Library</span>&nbsp;.<br><br>Bringing <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"TVmFW8umyCeSrLNd\" data-mention-uuid=\"Actor.TVmFW8umyCeSrLNd\" contenteditable=\"false\">@Guttersnipe</span>&nbsp;along proved catastrophic.<br><br>He improvised an explosive device.<br><br>The bomb killed <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"lMNhvQ8C8O51raJz\" data-mention-uuid=\"Item.lMNhvQ8C8O51raJz\" contenteditable=\"false\">@Vethis Ledger</span>&nbsp;.<br><br>The party escaped before authorities arrived and regrouped at the <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"scene\" data-mention-id=\"EP5IdhprUDApVniM\" data-mention-uuid=\"Scene.EP5IdhprUDApVniM\" contenteditable=\"false\">@Merl Inn</span>&nbsp;in <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"journal\" data-mention-id=\"I4CMlZUAE46BppMb\" data-mention-uuid=\"JournalEntry.I4CMlZUAE46BppMb\" contenteditable=\"false\">@Precinct Five</span>.<br><br>Later, a mysterious Merfolk investigator approached them, asking for help understanding the escaped Simic monsters.<br><br>The party ignored the request.",
+        "createdDate": "2026-07-19T03:04:37.392Z",
+        "source": "live",
+        "relatedActors": [
+          "Actor.KtUG0Wlb74NQH5B7",
+          "Actor.TVmFW8umyCeSrLNd"
+        ],
+        "relatedLocations": [
+          "Scene.bhlZHSWETMa9p1LT",
+          "Scene.EP5IdhprUDApVniM"
+        ],
+        "relatedItems": [
+          "Item.JXAj1bY05R1LfpKG",
+          "Item.lMNhvQ8C8O51raJz"
+        ],
+        "relatedQuests": [],
+        "relatedQuestEntries": [],
+        "beatIds": [],
+        "created": 1784430277392,
+        "updated": 1784431916077
+      },
+      {
+        "id": "NRsxpx8cQeOiBVOP",
+        "title": "",
+        "sessionNumber": 4,
+        "status": "completed",
+        "inGameDate": "",
+        "realDate": "",
+        "notes": "",
+        "sessionLog": "Session 4 — Return to the Blind Pit<br><br><span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"dhIK2PsfHdmJn8Yd\" data-mention-uuid=\"Actor.dhIK2PsfHdmJn8Yd\" contenteditable=\"false\">@Vesk</span>&nbsp;, <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"o73oz4VuacTw0uff\" data-mention-uuid=\"Actor.o73oz4VuacTw0uff\" contenteditable=\"false\">@Babar, The Bonded</span>&nbsp;'s handler, finally contacted the party.<br><br>He entrusted Babar with a mysterious access card and tasked the group with recovering the remaining <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"zB4aEsIYw4OKeKl0\" data-mention-uuid=\"Item.zB4aEsIYw4OKeKl0\" contenteditable=\"false\">@Powerstone Shard</span>&nbsp;from the <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"scene\" data-mention-id=\"kgJwooRvH1DrQkOz\" data-mention-uuid=\"Scene.kgJwooRvH1DrQkOz\" contenteditable=\"false\">@Blind Pit destroyed</span>&nbsp; before anyone else could.<br><br>The mission succeeded.<br><br>The party escaped after triggering another explosion that destroyed what little remained of the site.<br><br>Meanwhile...<br><br><span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"5dGMmVmcIkbEs9tA\" data-mention-uuid=\"Actor.5dGMmVmcIkbEs9tA\" contenteditable=\"false\">@Jace Beleren</span>&nbsp; psychically contacted <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"X8f1ZeHs0klsZyrR\" data-mention-uuid=\"Actor.X8f1ZeHs0klsZyrR\" contenteditable=\"false\">@Nico-Lahz</span>&nbsp;, asking him to meet privately.",
+        "createdDate": "2026-07-19T03:04:50.408Z",
+        "source": "live",
+        "relatedActors": [
+          "Actor.dhIK2PsfHdmJn8Yd",
+          "Actor.o73oz4VuacTw0uff",
+          "Actor.5dGMmVmcIkbEs9tA",
+          "Actor.X8f1ZeHs0klsZyrR"
+        ],
+        "relatedLocations": [
+          "Scene.kgJwooRvH1DrQkOz",
+          "Scene.f9o4ryw59F9BHk0P"
+        ],
+        "relatedItems": [
+          "Item.zB4aEsIYw4OKeKl0",
+          "Item.j42m3XOmgi4b87I0"
+        ],
+        "relatedQuests": [],
+        "relatedQuestEntries": [],
+        "beatIds": [],
+        "created": 1784430290408,
+        "updated": 1784431964287
+      },
+      {
+        "id": "zl7yowhMjYg8iOyR",
+        "title": "",
+        "sessionNumber": 5,
+        "status": "completed",
+        "inGameDate": "",
+        "realDate": "",
+        "notes": "",
+        "sessionLog": "Session 5 — The Mask of Memory<br>The party met <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"5dGMmVmcIkbEs9tA\" data-mention-uuid=\"Actor.5dGMmVmcIkbEs9tA\" contenteditable=\"false\">@Jace Beleren</span>&nbsp;beneath <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"scene\" data-mention-id=\"6k87ArLSEfVp9IVj\" data-mention-uuid=\"Scene.6k87ArLSEfVp9IVj\" contenteditable=\"false\">@Vitu Gazi</span>&nbsp;<br>Jace explained that someone appeared to be rewriting Ravnica's memories and feared a conspiracy beyond his understanding.<br>He asked the party to retrieve an ancient artifact:<br>The <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"NMfH7unhwbBMIbpL\" data-mention-uuid=\"Item.NMfH7unhwbBMIbpL\" contenteditable=\"false\">@Mask Of Memory</span>&nbsp;<br>The trail led to <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"scene\" data-mention-id=\"9fWZpu7fUJqA7yaO\" data-mention-uuid=\"Scene.9fWZpu7fUJqA7yaO\" contenteditable=\"false\">@Karn's Bastion</span>&nbsp;<br>The party recovered the Mask...<br>...and that night entered a shared nightmare.<br>Inside they confronted their deepest fears before facing <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"6vfZ9m46zw952cCP\" data-mention-uuid=\"Actor.6vfZ9m46zw952cCP\" contenteditable=\"false\">@Sheoldred the Apocalypse</span>&nbsp;, an entity that could not be defeated. They died to it, to wake up close to the mask. Just a nightmare.",
+        "createdDate": "2026-07-19T03:05:33.190Z",
+        "source": "live",
+        "relatedActors": [
+          "Actor.5dGMmVmcIkbEs9tA",
+          "Actor.6vfZ9m46zw952cCP"
+        ],
+        "relatedLocations": [
+          "Scene.6k87ArLSEfVp9IVj",
+          "Scene.9fWZpu7fUJqA7yaO"
+        ],
+        "relatedItems": [
+          "Item.NMfH7unhwbBMIbpL"
+        ],
+        "relatedQuests": [],
+        "relatedQuestEntries": [],
+        "beatIds": [],
+        "created": 1784430333190,
+        "updated": 1784432065761
+      },
+      {
+        "id": "FkLmMt7TJhoSO8y8",
+        "title": "",
+        "sessionNumber": 6,
+        "status": "completed",
+        "inGameDate": "",
+        "realDate": "",
+        "notes": "",
+        "sessionLog": "Session 6 — The Karlov Maze<br><br>The party returned the <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"NMfH7unhwbBMIbpL\" data-mention-uuid=\"Item.NMfH7unhwbBMIbpL\" contenteditable=\"false\">@Mask Of Memory</span>&nbsp;to <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"5dGMmVmcIkbEs9tA\" data-mention-uuid=\"Actor.5dGMmVmcIkbEs9tA\" contenteditable=\"false\">@Jace Beleren</span>&nbsp;.<br><br>Unable to explain what had happened, Jace directed them toward <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"cZIkCCPhzzLdBpM2\" data-mention-uuid=\"Actor.cZIkCCPhzzLdBpM2\" contenteditable=\"false\">@Agata Karlov</span>&nbsp;, believing she might understand the artifact.<br><br>Their search led into the <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"scene\" data-mention-id=\"2GiF5upVge11U1nK\" data-mention-uuid=\"Scene.2GiF5upVge11U1nK\" contenteditable=\"false\">@Karlov Maze</span>&nbsp;<br><br>Subtlety lasted only briefly.<br><br>The maze caught fire.<br><br>The Orzhov responded immediately.<br><br>The party was overwhelmed, captured and imprisoned.",
+        "createdDate": "2026-07-19T03:05:49.873Z",
+        "source": "live",
+        "relatedActors": [
+          "Actor.5dGMmVmcIkbEs9tA",
+          "Actor.cZIkCCPhzzLdBpM2"
+        ],
+        "relatedLocations": [
+          "Scene.2GiF5upVge11U1nK"
+        ],
+        "relatedItems": [
+          "Item.NMfH7unhwbBMIbpL"
+        ],
+        "relatedQuests": [],
+        "relatedQuestEntries": [],
+        "beatIds": [],
+        "created": 1784430349873,
+        "updated": 1784432114609
+      },
+      {
+        "id": "th6BxwP80767PJOj",
+        "title": "",
+        "sessionNumber": 7,
+        "status": "completed",
+        "inGameDate": "",
+        "realDate": "",
+        "notes": "",
+        "sessionLog": "Session 7 — Judgment<br>The party awoke inside <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"scene\" data-mention-id=\"P3Lmxz8VIo4gcUwQ\" data-mention-uuid=\"Scene.P3Lmxz8VIo4gcUwQ\" contenteditable=\"false\">@Karlov Manor</span>&nbsp;<br><span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"XBhoiGincckXCmik\" data-mention-uuid=\"Actor.XBhoiGincckXCmik\" contenteditable=\"false\">@Teysa Karlov</span>&nbsp; personally interrogated them before confiscating all of their possessions, including the <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"NMfH7unhwbBMIbpL\" data-mention-uuid=\"Item.NMfH7unhwbBMIbpL\" contenteditable=\"false\">@Mask Of Memory</span>&nbsp;, <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"JXAj1bY05R1LfpKG\" data-mention-uuid=\"Item.JXAj1bY05R1LfpKG\" contenteditable=\"false\">@Orzhov Crystal</span>&nbsp;, <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"j42m3XOmgi4b87I0\" data-mention-uuid=\"Item.j42m3XOmgi4b87I0\" contenteditable=\"false\">@Mysterious Access Card</span>&nbsp;, <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"zB4aEsIYw4OKeKl0\" data-mention-uuid=\"Item.zB4aEsIYw4OKeKl0\" contenteditable=\"false\">@Powerstone Shard</span>&nbsp;.<br><span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"cZIkCCPhzzLdBpM2\" data-mention-uuid=\"Actor.cZIkCCPhzzLdBpM2\" contenteditable=\"false\">@Agata Karlov</span>&nbsp;revealed she recognized the Mask immediately.<br>She warned that Teysa intended to weaponize it.<br>During the interrogation, <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"dhIK2PsfHdmJn8Yd\" data-mention-uuid=\"Actor.dhIK2PsfHdmJn8Yd\" contenteditable=\"false\">@Vesk</span>&nbsp;appeared.<br>Disappointed by the party's repeated failures, he branded them with five Debt Tokens, effectively placing them under Dimir probation.<br>After escaping confinement, the party infiltrated Orzhov holdings, defeated the guards, reclaimed the <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"NMfH7unhwbBMIbpL\" data-mention-uuid=\"Item.NMfH7unhwbBMIbpL\" contenteditable=\"false\">@Mask Of Memory</span>&nbsp;&nbsp;and fled Karlov Manor.<br>On the streets afterward...<br>Frikka discovered an odd prototype.<br>The now-infamous <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"EbxszjT0ryXS3P9a\" data-mention-uuid=\"Item.EbxszjT0ryXS3P9a\" contenteditable=\"false\">@Izzet Shitty Device</span>&nbsp;",
+        "createdDate": "2026-07-19T03:06:00.978Z",
+        "source": "live",
+        "relatedActors": [
+          "Actor.XBhoiGincckXCmik",
+          "Actor.cZIkCCPhzzLdBpM2",
+          "Actor.dhIK2PsfHdmJn8Yd"
+        ],
+        "relatedLocations": [
+          "Scene.P3Lmxz8VIo4gcUwQ"
+        ],
+        "relatedItems": [
+          "Item.NMfH7unhwbBMIbpL",
+          "Item.JXAj1bY05R1LfpKG",
+          "Item.j42m3XOmgi4b87I0",
+          "Item.zB4aEsIYw4OKeKl0",
+          "Item.EbxszjT0ryXS3P9a"
+        ],
+        "relatedQuests": [],
+        "relatedQuestEntries": [],
+        "beatIds": [],
+        "created": 1784430360978,
+        "updated": 1784432238469
+      },
+      {
+        "id": "taKFO7UydkKrMEyT",
+        "title": "",
+        "sessionNumber": 8,
+        "status": "completed",
+        "inGameDate": "",
+        "realDate": "",
+        "notes": "",
+        "sessionLog": "Sessio 8 - A cursed place to call home<br><br>The party started in the <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"scene\" data-mention-id=\"Pjyr57b4ojE89HEy\" data-mention-uuid=\"Scene.Pjyr57b4ojE89HEy\" contenteditable=\"false\">@Moon Market</span>&nbsp; after two weeks of downtime following the branding/disgrace fallout.<br>They browsed several black-market vendors and bought or negotiated for gear, potions, and odd items, including a love potion, climbing potion, illusion-related items, and a key piece for a future crafted device.<br>They learned there are three components needed to build a ghost-busting/resonance-disrupting weapon: a <strong>resonance crystal, a capacitor,</strong> and a <strong>harmonic focusing lens.</strong><br>The group first traveled to the haunted house in the Moon Market area, where they met <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"U3vuPhhpBjQUlDXn\" data-mention-uuid=\"Actor.U3vuPhhpBjQUlDXn\" contenteditable=\"false\">@Professor Mizzix</span>&nbsp;, a renowned goblin scholar studying resonance anomalies.<br>Mizzix explained that the house is haunted by ghosts interfering with his work and asked the party to help him gather the three components so he can build the device.<br>The party then traveled to the <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"scene\" data-mention-id=\"ahs7O0rdHVyZDHBB\" data-mention-uuid=\"Scene.ahs7O0rdHVyZDHBB\" contenteditable=\"false\">@Red Waste Cave</span>&nbsp; and recovered the resonance crystal from a ritual/cave-like site inhabited by ractose performers.<br>They then headed to the <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"scene\" data-mention-id=\"QnGZaORg2lozuqXb\" data-mention-uuid=\"Scene.QnGZaORg2lozuqXb\" contenteditable=\"false\">@Azorius Vault</span>&nbsp;and used social tricks and roleplay to get access.<br><span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"7lfMDP0Pvx6u7gx7\" data-mention-uuid=\"Actor.7lfMDP0Pvx6u7gx7\" contenteditable=\"false\">@Frikka The Fuse</span>&nbsp;successfully retrieved the harmonic focusing lens from inside the vault by slipping past the warded area and opening a contraption with Tinker’s tools.<br>Back at Mizzix’s lab, the party brought him the crystal, lens, and capacitor, and together they assembled a powerful laser-pistol-style ghostbuster weapon.<br>They returned to the haunted house and fought a wraith/ghostly Azorius bureaucrat that had been haunting the place.<br>The fight ended with the ghost being destroyed and the house becoming their new <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"scene\" data-mention-id=\"13JAHX28BeSlp79g\" data-mention-uuid=\"Scene.13JAHX28BeSlp79g\" contenteditable=\"false\">@Bastion</span>&nbsp;/home base.<br>They also earned a charisma-boosting meditation room, some gold, and a recommendation letter, and were told they can stash loot there safely and potentially improve the house later.<br>The session ended with the party settling into their new base and discussing future plans, including dealing with their brands and other open quests.<br>Main outcomes:<br><br>New bastion/home acquired<br>Ghost defeated<br>Ghostbuster weapon created<br>Key quest items recovered",
+        "createdDate": "2026-07-19T03:06:15.591Z",
+        "source": "live",
+        "relatedActors": [
+          "Actor.U3vuPhhpBjQUlDXn",
+          "Actor.7lfMDP0Pvx6u7gx7",
+          "Actor.8sG3dqfkxoxDT3qA"
+        ],
+        "relatedLocations": [
+          "Scene.Pjyr57b4ojE89HEy",
+          "Scene.ahs7O0rdHVyZDHBB",
+          "Scene.QnGZaORg2lozuqXb",
+          "Scene.13JAHX28BeSlp79g"
+        ],
+        "relatedItems": [
+          "Item.Jtx1HR0xWO1SJroO"
+        ],
+        "relatedQuests": [],
+        "relatedQuestEntries": [],
+        "beatIds": [],
+        "created": 1784430375591,
+        "updated": 1784432570817
+      },
+      {
+        "id": "S0etxGoUjL7OMqg1",
+        "title": "",
+        "sessionNumber": 9,
+        "status": "active",
+        "inGameDate": "",
+        "realDate": "",
+        "notes": "",
+        "sessionLog": "",
+        "createdDate": "2026-07-19T03:08:15.160Z",
+        "source": "live",
+        "relatedActors": [],
+        "relatedLocations": [],
+        "relatedItems": [],
+        "relatedQuests": [],
+        "relatedQuestEntries": [],
+        "beatIds": [
+          "iPAELuWEapYPAhyG",
+          "XqAe25MISTB0sLxZ",
+          "NF3FxMobBMUMfruq"
+        ],
+        "created": 1784430495160,
+        "updated": 1784433250356
+      }
+    ],
+    "threads": [
+      {
+        "id": "HqLZITRWCMXm5q9h",
+        "title": "The Maskee",
+        "status": "OPEN",
+        "type": "",
+        "category": "SIDE",
+        "overview": "tedt",
+        "entryIds": [],
+        "description": "tedt",
+        "notes": "",
+        "relatedBeatIds": [],
+        "relatedCharacterIds": [],
+        "relatedLocationIds": [],
+        "relatedItemIds": [],
+        "created": 1784259748643,
+        "updated": 1784315232810
+      },
+      {
+        "id": "NnEpmdovhXddZJAR",
+        "title": "The Orzhov Debt",
+        "status": "OPEN",
+        "type": "",
+        "category": "SIDE",
+        "overview": "OVERVIEW<p>The part was arrested by Orzhov sentinels on <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"journal\" data-mention-id=\"QArK87QnNCuFsRjG\" data-mention-uuid=\"JournalEntry.QArK87QnNCuFsRjG\" contenteditable=\"false\">@Session 6</span>&nbsp;once they put fire to the <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"scene\" data-mention-id=\"2GiF5upVge11U1nK\" data-mention-uuid=\"Scene.2GiF5upVge11U1nK\" contenteditable=\"false\">@Karlov Maze</span>&nbsp;at <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"scene\" data-mention-id=\"P3Lmxz8VIo4gcUwQ\" data-mention-uuid=\"Scene.P3Lmxz8VIo4gcUwQ\" contenteditable=\"false\">@Karlov Manor</span>&nbsp;. They had the <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"JXAj1bY05R1LfpKG\" data-mention-uuid=\"Item.JXAj1bY05R1LfpKG\" contenteditable=\"false\">@Orzhov Crystal</span>&nbsp;, <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"NMfH7unhwbBMIbpL\" data-mention-uuid=\"Item.NMfH7unhwbBMIbpL\" contenteditable=\"false\">@Mask Of Memory</span>&nbsp;, <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"j42m3XOmgi4b87I0\" data-mention-uuid=\"Item.j42m3XOmgi4b87I0\" contenteditable=\"false\">@Mysterious Access Card</span>&nbsp; and&nbsp;<span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"zB4aEsIYw4OKeKl0\" data-mention-uuid=\"Item.zB4aEsIYw4OKeKl0\" contenteditable=\"false\">@Powerstone Shard</span>&nbsp;confiscated by <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"XBhoiGincckXCmik\" data-mention-uuid=\"Actor.XBhoiGincckXCmik\" contenteditable=\"false\">@Teysa Karlov</span>&nbsp;. <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"dhIK2PsfHdmJn8Yd\" data-mention-uuid=\"Actor.dhIK2PsfHdmJn8Yd\" contenteditable=\"false\">@Vesk</span>&nbsp;was commisioned to set the punishment branding them with 5 Debt Tokens.</p><p><br></p><p>TOKEN 1</p><p></p><p><span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"cZIkCCPhzzLdBpM2\" data-mention-uuid=\"Actor.cZIkCCPhzzLdBpM2\" contenteditable=\"false\">@Agata Karlov</span>&nbsp;asked them to retreive the confiscated <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"NMfH7unhwbBMIbpL\" data-mention-uuid=\"Item.NMfH7unhwbBMIbpL\" contenteditable=\"false\">@Mask Of Memory</span>&nbsp;from the guards, removing 1 Debt Token.</p><p><br></p><p>TOKEN 2<br><span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"dhIK2PsfHdmJn8Yd\" data-mention-uuid=\"Actor.dhIK2PsfHdmJn8Yd\" contenteditable=\"false\">@Vesk</span>&nbsp;Assignment</p>",
+        "entryIds": [],
+        "description": "OVERVIEWThe part was arrested by Orzhov sentinels on @Session 6 once they put fire to the @Karlov Maze at @Karlov Manor . They had the @Orzhov Crystal , @Mask Of Memory , @Mysterious Access Card and @Powerstone Shard confiscated by @Teysa Karlov . @Vesk was commisioned to set the punishment branding them with 5 Debt Tokens.TOKEN 1@Agata Karlov asked them to retreive the confiscated @Mask Of Memory from the guards, removing 1 Debt Token.TOKEN 2@Vesk Assignment",
+        "notes": "OVERVIEW<p>The part was arrested by Orzhov sentinels on <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"journal\" data-mention-id=\"QArK87QnNCuFsRjG\" data-mention-uuid=\"JournalEntry.QArK87QnNCuFsRjG\" contenteditable=\"false\">@Session 6</span>&nbsp;once they put fire to the <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"scene\" data-mention-id=\"2GiF5upVge11U1nK\" data-mention-uuid=\"Scene.2GiF5upVge11U1nK\" contenteditable=\"false\">@Karlov Maze</span>&nbsp;at <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"scene\" data-mention-id=\"P3Lmxz8VIo4gcUwQ\" data-mention-uuid=\"Scene.P3Lmxz8VIo4gcUwQ\" contenteditable=\"false\">@Karlov Manor</span>&nbsp;. They had the <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"JXAj1bY05R1LfpKG\" data-mention-uuid=\"Item.JXAj1bY05R1LfpKG\" contenteditable=\"false\">@Orzhov Crystal</span>&nbsp;, <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"NMfH7unhwbBMIbpL\" data-mention-uuid=\"Item.NMfH7unhwbBMIbpL\" contenteditable=\"false\">@Mask Of Memory</span>&nbsp;, <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"j42m3XOmgi4b87I0\" data-mention-uuid=\"Item.j42m3XOmgi4b87I0\" contenteditable=\"false\">@Mysterious Access Card</span>&nbsp; and&nbsp;<span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"zB4aEsIYw4OKeKl0\" data-mention-uuid=\"Item.zB4aEsIYw4OKeKl0\" contenteditable=\"false\">@Powerstone Shard</span>&nbsp;confiscated by <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"XBhoiGincckXCmik\" data-mention-uuid=\"Actor.XBhoiGincckXCmik\" contenteditable=\"false\">@Teysa Karlov</span>&nbsp;. <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"dhIK2PsfHdmJn8Yd\" data-mention-uuid=\"Actor.dhIK2PsfHdmJn8Yd\" contenteditable=\"false\">@Vesk</span>&nbsp;was commisioned to set the punishment branding them with 5 Debt Tokens.</p><p><br></p><p>TOKEN 1</p><p></p><p><span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"actor\" data-mention-id=\"cZIkCCPhzzLdBpM2\" data-mention-uuid=\"Actor.cZIkCCPhzzLdBpM2\" contenteditable=\"false\">@Agata Karlov</span>&nbsp;asked them to retreive the confiscated <span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"item\" data-mention-id=\"NMfH7unhwbBMIbpL\" data-mention-uuid=\"Item.NMfH7unhwbBMIbpL\" contenteditable=\"false\">@Mask Of Memory</span>&nbsp;from the guards, removing 1 Debt Token.</p><p><br></p><p>TOKEN 2</p><span class=\"nd-mention\" data-nd-mention=\"\" data-mention-kind=\"beat\" data-mention-id=\"xQXOfa2joc3dMlnS\" data-mention-uuid=\"\" contenteditable=\"false\">@Vesk Mission</span>&nbsp;",
+        "relatedBeatIds": [],
+        "relatedCharacterIds": [
+          "Actor.XBhoiGincckXCmik",
+          "Actor.dhIK2PsfHdmJn8Yd",
+          "Actor.cZIkCCPhzzLdBpM2"
+        ],
+        "relatedLocationIds": [
+          "Scene.2GiF5upVge11U1nK",
+          "Scene.P3Lmxz8VIo4gcUwQ"
+        ],
+        "relatedItemIds": [
+          "Item.JXAj1bY05R1LfpKG",
+          "Item.NMfH7unhwbBMIbpL",
+          "Item.j42m3XOmgi4b87I0",
+          "Item.zB4aEsIYw4OKeKl0"
+        ],
+        "created": 1784302364553,
+        "updated": 1784432857751
+      },
+      {
+        "id": "MfHScPNwMXyF0XxB",
+        "title": "The Maze's End",
+        "status": "OPEN",
+        "type": "",
+        "category": "MAIN",
+        "overview": "Find a way to activate the Maze's End and travel to other planes.",
+        "entryIds": [],
+        "description": "Find a way to activate the Maze's End and travel to other planes.",
+        "notes": "",
+        "relatedBeatIds": [],
+        "relatedCharacterIds": [],
+        "relatedLocationIds": [],
+        "relatedItemIds": [],
+        "created": 1784312292425,
+        "updated": 1784432644332
+      },
+      {
+        "id": "67xyhhiBOvZ7ifqg",
+        "title": "Untitled Quest",
+        "status": "OPEN",
+        "type": "",
+        "category": "SIDE",
+        "overview": "",
+        "entryIds": [],
+        "description": "",
+        "notes": "",
+        "relatedBeatIds": [],
+        "relatedCharacterIds": [],
+        "relatedLocationIds": [],
+        "relatedItemIds": [],
+        "created": 1784312337294,
+        "updated": 1784312337294
+      }
+    ],
+    "questEntries": []
+  },
+  "playbook": {
+    "currentIndex": 0,
+    "beats": [
+      {
+        "id": "iPAELuWEapYPAhyG",
+        "title": "Captain Voss's Sextant",
+        "objective": "Return or recover the stolen navigational sextant.",
+        "sceneUuid": null,
+        "keyNpcUuids": [],
+        "gmNotes": "If already returned, skip to Voss's tip about night landings near Ashfeld.",
+        "experience": "",
+        "speechNotes": "",
+        "setup": "",
+        "twist": "",
+        "possibleOutcomes": "",
+        "sourceQuestId": "",
+        "sourceQuestEntryId": "",
+        "relatedBeatIds": [],
+        "relatedCharacterIds": [],
+        "relatedLocationIds": [],
+        "relatedItemIds": [],
+        "related": [
+          {
+            "name": "Captain Voss",
+            "kind": "actor"
+          },
+          {
+            "name": "Random Encounters",
+            "kind": "rollTable"
+          }
+        ]
+      },
+      {
+        "id": "XqAe25MISTB0sLxZ",
+        "title": "Thornwood Silence",
+        "objective": "Discover what silenced the forest scouts.",
+        "sceneUuid": null,
+        "keyNpcUuids": [],
+        "gmNotes": "Ambient dread only — no full reveal yet. One strange nest is enough for this beat.",
+        "experience": "",
+        "speechNotes": "",
+        "setup": "",
+        "twist": "",
+        "possibleOutcomes": "",
+        "sourceQuestId": "",
+        "sourceQuestEntryId": "",
+        "relatedBeatIds": [],
+        "relatedCharacterIds": [],
+        "relatedLocationIds": [],
+        "relatedItemIds": [],
+        "related": [
+          {
+            "name": "Thornwood Edge",
+            "kind": "scene"
+          },
+          {
+            "name": "Scout Report",
+            "kind": "journal"
+          }
+        ]
+      },
+      {
+        "id": "NF3FxMobBMUMfruq",
+        "title": "Letter to Ashfeld",
+        "objective": "Deliver Sister Elara's letter to Ashfeld without interception.",
+        "sceneUuid": null,
+        "keyNpcUuids": [],
+        "gmNotes": "Road encounter optional. If the party open the letter, note the seal is genuine.",
+        "experience": "",
+        "speechNotes": "",
+        "setup": "",
+        "twist": "",
+        "possibleOutcomes": "",
+        "sourceQuestId": "",
+        "sourceQuestEntryId": "",
+        "relatedBeatIds": [],
+        "relatedCharacterIds": [],
+        "relatedLocationIds": [],
+        "relatedItemIds": [],
+        "related": [
+          {
+            "name": "Sister Elara",
+            "kind": "actor"
+          },
+          {
+            "name": "Ashfeld Road",
+            "kind": "scene"
+          }
+        ]
+      }
+    ]
+  },
+  "campaignMemory": {
+    "actor:Scene.13JAHX28BeSlp79g.Token.VXzWxLgnkqj4Ozt5.Actor.U3vuPhhpBjQUlDXn": "Will study resonance in the bastion for 7 days",
+    "actor:Actor.7lfMDP0Pvx6u7gx7": "Has a ghost killing blaster.",
+    "actor:Actor.X8f1ZeHs0klsZyrR": "After the Red Wastes performance, Rakdos want to recruit him for a future spectacle.",
+    "actor:Actor.dhIK2PsfHdmJn8Yd": "test"
+  }
+}

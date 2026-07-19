@@ -1,4 +1,5 @@
 import { CampaignAwareness, CampaignContext } from "./campaign-context.js";
+import { CampaignDocument } from "./campaign-document.js";
 import { CampaignWorkspace } from "./campaign-workspace.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { FocusManager } from "./focus-manager.js";
@@ -41,7 +42,8 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     },
     actions: {
       setWorkspace: CompanionApp.#onSetWorkspace,
-      exportCampaign: CompanionApp.#onExportCampaign
+      exportCampaign: CompanionApp.#onExportCampaign,
+      importCampaign: CompanionApp.#onImportCampaign
     }
   };
 
@@ -117,6 +119,104 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       console.error("N&D Companion: campaign export failed", error);
       ui.notifications?.error("Campaign export failed. See the console for details.");
     }
+  }
+
+  /**
+   * Select, validate, preview, and import one serialized campaign file.
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} target
+   */
+  static #onImportCampaign(_event, target) {
+    const app = this;
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".ndcompanion.json,.json,application/json";
+    input.hidden = true;
+    document.body.append(input);
+    input.addEventListener("cancel", () => input.remove(), { once: true });
+
+    input.addEventListener("change", async () => {
+      const file = input.files?.[0] ?? null;
+      input.remove();
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        let parsed;
+        try {
+          parsed = JSON.parse(text);
+        } catch (_error) {
+          ui.notifications?.error("Selected file is not valid JSON.");
+          return;
+        }
+
+        const validation = CompanionStorage.validateCampaignPayload(parsed);
+        if (!validation.valid) {
+          ui.notifications?.error(
+            `Campaign import validation failed: ${validation.errors.join(" • ")}`
+          );
+          return;
+        }
+
+        const payload = CompanionStorage.deserializeCampaign(parsed);
+        const confirmed = await CompanionApp.#confirmCampaignImport(payload);
+        if (confirmed !== true) return;
+
+        await CompanionStorage.applyCampaignPayload(payload);
+        await CampaignDocument.ready();
+        PlaybookService.reload();
+        await SessionService.ready();
+        target.closest("details")?.removeAttribute("open");
+        await app.render({ force: true });
+        ui.notifications?.info("Campaign imported successfully.");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("N&D Companion: campaign import failed", error);
+        ui.notifications?.error(message);
+      }
+    }, { once: true });
+
+    input.click();
+  }
+
+  /**
+   * Show a read-only import preview and require explicit confirmation.
+   * @param {import("./storage.js").CampaignPayload} payload
+   * @returns {Promise<boolean>}
+   */
+  static async #confirmCampaignImport(payload) {
+    const campaign = payload.campaign ?? {};
+    const campaignName = [
+      campaign.name,
+      campaign.title,
+      campaign.campaignName
+    ].find((value) => typeof value === "string" && value.trim())?.trim() ?? "";
+    const sessions = Array.isArray(campaign.sessions) ? campaign.sessions.length : 0;
+    const threads = Array.isArray(campaign.threads) ? campaign.threads.length : 0;
+    const questEntries = Array.isArray(campaign.questEntries)
+      ? campaign.questEntries.length
+      : 0;
+    const row = (label, value) =>
+      `<div><dt>${foundry.utils.escapeHTML(label)}</dt>` +
+      `<dd>${foundry.utils.escapeHTML(String(value))}</dd></div>`;
+    const rows = [
+      campaignName ? row("Campaign", campaignName) : "",
+      row("Module Version", payload.moduleVersion),
+      row("Schema Version", payload.schemaVersion),
+      row("Export Date", payload.exportedAt || "Not provided"),
+      row("Sessions", sessions),
+      row("Threads", threads),
+      row("Quest Entries", questEntries)
+    ].join("");
+
+    return foundry.applications.api.DialogV2.confirm({
+      window: { title: "Import Campaign" },
+      content:
+        `<p>This will replace the Companion data in the current world.</p>` +
+        `<dl class="nd-import-preview">${rows}</dl>`,
+      rejectClose: false,
+      modal: true
+    });
   }
 
   /**

@@ -216,6 +216,30 @@
   border-color: var(--nd-blue-border);
 }
 
+.nd-import-preview {
+  display: grid;
+  gap: 6px;
+  margin: var(--nd-space-3) 0 0;
+}
+
+.nd-import-preview > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--nd-space-4);
+  padding: 5px 0;
+  border-bottom: 1px solid var(--nd-border);
+}
+
+.nd-import-preview dt {
+  color: var(--nd-text-3);
+}
+
+.nd-import-preview dd {
+  margin: 0;
+  color: var(--nd-text-1);
+  font-weight: var(--nd-weight-semibold);
+}
+
 .nd-global-search {
   position: relative;
   display: flex;
