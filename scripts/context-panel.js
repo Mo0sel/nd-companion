@@ -48,7 +48,7 @@ export class ContextPanel {
       eyebrow.textContent = "Campaign";
       const title = document.createElement("h3");
       title.className = "nd-hierarchy-group";
-      title.textContent = "Campaign Memory";
+      title.textContent = "DM Notes";
       header.append(eyebrow, title);
       container.append(header);
     }
@@ -74,23 +74,12 @@ export class ContextPanel {
     if (hasKnowledge) {
       const knowledge = document.createElement("div");
       knowledge.className = "nd-context-panel__knowledge";
-      knowledge.textContent = "Knowledge";
+      knowledge.textContent = "Campaign History";
       container.append(knowledge);
-
-      if (context.lastSeen) {
-        const section = ContextPanel.#section("Last Seen");
-        section.append(ContextPanel.#sessionCard(context.lastSeen, true));
-        container.append(section);
-      }
 
       if (context.sessions.length) {
         const history = ContextPanel.#section("History");
-        const list = document.createElement("div");
-        list.className = "nd-context-panel__history";
-        for (const session of context.sessions) {
-          list.append(ContextPanel.#sessionCard(session, false));
-        }
-        history.append(list);
+        history.append(ContextPanel.#timeline(context.sessions, context.lastSeen));
         container.append(history);
       }
 
@@ -123,11 +112,40 @@ export class ContextPanel {
       (event) => {
         const target = event.target;
         if (!(target instanceof Element)) return;
+
+        const toggle = target.closest("[data-context-timeline-toggle]");
+        if (toggle instanceof HTMLButtonElement) {
+          event.preventDefault();
+          ContextPanel.#toggleTimeline(toggle);
+          return;
+        }
+
+        const mention = target.closest("[data-nd-mention]");
+        if (mention instanceof HTMLElement) {
+          const mentionTarget = ContextPanel.#mentionTarget(mention);
+          if (mentionTarget) {
+            event.preventDefault();
+            void Promise.resolve(onNavigate(mentionTarget));
+          }
+          return;
+        }
+
         const link = target.closest("[data-context-kind][data-context-id]");
         if (!link) return;
         const kind = link.getAttribute("data-context-kind");
         const id = link.getAttribute("data-context-id");
         if (kind && id) void Promise.resolve(onNavigate({ kind, id }));
+      },
+      { signal: controller.signal }
+    );
+    root.addEventListener(
+      "keydown",
+      (event) => {
+        if (!["Enter", " "].includes(event.key)) return;
+        const target = event.target;
+        if (!(target instanceof HTMLElement) || !target.hasAttribute("data-nd-mention")) return;
+        event.preventDefault();
+        target.click();
       },
       { signal: controller.signal }
     );
@@ -189,28 +207,103 @@ export class ContextPanel {
     return button;
   }
 
-  static #sessionCard(session, compact) {
-    const button = ContextPanel.#link(session);
-    button.classList.add("nd-context-panel__session");
-    button.classList.toggle("nd-context-panel__session--compact", compact);
-    button.replaceChildren();
+  static #timeline(sessions, lastSeen) {
+    const timeline = document.createElement("div");
+    timeline.className = "nd-context-timeline";
 
-    const number = document.createElement("span");
-    number.className = "nd-context-panel__session-number";
-    number.textContent = `Session ${session.sessionNumber}`;
-    const title = document.createElement("strong");
-    title.className = "nd-context-panel__session-title";
-    title.textContent = session.title?.trim()
-      ? `“${session.title.trim()}”`
-      : "Untitled Session";
-    button.append(number, title);
+    for (const session of sessions) {
+      const item = document.createElement("article");
+      item.className = "nd-context-timeline__item";
+      item.dataset.contextTimelineSession = session.id;
+      item.classList.toggle("is-last-seen", session.id === lastSeen?.id);
 
-    if (!compact && session.excerpt) {
-      const excerpt = document.createElement("span");
-      excerpt.className = "nd-context-panel__session-excerpt";
-      excerpt.textContent = session.excerpt;
-      button.append(excerpt);
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "nd-context-timeline__toggle";
+      toggle.dataset.contextTimelineToggle = session.id;
+      toggle.setAttribute("aria-expanded", "false");
+
+      const marker = document.createElement("span");
+      marker.className = "nd-context-timeline__marker";
+      marker.setAttribute("aria-hidden", "true");
+      const summary = document.createElement("span");
+      summary.className = "nd-context-timeline__summary";
+      const number = document.createElement("span");
+      number.className = "nd-context-panel__session-number";
+      number.textContent = `Session ${session.sessionNumber}`;
+      const title = document.createElement("strong");
+      title.className = "nd-context-panel__session-title";
+      title.textContent = session.title?.trim() || "Untitled Session";
+      summary.append(number, title);
+      if (session.id === lastSeen?.id) {
+        const badge = document.createElement("span");
+        badge.className = "nd-context-timeline__badge";
+        badge.textContent = "Last Seen";
+        summary.append(badge);
+      }
+      toggle.append(marker, summary);
+
+      const preview = document.createElement("div");
+      preview.className = "nd-context-timeline__preview";
+      preview.hidden = true;
+      const log = document.createElement("div");
+      log.className = "nd-context-timeline__log nd-richtext";
+      log.innerHTML = RichText.sanitize(session.sessionLog ?? "");
+      log.querySelectorAll("[data-nd-mention]").forEach((mention) => {
+        mention.setAttribute("role", "link");
+        mention.setAttribute("tabindex", "0");
+        mention.setAttribute("title", "Open this campaign entity");
+      });
+
+      const actions = document.createElement("div");
+      actions.className = "nd-context-timeline__actions";
+      const open = ContextPanel.#link(session);
+      open.classList.add("nd-context-timeline__open");
+      open.textContent = "Open Full Chronicle →";
+      const collapse = document.createElement("button");
+      collapse.type = "button";
+      collapse.className = "nd-context-timeline__collapse";
+      collapse.dataset.contextTimelineToggle = session.id;
+      collapse.textContent = "Collapse";
+      actions.append(open, collapse);
+      preview.append(log, actions);
+      item.append(toggle, preview);
+      timeline.append(item);
     }
-    return button;
+    return timeline;
+  }
+
+  static #toggleTimeline(toggle) {
+    const timeline = toggle.closest(".nd-context-timeline");
+    const item = toggle.closest("[data-context-timeline-session]");
+    if (!(timeline instanceof HTMLElement) || !(item instanceof HTMLElement)) return;
+    const willOpen = !item.classList.contains("is-expanded");
+
+    timeline.querySelectorAll("[data-context-timeline-session]").forEach((entry) => {
+      const expanded = willOpen && entry === item;
+      entry.classList.toggle("is-expanded", expanded);
+      const entryToggle = entry.querySelector(".nd-context-timeline__toggle");
+      const preview = entry.querySelector(".nd-context-timeline__preview");
+      entryToggle?.setAttribute("aria-expanded", expanded ? "true" : "false");
+      if (preview instanceof HTMLElement) {
+        preview.hidden = !expanded;
+        if (expanded) {
+          requestAnimationFrame(() => {
+            const log = preview.querySelector(".nd-context-timeline__log");
+            if (log instanceof HTMLElement) {
+              log.classList.toggle("is-truncated", log.scrollHeight > log.clientHeight);
+            }
+          });
+        }
+      }
+    });
+  }
+
+  static #mentionTarget(mention) {
+    const rawKind = mention.dataset.mentionKind;
+    const id = mention.dataset.mentionUuid || mention.dataset.mentionId;
+    if (!rawKind || !id) return null;
+    const kind = rawKind === "scene" ? "location" : rawKind;
+    return { kind, id };
   }
 }

@@ -207,7 +207,8 @@ export class ContextEngine {
             label: CampaignMemoryService.label(session),
             sessionNumber: session.sessionNumber,
             title: session.title ?? "",
-            excerpt: session.contextExcerpt ?? ""
+            excerpt: session.contextExcerpt ?? "",
+            sessionLog: session.sessionLog ?? ""
           }
         : null;
     }
@@ -267,6 +268,7 @@ export class ContextEngine {
  * @property {number} [sessionNumber]
  * @property {string} [title]
  * @property {string} [excerpt]
+ * @property {string} [sessionLog]
  */
 
 /**

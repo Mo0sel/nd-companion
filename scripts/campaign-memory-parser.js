@@ -108,7 +108,7 @@ export class CampaignMemoryParser {
     });
 
     const result = await foundry.applications.api.DialogV2.wait({
-      window: { title: "Confirm Campaign Memory Match" },
+      window: { title: "Confirm Chronicle Match" },
       content: `<p>Multiple matches for <strong>${foundry.utils.escapeHTML(match.matchedText)}</strong>. Choose one, or skip.</p>`,
       buttons,
       rejectClose: false,

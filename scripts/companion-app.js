@@ -277,17 +277,42 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       }
       return;
     }
+    if (target.kind === "beat") {
+      if (CampaignWorkspace.selectQuestEntry(this.element, target.id)) {
+        this.setWorkspace("campaign");
+        return;
+      }
+      const index = PlaybookService.getDocument().beats.findIndex(
+        (beat) => beat.id === target.id
+      );
+      if (index >= 0 && await PlaybookService.setCurrentIndex(index)) {
+        this.setWorkspace("play");
+        Playbook.paint(this.element, Playbook.get());
+      }
+      return;
+    }
     if (target.kind === "actor") {
-      if (CampaignWorkspace.selectEntity(this.element, "actor", target.id)) {
+      const actor = EntityRegistry.findByUUID(target.id)
+        ?? EntityRegistry.all("actor").find((entity) => entity.id === target.id);
+      if (actor && CampaignWorkspace.selectEntity(this.element, "actor", actor.uuid)) {
         this.setWorkspace("campaign");
       }
       return;
     }
     if (target.kind === "location" || target.kind === "item") {
       const kind = target.kind === "location" ? "scene" : "item";
-      if (CampaignWorkspace.selectEntity(this.element, kind, target.id)) {
+      const entity = EntityRegistry.findByUUID(target.id)
+        ?? EntityRegistry.all(kind).find((entry) => entry.id === target.id);
+      if (entity && CampaignWorkspace.selectEntity(this.element, kind, entity.uuid)) {
         this.setWorkspace("campaign");
       }
+      return;
+    }
+
+    const entity = EntityRegistry.findByUUID(target.id)
+      ?? EntityRegistry.all(target.kind).find((entry) => entry.id === target.id);
+    if (entity && Navigation.canNavigate(entity)) {
+      await Navigation.navigate(entity);
     }
   }
 

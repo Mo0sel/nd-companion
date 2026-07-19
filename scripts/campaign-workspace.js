@@ -52,6 +52,12 @@ export class CampaignWorkspace {
   /** @type {string|null} */
   static #openEntryId = null;
 
+  /** @type {Map<string, string>} */
+  static #lastSelections = new Map();
+
+  /** @type {Map<string, number>} */
+  static #scrollPositions = new Map();
+
   /** @type {WeakMap<HTMLElement, AbortController>} */
   static #listeners = new WeakMap();
 
@@ -78,10 +84,11 @@ export class CampaignWorkspace {
    */
   static selectQuest(root, id) {
     if (!ThreadService.getById(id)) return false;
+    CampaignWorkspace.#captureScroll(root);
     CampaignWorkspace.#view = "quest";
     CampaignWorkspace.#section = "quests";
     CampaignWorkspace.#questId = id;
-    CampaignWorkspace.#memoryId = null;
+    CampaignWorkspace.#lastSelections.set("quests", id);
     CampaignWorkspace.#openEntryId = null;
     CampaignWorkspace.paint(root);
     return true;
@@ -94,10 +101,11 @@ export class CampaignWorkspace {
   static selectQuestEntry(root, id) {
     const entry = QuestEntryService.getById(id);
     if (!entry) return false;
+    CampaignWorkspace.#captureScroll(root);
     CampaignWorkspace.#view = "quest";
     CampaignWorkspace.#section = "quests";
     CampaignWorkspace.#questId = entry.questId;
-    CampaignWorkspace.#memoryId = null;
+    CampaignWorkspace.#lastSelections.set("quests", entry.questId);
     CampaignWorkspace.#openEntryId = entry.id;
     CampaignWorkspace.paint(root);
     return true;
@@ -109,9 +117,11 @@ export class CampaignWorkspace {
    */
   static selectMemory(root, id) {
     if (!CampaignMemoryService.getById(id)) return false;
+    CampaignWorkspace.#captureScroll(root);
     CampaignWorkspace.#view = "memory";
     CampaignWorkspace.#section = "chronicle";
     CampaignWorkspace.#memoryId = id;
+    CampaignWorkspace.#lastSelections.set("chronicle", id);
     CampaignWorkspace.#openEntryId = null;
     CampaignWorkspace.paint(root);
     return true;
@@ -136,11 +146,13 @@ export class CampaignWorkspace {
     if (!entity || entity.kind !== kind || !["actor", "scene", "item"].includes(kind)) {
       return false;
     }
-    CampaignWorkspace.#section =
+    CampaignWorkspace.#captureScroll(root);
+    const section =
       kind === "actor" ? "actors" : kind === "scene" ? "locations" : "items";
+    CampaignWorkspace.#section = section;
     CampaignWorkspace.#entityKind = kind;
     CampaignWorkspace.#entityId = id;
-    CampaignWorkspace.#memoryId = null;
+    CampaignWorkspace.#lastSelections.set(section, id);
     CampaignWorkspace.#view = "entity";
     CampaignWorkspace.paint(root);
     return true;
@@ -174,6 +186,7 @@ export class CampaignWorkspace {
       ? ThreadService.getById(CampaignWorkspace.#questId)
       : null;
     if (CampaignWorkspace.#view === "quest" && CampaignWorkspace.#questId && !quest) {
+      CampaignWorkspace.#lastSelections.delete("quests");
       CampaignWorkspace.#questId = null;
     }
 
@@ -181,14 +194,22 @@ export class CampaignWorkspace {
       ? CampaignMemoryService.getById(CampaignWorkspace.#memoryId)
       : null;
     if (CampaignWorkspace.#view === "memory" && CampaignWorkspace.#memoryId && !memory) {
+      CampaignWorkspace.#lastSelections.delete("chronicle");
       CampaignWorkspace.#memoryId = null;
     }
 
-    CampaignWorkspace.#paintQuest(panel, quest);
-    CampaignWorkspace.#paintMemory(panel, memory);
+    CampaignWorkspace.#paintQuest(
+      panel,
+      CampaignWorkspace.#view === "quest" ? quest : null
+    );
+    CampaignWorkspace.#paintMemory(
+      panel,
+      CampaignWorkspace.#view === "memory" ? memory : null
+    );
     CampaignWorkspace.#paintEntity(panel);
     CampaignWorkspace.#applyView(panel, quest, memory);
     CampaignWorkspace.#attachRichEditors(panel);
+    CampaignWorkspace.#restoreScroll(panel);
   }
 
   /**
@@ -203,6 +224,19 @@ export class CampaignWorkspace {
     CampaignWorkspace.#listeners.get(panel)?.abort();
     const controller = new AbortController();
     CampaignWorkspace.#listeners.set(panel, controller);
+    const sidebarScroll = panel.querySelector(".nd-quest-sidebar__scroll");
+    if (sidebarScroll instanceof HTMLElement) {
+      sidebarScroll.addEventListener(
+        "scroll",
+        () => {
+          CampaignWorkspace.#scrollPositions.set(
+            CampaignWorkspace.#section,
+            sidebarScroll.scrollTop
+          );
+        },
+        { signal: controller.signal, passive: true }
+      );
+    }
 
     panel.addEventListener(
       "click",
@@ -285,10 +319,8 @@ export class CampaignWorkspace {
         const entityButton = target.closest("[data-campaign-entity-id]");
         if (entityButton) {
           const id = entityButton.getAttribute("data-campaign-entity-id");
-          if (id) {
-            CampaignWorkspace.#entityId = id;
-            CampaignWorkspace.#view = "entity";
-            CampaignWorkspace.paint(root);
+          if (id && CampaignWorkspace.#entityKind) {
+            CampaignWorkspace.selectEntity(root, CampaignWorkspace.#entityKind, id);
           }
           return;
         }
@@ -342,20 +374,37 @@ export class CampaignWorkspace {
   static #selectSection(root, section) {
     const allowed = new Set(["quests", "actors", "locations", "items", "chronicle"]);
     if (!allowed.has(section)) return;
+    CampaignWorkspace.#captureScroll(root);
     CampaignWorkspace.#section = section;
-    CampaignWorkspace.#memoryId = null;
-    CampaignWorkspace.#entityId = null;
 
     if (section === "quests") {
       CampaignWorkspace.#view = "quest";
+      CampaignWorkspace.#questId = CampaignWorkspace.#lastSelections.get(section) ?? null;
     } else if (section === "chronicle") {
       CampaignWorkspace.#view = "memory";
+      CampaignWorkspace.#memoryId = CampaignWorkspace.#lastSelections.get(section) ?? null;
     } else {
       CampaignWorkspace.#view = "entity";
       CampaignWorkspace.#entityKind =
         section === "actors" ? "actor" : section === "locations" ? "scene" : "item";
+      CampaignWorkspace.#entityId = CampaignWorkspace.#lastSelections.get(section) ?? null;
     }
     CampaignWorkspace.paint(root);
+  }
+
+  static #captureScroll(root) {
+    const panel = root?.matches?.("[data-campaign-workspace]")
+      ? root
+      : root?.querySelector?.("[data-campaign-workspace]");
+    const scroll = panel?.querySelector?.(".nd-quest-sidebar__scroll");
+    if (!(scroll instanceof HTMLElement)) return;
+    CampaignWorkspace.#scrollPositions.set(CampaignWorkspace.#section, scroll.scrollTop);
+  }
+
+  static #restoreScroll(panel) {
+    const scroll = panel.querySelector(".nd-quest-sidebar__scroll");
+    if (!(scroll instanceof HTMLElement)) return;
+    scroll.scrollTop = CampaignWorkspace.#scrollPositions.get(CampaignWorkspace.#section) ?? 0;
   }
 
   static #paintCampaignNavigation(panel) {
@@ -410,10 +459,18 @@ export class CampaignWorkspace {
   static #paintEntity(panel) {
     const view = panel.querySelector("[data-campaign-entity-view]");
     if (!(view instanceof HTMLElement)) return;
+    if (CampaignWorkspace.#view !== "entity") {
+      view.hidden = true;
+      return;
+    }
     const entity = CampaignWorkspace.#entityId
       ? EntityRegistry.findByUUID(CampaignWorkspace.#entityId)
       : null;
     if (!entity) {
+      if (CampaignWorkspace.#view === "entity" && CampaignWorkspace.#entityId) {
+        CampaignWorkspace.#lastSelections.delete(CampaignWorkspace.#section);
+        CampaignWorkspace.#entityId = null;
+      }
       view.hidden = true;
       return;
     }
@@ -765,7 +822,7 @@ export class CampaignWorkspace {
       return;
     }
     if (!result.ok) {
-      ui.notifications?.error("Could not import session into Campaign Memory.");
+      ui.notifications?.error("Could not import session into Chronicle.");
       return;
     }
     const record = result.session;
@@ -775,7 +832,9 @@ export class CampaignWorkspace {
     if (logInput instanceof HTMLTextAreaElement) logInput.value = "";
     CampaignWorkspace.#setMemoryImportOpen(panel, false);
     CampaignWorkspace.#view = "memory";
+    CampaignWorkspace.#section = "chronicle";
     CampaignWorkspace.#memoryId = record.id;
+    CampaignWorkspace.#lastSelections.set("chronicle", record.id);
     CampaignWorkspace.paint(root);
     ui.notifications?.info(`Imported Session ${record.sessionNumber} into Chronicle.`);
   }
@@ -838,9 +897,11 @@ export class CampaignWorkspace {
       category,
       overview: ""
     });
+    CampaignWorkspace.#captureScroll(root);
     CampaignWorkspace.#questId = quest.id;
-    CampaignWorkspace.#memoryId = null;
     CampaignWorkspace.#view = "quest";
+    CampaignWorkspace.#section = "quests";
+    CampaignWorkspace.#lastSelections.set("quests", quest.id);
     CampaignWorkspace.paint(root);
     requestAnimationFrame(() => root.querySelector("[data-quest-title]")?.focus());
   }
