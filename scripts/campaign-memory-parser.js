@@ -385,7 +385,7 @@ export class CampaignMemoryParser {
       case "quest":
         return "Quest";
       case "beat":
-        return "Story Entry";
+        return "Scene";
       case "scene":
         return "Location";
       case "item":

@@ -93,7 +93,7 @@ export class SessionBuilder {
     if (count === 0) {
       const empty = document.createElement("p");
       empty.className = "nd-campaign-empty";
-      empty.textContent = "No Story Entries are available to import.";
+      empty.textContent = "No Scenes are available to import.";
       list.append(empty);
     }
   }

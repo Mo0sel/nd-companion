@@ -219,7 +219,7 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       row("Quests", threads),
       row("Story Threads", storyThreads),
       row("Factions", factions),
-      row("Story Entries", storyEntries)
+      row("Scenes", storyEntries)
     ].join("");
 
     return foundry.applications.api.DialogV2.confirm({

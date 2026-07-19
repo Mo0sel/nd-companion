@@ -137,14 +137,14 @@ export function registerSearchProviders() {
 
   SearchService.registerProvider({
     id: "story-entries",
-    label: "Story Entries",
+    label: "Scenes",
     getItems: () =>
       QuestEntryService.list().map((entry) => ({
         id: entry.id,
-        title: entry.title?.trim() || "Untitled Entry",
+        title: entry.title?.trim() || "Untitled Scene",
         subtitle:
-          StoryThreadService.getById(entry.storyThreadId)?.title || "Story Entry",
-        group: "STORY ENTRY"
+          StoryThreadService.getById(entry.storyThreadId)?.title || "Scene",
+        group: "SCENE"
       })),
     open: (id, context) => {
       context.openQuestEntry(id);

@@ -446,7 +446,7 @@
   margin-bottom: var(--nd-space-3);
 }
 
-.nd-story-entries__actions {
+.nd-story-scenes__actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;

@@ -31,7 +31,7 @@ const ENTRY_FIELDS = Object.freeze([
 
 /**
  * Campaign authoring workspace.
- * Quests are player objectives; Story Threads own playable Story Entries.
+ * Quests are player objectives; Story Threads own playable Scenes.
  */
 export class CampaignWorkspace {
   /** @type {"quest"|"storyThread"|"faction"|"memory"|"entity"} */
@@ -735,7 +735,7 @@ export class CampaignWorkspace {
       if (!entries.length) {
         const empty = document.createElement("div");
         empty.className = "nd-quest-empty nd-quest-empty--entries";
-        empty.textContent = "No Story Entries yet.";
+        empty.textContent = "No Scenes yet.";
         list.append(empty);
       } else {
         for (const entry of entries) list.append(CampaignWorkspace.#entryElement(entry));
@@ -1163,7 +1163,7 @@ export class CampaignWorkspace {
     status.dataset.status = entry.status;
     status.textContent = entry.status;
     const title = document.createElement("strong");
-    title.textContent = entry.title?.trim() || "Untitled Entry";
+    title.textContent = entry.title?.trim() || "Untitled Scene";
     summary.append(status, title);
 
     const body = document.createElement("div");
