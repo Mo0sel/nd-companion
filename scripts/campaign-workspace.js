@@ -509,7 +509,9 @@ export class CampaignWorkspace {
       source.textContent = memory.source === "imported" ? "Imported" : "Live";
       source.dataset.status = memory.source;
     }
-    if (log instanceof HTMLTextAreaElement) log.value = memory.sessionLog ?? "";
+    if (log instanceof HTMLElement) {
+      log.innerHTML = CampaignWorkspace.#sessionLogHtml(memory.sessionLog);
+    }
 
     const labels = CampaignMemoryService.relatedLabels(memory);
     for (const kind of ["actor", "scene", "item", "quest", "beat"]) {
@@ -826,11 +828,12 @@ export class CampaignWorkspace {
 
   static async #saveMemoryLog(root) {
     if (!CampaignWorkspace.#memoryId) return;
-    const input = root.querySelector("[data-memory-session-log]");
-    if (!(input instanceof HTMLTextAreaElement)) return;
+    const editor = root.querySelector("[data-memory-session-log]");
+    if (!(editor instanceof HTMLElement)) return;
+    const safeLog = RichText.sanitize(editor.innerHTML);
     const updated = await CampaignMemoryService.updateSessionLog(
       CampaignWorkspace.#memoryId,
-      input.value
+      safeLog
     );
     if (!updated) {
       ui.notifications?.error("Could not update the Session Log.");
@@ -843,12 +846,35 @@ export class CampaignWorkspace {
   static #attachRichEditors(panel) {
     for (const editor of CampaignWorkspace.#mentionEditors) EntityMentions.detach(editor);
     CampaignWorkspace.#mentionEditors.clear();
-    RichTextToolbar.attach(panel);
+
+    // Scope each toolbar to its editor region so Chronicle does not share the
+    // Quest Overview toolbar (RichTextToolbar only binds the first toolbar in a root).
+    const questEditor = panel.querySelector("[data-quest-editor]");
+    const memoryView = panel.querySelector("[data-memory-view]");
+    if (questEditor instanceof HTMLElement) RichTextToolbar.attach(questEditor);
+    if (memoryView instanceof HTMLElement) RichTextToolbar.attach(memoryView);
+
     panel.querySelectorAll("[data-richtext-editor]").forEach((editor) => {
       if (!(editor instanceof HTMLElement) || editor.closest("[aria-hidden=\"true\"]")) return;
       EntityMentions.attach(editor);
       CampaignWorkspace.#mentionEditors.add(editor);
     });
+  }
+
+  /**
+   * Preserve stored HTML; convert legacy plain-text logs so line breaks survive.
+   * @param {string|null|undefined} value
+   * @returns {string}
+   */
+  static #sessionLogHtml(value) {
+    const raw = String(value ?? "");
+    if (!raw) return "";
+    if (/<[a-z][\s\S]*>/i.test(raw) || raw.includes("data-nd-mention")) {
+      return RichText.sanitize(raw);
+    }
+    return RichText.sanitize(
+      foundry.utils.escapeHTML(raw).replace(/\r\n|\r|\n/g, "<br>")
+    );
   }
 
   static async #createQuest(root, category) {

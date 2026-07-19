@@ -479,7 +479,40 @@
             </header>
             <section class="nd-campaign-content-block nd-chronicle-log">
               <h3 class="nd-hierarchy-group">Session Log</h3>
-              <textarea data-memory-session-log rows="12" aria-label="Session Log"></textarea>
+              <div class="nd-campaign-field nd-campaign-field--notes">
+                <div class="nd-richtext-toolbar" data-richtext-toolbar role="toolbar" aria-label="Session Log formatting">
+                  <button type="button" data-richtext-command="bold" aria-label="Bold"><strong>B</strong></button>
+                  <button type="button" data-richtext-command="italic" aria-label="Italic"><em>I</em></button>
+                  <button type="button" data-richtext-command="underline" aria-label="Underline"><u>U</u></button>
+                  <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
+                  <button type="button" data-richtext-command="heading" data-richtext-value="h2" aria-label="Heading 2">H2</button>
+                  <button type="button" data-richtext-command="heading" data-richtext-value="h3" aria-label="Heading 3">H3</button>
+                  <button type="button" data-richtext-command="list" data-richtext-value="ul" aria-label="Bullet list">• List</button>
+                  <button type="button" data-richtext-command="list" data-richtext-value="ol" aria-label="Numbered list">1. List</button>
+                  <label class="nd-richtext-toolbar__color">
+                    <select data-richtext-color aria-label="Text color">
+                      <option value="default">Default</option>
+                      <option value="blue">Blue</option>
+                      <option value="green">Green</option>
+                      <option value="yellow">Yellow</option>
+                      <option value="orange">Orange</option>
+                      <option value="red">Red</option>
+                      <option value="purple">Purple</option>
+                      <option value="gray">Gray</option>
+                    </select>
+                  </label>
+                  <button type="button" data-richtext-command="clear" aria-label="Clear formatting">Clear</button>
+                </div>
+                <div
+                  class="nd-richtext nd-richtext--editor nd-chronicle-log__editor"
+                  data-memory-session-log
+                  data-richtext-editor
+                  contenteditable="true"
+                  data-placeholder="Record what happened this session. Use @ to link Actors, Locations, Items, and Entries..."
+                  role="textbox"
+                  aria-label="Session Log"
+                ></div>
+              </div>
               <div class="nd-quest-actions">
                 <button type="button" class="nd-campaign-save" data-save-memory-log>
                   Save &amp; Refresh Links

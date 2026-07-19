@@ -713,20 +713,17 @@
   font-weight: var(--nd-weight-medium);
 }
 
-.nd-chronicle-log textarea {
-  width: 100%;
+.nd-chronicle-log .nd-campaign-field--notes {
+  margin-top: var(--nd-space-2);
+}
+
+.nd-chronicle-log__editor {
   min-height: 220px;
   padding: 12px 14px;
-  color: var(--nd-text-1);
-  background: var(--nd-surface-2);
-  border: 1px solid var(--nd-border);
-  border-radius: var(--nd-radius-md);
-  box-shadow: none;
-  box-sizing: border-box;
-  font: inherit;
   font-size: var(--nd-text-body-sm);
   line-height: 1.65;
-  resize: vertical;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 .nd-chronicle-relationships {

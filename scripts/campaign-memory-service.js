@@ -1,7 +1,9 @@
 import { CampaignDocument } from "./campaign-document.js";
 import { CampaignMemoryParser } from "./campaign-memory-parser.js";
+import { EntityMentions } from "./entity-mentions.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { QuestEntryService } from "./quest-entry-service.js";
+import { RichText } from "./rich-text.js";
 import { ThreadService } from "./thread-service.js";
 
 /**
@@ -89,6 +91,7 @@ export class CampaignMemoryService {
 
   /**
    * Edit the canonical log and recompute every inferred relationship.
+   * Sanitizes HTML, extracts EntityMentions, and merges name-based matches.
    * @param {string} id
    * @param {string} sessionLog
    * @returns {Promise<import("./campaign-document.js").CampaignSession|null>}
@@ -96,10 +99,14 @@ export class CampaignMemoryService {
   static async updateSessionLog(id, sessionLog) {
     const current = CampaignMemoryService.getById(id);
     if (!current) return null;
-    const value = String(sessionLog ?? "").trim();
-    const refs = await CampaignMemoryParser.resolveReferences(
-      CampaignMemoryParser.parse(value)
+    const value = RichText.sanitize(String(sessionLog ?? ""));
+    const mentionRefs = CampaignMemoryService.#refsFromMentions(
+      EntityMentions.extract(value)
     );
+    const parserRefs = await CampaignMemoryParser.resolveReferences(
+      CampaignMemoryParser.parse(RichText.plainText(value))
+    );
+    const refs = CampaignMemoryService.#mergeRefs(mentionRefs, parserRefs);
     let updated = null;
     await CampaignDocument.update((doc) => {
       const session = doc.sessions.find((entry) => entry.id === id);
@@ -229,6 +236,40 @@ export class CampaignMemoryService {
       relatedItems: refs.relatedItemIds ?? [],
       relatedQuests: refs.relatedQuestIds ?? [],
       relatedQuestEntries: refs.relatedBeatIds ?? []
+    };
+  }
+
+  /**
+   * Same mention → related* mapping used by Quest Overview / Quest Entries.
+   * @param {import("./entity-mentions.js").MentionReference[]} mentions
+   */
+  static #refsFromMentions(mentions) {
+    const ids = (kind, preferUuid) =>
+      (mentions ?? [])
+        .filter((mention) => mention.kind === kind)
+        .map((mention) => (preferUuid ? mention.uuid : mention.id) || mention.id)
+        .filter(Boolean);
+    return {
+      relatedBeatIds: ids("beat", false),
+      relatedCharacterIds: ids("actor", true),
+      relatedLocationIds: ids("scene", true),
+      relatedItemIds: ids("item", true),
+      relatedQuestIds: ids("quest", false)
+    };
+  }
+
+  /**
+   * @param {ReturnType<typeof CampaignMemoryService.#refsFromMentions>} a
+   * @param {Awaited<ReturnType<typeof CampaignMemoryParser.resolveReferences>>} b
+   */
+  static #mergeRefs(a, b) {
+    const union = (left, right) => [...new Set([...(left ?? []), ...(right ?? [])])];
+    return {
+      relatedBeatIds: union(a.relatedBeatIds, b.relatedBeatIds),
+      relatedCharacterIds: union(a.relatedCharacterIds, b.relatedCharacterIds),
+      relatedLocationIds: union(a.relatedLocationIds, b.relatedLocationIds),
+      relatedItemIds: union(a.relatedItemIds, b.relatedItemIds),
+      relatedQuestIds: union(a.relatedQuestIds, b.relatedQuestIds)
     };
   }
 }
