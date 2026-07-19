@@ -482,7 +482,6 @@ export class CampaignWorkspace {
     const status = view.querySelector("[data-story-thread-status]");
     const description = view.querySelector("[data-story-thread-description]");
     const currentState = view.querySelector("[data-story-thread-current-state]");
-    const notes = view.querySelector("[data-story-thread-notes]");
     if (title instanceof HTMLInputElement) title.value = thread.title ?? "";
     if (status instanceof HTMLSelectElement) status.value = thread.status ?? "ACTIVE";
     if (description instanceof HTMLElement) {
@@ -1108,6 +1107,7 @@ export class CampaignWorkspace {
     const status = view.querySelector("[data-story-thread-status]");
     const description = view.querySelector("[data-story-thread-description]");
     const currentState = view.querySelector("[data-story-thread-current-state]");
+    const notes = view.querySelector("[data-story-thread-notes]");
     const safeDescription = description instanceof HTMLElement
       ? RichText.sanitize(description.innerHTML)
       : "";
