@@ -93,7 +93,7 @@ export class FocusPanel {
       ContextPanel.paint(
         section.querySelector("[data-context-panel=\"actor\"]"),
         ContextEngine.getContext({ kind: "actor", id: model.uuid }),
-        { showCampaignMemory: false }
+        { showCampaignMemory: false, showHeader: false }
       );
       return;
     }
@@ -106,7 +106,7 @@ export class FocusPanel {
     ContextPanel.paint(
       section.querySelector("[data-context-panel=\"actor\"]"),
       ContextEngine.getContext(null),
-      { showCampaignMemory: false }
+      { showCampaignMemory: false, showHeader: false }
     );
   }
 }

@@ -572,6 +572,29 @@ select.nd-playbook-prepare__select:focus-visible {
   text-transform: uppercase;
 }
 
+.nd-context-panel__status {
+  min-height: 88px;
+  padding: 10px 12px;
+  color: var(--nd-text-1);
+  background: var(--nd-surface-2);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-md);
+  font-size: var(--nd-text-body-sm);
+  line-height: 1.65;
+}
+
+.nd-context-panel__knowledge {
+  margin: var(--nd-space-5) 0 var(--nd-space-3);
+  padding-top: var(--nd-space-4);
+  color: var(--nd-group-accent);
+  border-top: 1px solid var(--nd-border);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-label);
+  font-weight: var(--nd-weight-bold);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
 .nd-context-panel__last-seen {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -606,6 +629,11 @@ select.nd-playbook-prepare__select:focus-visible {
   gap: 6px;
 }
 
+.nd-context-panel__history {
+  display: grid;
+  gap: var(--nd-space-2);
+}
+
 .nd-context-panel__link {
   margin: 0;
   padding: 5px 9px;
@@ -624,6 +652,55 @@ select.nd-playbook-prepare__select:focus-visible {
   color: var(--nd-blue);
   background: var(--nd-blue-dim);
   border-color: var(--nd-blue-border);
+}
+
+.nd-context-panel__session {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px var(--nd-space-3);
+  width: 100%;
+  padding: 9px 11px;
+}
+
+.nd-context-panel__session-number {
+  color: var(--nd-blue);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-bold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.nd-context-panel__session-title {
+  overflow: hidden;
+  color: var(--nd-text-1);
+  font-size: var(--nd-text-body-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nd-context-panel__session-excerpt {
+  grid-column: 1 / -1;
+  color: var(--nd-text-3);
+  font-size: var(--nd-text-caption);
+  line-height: var(--nd-leading-snug);
+}
+
+.nd-context-panel__session--compact {
+  border-color: var(--nd-blue-border);
+  background: var(--nd-blue-dim);
+}
+
+.nd-context-panel__relationships {
+  display: grid;
+  gap: var(--nd-space-3);
+}
+
+.nd-context-panel__relationships h5 {
+  margin: 0 0 5px;
+  color: var(--nd-text-3);
+  font-size: var(--nd-text-caption);
+  font-weight: var(--nd-weight-semibold);
 }
 
 .nd-context-panel__memory {

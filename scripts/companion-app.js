@@ -278,11 +278,9 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       return;
     }
     if (target.kind === "actor") {
-      const actor = EntityRegistry.findByUUID(target.id);
-      if (!actor) return;
-      await Navigation.navigate(actor);
-      this.setWorkspace("notes");
-      FocusPanel.paint(this.element, FocusManager.get());
+      if (CampaignWorkspace.selectEntity(this.element, "actor", target.id)) {
+        this.setWorkspace("campaign");
+      }
       return;
     }
     if (target.kind === "location" || target.kind === "item") {
@@ -421,10 +419,10 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       openEntity: async (uuid, kind) => {
         const entity = EntityRegistry.findByUUID(uuid);
         if (!entity) return false;
-        if (kind === "actor") {
-          const result = await Navigation.navigate(entity);
-          this.setWorkspace("notes");
-          return result.status !== "failed";
+        if (["actor", "scene", "item"].includes(kind)) {
+          const contextKind = kind === "scene" ? "location" : kind;
+          await this.#openContextTarget({ kind: contextKind, id: uuid });
+          return true;
         }
         if (Navigation.canNavigate(entity)) {
           const result = await Navigation.navigate(entity);

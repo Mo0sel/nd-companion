@@ -1,6 +1,7 @@
 import { CampaignDocument } from "./campaign-document.js";
 import { CampaignMemoryService } from "./campaign-memory-service.js";
 import { EntityRegistry } from "./entity-registry.js";
+import { RichText } from "./rich-text.js";
 import { CompanionStorage } from "./storage.js";
 
 /**
@@ -66,10 +67,23 @@ export class ContextEngine {
       actors: unique(related.filter((node) => node.kind === "actor")).sort(byLabel),
       locations: unique(related.filter((node) => node.kind === "location")).sort(byLabel),
       items: unique(related.filter((node) => node.kind === "item")).sort(byLabel),
+      currentStatus: CompanionStorage.getMemory(ContextEngine.currentStatusKey(target)),
       campaignMemory: CompanionStorage.getMemory(
         `${ContextEngine.#storageKind(target.kind)}:${target.id}`
       )
     };
+  }
+
+  /**
+   * Current Status lives in the existing campaignMemory bag under a namespaced
+   * key; no setting or schema is added.
+   * @param {object} entity
+   * @returns {string}
+   */
+  static currentStatusKey(entity) {
+    const target = ContextEngine.#normalizeTarget(entity);
+    if (!target || !["actor", "quest", "location", "item"].includes(target.kind)) return "";
+    return `status:${ContextEngine.#storageKind(target.kind)}:${target.id}`;
   }
 
   static #ensureIndex() {
@@ -80,7 +94,13 @@ export class ContextEngine {
     ContextEngine.#sessions = new Map(
       doc.sessions
         .filter((session) => session.status === "completed")
-        .map((session) => [session.id, session])
+        .map((session) => [
+          session.id,
+          {
+            ...session,
+            contextExcerpt: ContextEngine.#excerpt(session.sessionLog)
+          }
+        ])
     );
     ContextEngine.#quests = new Map(doc.threads.map((quest) => [quest.id, quest]));
     ContextEngine.#entries = new Map(doc.questEntries.map((entry) => [entry.id, entry]));
@@ -186,7 +206,8 @@ export class ContextEngine {
             id,
             label: CampaignMemoryService.label(session),
             sessionNumber: session.sessionNumber,
-            title: session.title ?? ""
+            title: session.title ?? "",
+            excerpt: session.contextExcerpt ?? ""
           }
         : null;
     }
@@ -212,6 +233,12 @@ export class ContextEngine {
     return kind === "location" ? "scene" : kind;
   }
 
+  static #excerpt(sessionLog) {
+    const text = RichText.plainText(sessionLog ?? "");
+    if (text.length <= 160) return text;
+    return `${text.slice(0, 157).trimEnd()}...`;
+  }
+
   static #key(kind, id) {
     return `${kind}:${id}`;
   }
@@ -226,6 +253,7 @@ export class ContextEngine {
       actors: [],
       locations: [],
       items: [],
+      currentStatus: "",
       campaignMemory: ""
     };
   }
@@ -238,6 +266,7 @@ export class ContextEngine {
  * @property {string} label
  * @property {number} [sessionNumber]
  * @property {string} [title]
+ * @property {string} [excerpt]
  */
 
 /**
@@ -250,5 +279,6 @@ export class ContextEngine {
  * @property {ContextNode[]} actors
  * @property {ContextNode[]} locations
  * @property {ContextNode[]} items
+ * @property {string} currentStatus
  * @property {string} campaignMemory
  */

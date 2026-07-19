@@ -8,11 +8,11 @@ import { SessionService } from "./session-service.js";
 import { ThreadService } from "./thread-service.js";
 
 const ENTITY_GROUPS = Object.freeze({
-  actor: "Characters",
-  item: "Items",
-  scene: "Locations",
-  journal: "Journals",
-  rollTable: "Roll Tables"
+  actor: "ACTOR",
+  item: "ITEM",
+  scene: "LOCATION",
+  journal: "JOURNAL",
+  rollTable: "ROLL TABLE"
 });
 
 /**
@@ -29,7 +29,7 @@ export function registerSearchProviders() {
         subtitle: session.status === "active"
           ? "Current Session"
           : session.source === "imported" ? "Imported" : "Live",
-        group: session.status === "active" ? "Sessions" : "Chronicle"
+        group: "SESSION"
       })),
     getQuickAccess: () => {
       const session = SessionService.getActive();
@@ -55,7 +55,7 @@ export function registerSearchProviders() {
         id: beat.id,
         title: beat.title?.trim() || "Untitled Entry",
         subtitle: "Prepared Entry",
-        group: "Session Entries"
+        group: "SESSION ENTRY"
       })),
     getQuickAccess: () => {
       const current = PlaybookService.getCurrent();
@@ -82,7 +82,7 @@ export function registerSearchProviders() {
         id: thread.id,
         title: thread.title?.trim() || "Untitled Quest",
         subtitle: thread.category || thread.status,
-        group: "Quests"
+        group: "QUEST"
       })),
     getQuickAccess: () => {
       const id = CampaignWorkspace.getSelectedThreadId();
@@ -109,7 +109,7 @@ export function registerSearchProviders() {
         id: entry.id,
         title: entry.title?.trim() || "Untitled Entry",
         subtitle: ThreadService.getById(entry.questId)?.title || "Quest Entry",
-        group: "Quest Entries"
+        group: "QUEST ENTRY"
       })),
     open: (id, context) => {
       context.openQuestEntry(id);
