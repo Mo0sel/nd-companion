@@ -171,6 +171,7 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
         await CompanionStorage.applyCampaignPayload(payload);
         await CampaignDocument.ready();
         PlaybookService.reload();
+        await PlaybookService.alignStoryEntrySources();
         await SessionService.ready();
         target.closest("details")?.removeAttribute("open");
         await app.render({ force: true });
@@ -199,9 +200,9 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     ].find((value) => typeof value === "string" && value.trim())?.trim() ?? "";
     const sessions = Array.isArray(campaign.sessions) ? campaign.sessions.length : 0;
     const threads = Array.isArray(campaign.threads) ? campaign.threads.length : 0;
-    const questEntries = Array.isArray(campaign.questEntries)
-      ? campaign.questEntries.length
-      : 0;
+    const storyEntries = Array.isArray(campaign.storyEntries)
+      ? campaign.storyEntries.length
+      : Array.isArray(campaign.questEntries) ? campaign.questEntries.length : 0;
     const storyThreads = Array.isArray(campaign.storyThreads)
       ? campaign.storyThreads.length
       : 0;
@@ -218,7 +219,7 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       row("Quests", threads),
       row("Story Threads", storyThreads),
       row("Factions", factions),
-      row("Quest Entries", questEntries)
+      row("Story Entries", storyEntries)
     ].join("");
 
     return foundry.applications.api.DialogV2.confirm({

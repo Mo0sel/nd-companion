@@ -175,7 +175,7 @@ export class ContextPanel {
       ["Locations", context.locations],
       ["Items", context.items],
       ["Quests", context.quests],
-      ["Quest Entries", context.questEntries]
+      ["Story Entries", context.questEntries]
     ].filter(([, nodes]) => nodes.length);
     if (!groups.length) return;
 

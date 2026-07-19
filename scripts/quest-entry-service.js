@@ -2,28 +2,41 @@ import {
   CampaignDocument,
   QUEST_ENTRY_STATUSES
 } from "./campaign-document.js";
-import { ThreadService } from "./thread-service.js";
+import { StoryThreadService } from "./story-thread-service.js";
 
 /**
- * Campaign-owned Quest Entry CRUD.
+ * Campaign-owned Story Entry CRUD.
+ * The legacy class name remains as a compatibility API for existing callers.
  * Imported Session copies are created separately by PlaybookService.
  */
 export class QuestEntryService {
   /** @returns {import("./campaign-document.js").CampaignQuestEntry[]} */
   static list() {
-    return CampaignDocument.get().questEntries;
+    return CampaignDocument.get().storyEntries;
   }
 
   /**
-   * @param {string} questId
+   * @param {string} storyThreadId
    * @returns {import("./campaign-document.js").CampaignQuestEntry[]}
    */
+  static listForStoryThread(storyThreadId) {
+    if (!StoryThreadService.getById(storyThreadId)) return [];
+    return QuestEntryService.list().filter(
+      (entry) => entry.storyThreadId === storyThreadId
+    );
+  }
+
+  /**
+   * Compatibility lookup for integrations that still ask by Quest.
+   * @param {string} questId
+   */
   static listForQuest(questId) {
-    const doc = CampaignDocument.get();
-    const quest = doc.threads.find((thread) => thread.id === questId);
-    if (!quest) return [];
-    const byId = new Map(doc.questEntries.map((entry) => [entry.id, entry]));
-    return (quest.entryIds ?? []).map((id) => byId.get(id)).filter(Boolean);
+    const storyIds = StoryThreadService.list()
+      .filter((thread) => thread.relatedQuestIds.includes(questId))
+      .map((thread) => thread.id);
+    return QuestEntryService.list().filter(
+      (entry) => storyIds.includes(entry.storyThreadId)
+    );
   }
 
   /**
@@ -32,18 +45,18 @@ export class QuestEntryService {
    */
   static getById(id) {
     if (!id) return null;
-    return CampaignDocument.get().questEntries.find((entry) => entry.id === id) ?? null;
+    return CampaignDocument.get().storyEntries.find((entry) => entry.id === id) ?? null;
   }
 
   /**
-   * @param {string} questId
+   * @param {string} storyThreadId
    * @returns {Promise<import("./campaign-document.js").CampaignQuestEntry|null>}
    */
-  static async create(questId) {
-    if (!ThreadService.getById(questId)) return null;
+  static async create(storyThreadId) {
+    if (!StoryThreadService.getById(storyThreadId)) return null;
     const entry = CampaignDocument.normalizeQuestEntry({
       id: foundry.utils.randomID(),
-      questId,
+      storyThreadId,
       title: "Untitled Entry",
       status: "PLANNED",
       created: Date.now(),
@@ -51,12 +64,8 @@ export class QuestEntryService {
     });
 
     await CampaignDocument.update((doc) => {
-      const quest = doc.threads.find((thread) => thread.id === questId);
-      if (!quest) return;
-      doc.questEntries.push(entry);
-      quest.entryIds ??= [];
-      quest.entryIds.push(entry.id);
-      quest.updated = Date.now();
+      if (!doc.storyThreads.some((thread) => thread.id === storyThreadId)) return;
+      doc.storyEntries.push(entry);
     });
     return foundry.utils.duplicate(entry);
   }
@@ -70,7 +79,7 @@ export class QuestEntryService {
     if (!id || !patch) return null;
     let updated = null;
     await CampaignDocument.update((doc) => {
-      const entry = doc.questEntries.find((item) => item.id === id);
+      const entry = doc.storyEntries.find((item) => item.id === id);
       if (!entry) return;
 
       if (typeof patch.title === "string") entry.title = patch.title;
@@ -110,14 +119,9 @@ export class QuestEntryService {
     if (!id) return false;
     let removed = false;
     await CampaignDocument.update((doc) => {
-      const index = doc.questEntries.findIndex((entry) => entry.id === id);
+      const index = doc.storyEntries.findIndex((entry) => entry.id === id);
       if (index < 0) return;
-      const [entry] = doc.questEntries.splice(index, 1);
-      const quest = doc.threads.find((thread) => thread.id === entry.questId);
-      if (quest) {
-        quest.entryIds = (quest.entryIds ?? []).filter((entryId) => entryId !== id);
-        quest.updated = Date.now();
-      }
+      doc.storyEntries.splice(index, 1);
       removed = true;
     });
     return removed;

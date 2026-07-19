@@ -120,7 +120,7 @@ export class CampaignMemoryService {
   }
 
   /**
-   * Computed history for an Actor, Quest, Quest Entry, Location, or Item.
+   * Computed history for an Actor, Quest, Story Entry, Location, or Item.
    * Scans stored memory references only — no duplicated reverse index.
    * @param {{
    *   kind: "actor"|"quest"|"beat"|"scene"|"item",
@@ -240,7 +240,7 @@ export class CampaignMemoryService {
   }
 
   /**
-   * Same mention → related* mapping used by Quest Overview / Quest Entries.
+   * Same mention → related* mapping used by Quest Overview / Story Entries.
    * @param {import("./entity-mentions.js").MentionReference[]} mentions
    */
   static #refsFromMentions(mentions) {

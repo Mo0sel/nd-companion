@@ -119,7 +119,7 @@ export class ContextEngine {
         ])
     );
     ContextEngine.#quests = new Map(doc.threads.map((quest) => [quest.id, quest]));
-    ContextEngine.#entries = new Map(doc.questEntries.map((entry) => [entry.id, entry]));
+    ContextEngine.#entries = new Map(doc.storyEntries.map((entry) => [entry.id, entry]));
     ContextEngine.#storyThreads = new Map(
       doc.storyThreads.map((thread) => [thread.id, thread])
     );
@@ -129,26 +129,24 @@ export class ContextEngine {
 
     for (const session of ContextEngine.#sessions.values()) {
       const sessionEntryIds = session.relatedQuestEntries ?? [];
-      const owningQuestIds = sessionEntryIds
-        .map((id) => ContextEngine.#entries.get(id)?.questId)
+      const owningStoryThreadIds = sessionEntryIds
+        .map((id) => ContextEngine.#entries.get(id)?.storyThreadId)
         .filter(Boolean);
       ContextEngine.#connectGroup([
         { kind: "session", id: session.id },
         ...(session.relatedActors ?? []).map((id) => ({ kind: "actor", id })),
         ...(session.relatedLocations ?? []).map((id) => ({ kind: "location", id })),
         ...(session.relatedItems ?? []).map((id) => ({ kind: "item", id })),
-        ...[...(session.relatedQuests ?? []), ...owningQuestIds].map(
-          (id) => ({ kind: "quest", id })
-        ),
+        ...(session.relatedQuests ?? []).map((id) => ({ kind: "quest", id })),
+        ...owningStoryThreadIds.map((id) => ({ kind: "storyThread", id })),
         ...sessionEntryIds.map((id) => ({ kind: "questEntry", id }))
       ]);
     }
 
     for (const quest of ContextEngine.#quests.values()) {
-      const entryIds = new Set([...(quest.entryIds ?? []), ...(quest.relatedBeatIds ?? [])]);
       ContextEngine.#connectGroup([
         { kind: "quest", id: quest.id },
-        ...[...entryIds]
+        ...(quest.relatedBeatIds ?? [])
           .filter((id) => ContextEngine.#entries.has(id))
           .map((id) => ({ kind: "questEntry", id })),
         ...(quest.relatedCharacterIds ?? []).map((id) => ({ kind: "actor", id })),
@@ -160,7 +158,9 @@ export class ContextEngine {
     for (const entry of ContextEngine.#entries.values()) {
       ContextEngine.#connectGroup([
         { kind: "questEntry", id: entry.id },
-        ...(entry.questId ? [{ kind: "quest", id: entry.questId }] : []),
+        ...(entry.storyThreadId
+          ? [{ kind: "storyThread", id: entry.storyThreadId }]
+          : []),
         ...(entry.relatedBeatIds ?? [])
           .filter((id) => ContextEngine.#entries.has(id))
           .map((id) => ({ kind: "questEntry", id })),

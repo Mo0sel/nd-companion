@@ -94,7 +94,7 @@ export class CompanionStorage {
         activeSessionId: "",
         sessions: [],
         threads: [],
-        questEntries: [],
+        storyEntries: [],
         storyThreads: [],
         factions: []
       }
@@ -181,7 +181,7 @@ export class CompanionStorage {
   }
 
   /**
-   * @returns {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], questEntries: object[], storyThreads: object[], factions: object[] }}
+   * @returns {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], storyEntries: object[], storyThreads: object[], factions: object[] }}
    */
   static getCampaign() {
     const doc = game.settings.get(MODULE_ID, CAMPAIGN_SETTING);
@@ -191,7 +191,7 @@ export class CompanionStorage {
         activeSessionId: "",
         sessions: [],
         threads: [],
-        questEntries: [],
+        storyEntries: [],
         storyThreads: [],
         factions: []
       }
@@ -199,7 +199,7 @@ export class CompanionStorage {
   }
 
   /**
-   * @param {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], questEntries: object[], storyThreads: object[], factions: object[] }} value
+   * @param {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], storyEntries: object[], storyThreads: object[], factions: object[] }} value
    * @returns {Promise<object>}
    */
   static async setCampaign(value) {
@@ -212,7 +212,7 @@ export class CompanionStorage {
           activeSessionId: "",
           sessions: [],
           threads: [],
-          questEntries: [],
+          storyEntries: [],
           storyThreads: [],
           factions: []
         }
@@ -349,7 +349,10 @@ export class CompanionStorage {
       typeof campaign.activeSessionId === "string" ? campaign.activeSessionId : "";
     campaign.sessions = Array.isArray(campaign.sessions) ? campaign.sessions : [];
     campaign.threads = Array.isArray(campaign.threads) ? campaign.threads : [];
-    campaign.questEntries = Array.isArray(campaign.questEntries) ? campaign.questEntries : [];
+    campaign.storyEntries = Array.isArray(campaign.storyEntries)
+      ? campaign.storyEntries
+      : Array.isArray(campaign.questEntries) ? campaign.questEntries : [];
+    delete campaign.questEntries;
     campaign.storyThreads = Array.isArray(campaign.storyThreads) ? campaign.storyThreads : [];
     campaign.factions = Array.isArray(campaign.factions) ? campaign.factions : [];
     campaign.schemaVersion = Number.isFinite(campaign.schemaVersion)
@@ -424,7 +427,7 @@ export class CompanionStorage {
  * @property {number} schemaVersion
  * @property {string} foundryVersion
  * @property {string} exportedAt
- * @property {object} campaign Campaign document (sessions, quests, quest entries, story threads)
+ * @property {object} campaign Campaign document (sessions, quests, story entries, story threads)
  * @property {{ currentIndex: number, beats: object[] }} playbook
  * @property {Record<string, string>} campaignMemory Per-document memory bag
  */

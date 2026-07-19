@@ -37,7 +37,6 @@ import { CompanionStorage } from "./storage.js";
  * @property {string} [type]
  * @property {QuestCategory} category
  * @property {string} overview
- * @property {string[]} entryIds
  * @property {string} description
  * @property {string} notes
  * @property {string[]} relatedBeatIds
@@ -49,10 +48,11 @@ import { CompanionStorage } from "./storage.js";
  */
 
 /**
- * Campaign-authored playable content. Imported copies become Playbook Beats.
+ * Campaign-authored playable content owned by a Story Thread.
+ * Imported copies become Playbook Beats.
  * @typedef {object} CampaignQuestEntry
  * @property {string} id
- * @property {string} questId
+ * @property {string} storyThreadId
  * @property {string} title
  * @property {QuestEntryStatus} status
  * @property {string} speechNotes
@@ -118,12 +118,12 @@ import { CompanionStorage } from "./storage.js";
  * @property {string} activeSessionId
  * @property {CampaignSession[]} sessions
  * @property {CampaignThread[]} threads
- * @property {CampaignQuestEntry[]} questEntries
+ * @property {CampaignQuestEntry[]} storyEntries
  * @property {CampaignStoryThread[]} storyThreads
  * @property {CampaignFaction[]} factions
  */
 
-export const CAMPAIGN_SCHEMA_VERSION = 4;
+export const CAMPAIGN_SCHEMA_VERSION = 5;
 
 export const SESSION_STATUSES = Object.freeze(["planned", "active", "completed"]);
 export const THREAD_STATUSES = Object.freeze(["OPEN", "ACTIVE", "RESOLVED"]);
@@ -169,18 +169,24 @@ export class CampaignDocument {
    */
   static async ready() {
     const stored = CompanionStorage.getCampaign();
+    const previousVersion = Number.isFinite(stored?.schemaVersion)
+      ? stored.schemaVersion
+      : 0;
     const needsMigration =
       !stored ||
       typeof stored !== "object" ||
       !Number.isFinite(stored.schemaVersion) ||
       stored.schemaVersion < CAMPAIGN_SCHEMA_VERSION;
 
-    if (needsMigration) {
-      CampaignDocument.#doc = CampaignDocument.#migrateFromLegacy(stored);
+    // Auto-create Story Threads only during migration. Re-running creation on
+    // every normalize would mint new random IDs for orphaned entries.
+    CampaignDocument.#doc = needsMigration
+      ? CampaignDocument.#migrateFromLegacy(stored)
+      : CampaignDocument.#normalize(stored, { allowCreateOwners: false });
+
+    if (needsMigration || CampaignDocument.#doc.schemaVersion !== previousVersion) {
       await CompanionStorage.setCampaign(CampaignDocument.#doc);
-      await CompanionStorage.clearLegacySessionFields();
-    } else {
-      CampaignDocument.#doc = CampaignDocument.#normalize(stored);
+      if (needsMigration) await CompanionStorage.clearLegacySessionFields();
     }
 
     CampaignDocument.#ready = true;
@@ -224,17 +230,16 @@ export class CampaignDocument {
 
     const existingSessions = Array.isArray(stored?.sessions) ? stored.sessions : [];
     if (existingSessions.length > 0) {
-      const normalized = CampaignDocument.#normalize({
-        schemaVersion: CAMPAIGN_SCHEMA_VERSION,
+      return CampaignDocument.#normalize({
+        schemaVersion: stored?.schemaVersion,
         activeSessionId: stored?.activeSessionId,
         sessions: existingSessions,
         threads: stored?.threads,
-        questEntries: stored?.questEntries,
+        storyEntries: stored?.storyEntries ?? stored?.questEntries,
         storyThreads: stored?.storyThreads,
         factions: stored?.factions,
         memoryRecords: stored?.memoryRecords
-      });
-      return normalized;
+      }, { allowCreateOwners: true });
     }
 
     const sessionId = foundry.utils.randomID();
@@ -261,22 +266,24 @@ export class CampaignDocument {
     };
 
     return CampaignDocument.#normalize({
-      schemaVersion: CAMPAIGN_SCHEMA_VERSION,
+      schemaVersion: stored?.schemaVersion,
       activeSessionId: sessionId,
       sessions: [session],
-      threads: CampaignDocument.#normalizeThreads(stored?.threads),
-      questEntries: CampaignDocument.#normalizeQuestEntries(stored?.questEntries),
-      storyThreads: CampaignDocument.#normalizeStoryThreads(stored?.storyThreads),
-      factions: CampaignDocument.#normalizeFactions(stored?.factions),
+      threads: stored?.threads,
+      storyEntries: stored?.storyEntries ?? stored?.questEntries,
+      storyThreads: stored?.storyThreads,
+      factions: stored?.factions,
       memoryRecords: stored?.memoryRecords
-    });
+    }, { allowCreateOwners: true });
   }
 
   /**
    * @param {unknown} stored
+   * @param {{ allowCreateOwners?: boolean }} [options]
    * @returns {CampaignDocumentData}
    */
-  static #normalize(stored) {
+  static #normalize(stored, options = {}) {
+    const allowCreateOwners = options.allowCreateOwners !== false;
     const sessions = CampaignDocument.#normalizeSessions(stored?.sessions);
     const migratedMemory = CampaignDocument.#normalizeMemorySessions(stored?.memoryRecords);
     const knownIds = new Set(sessions.map((session) => session.id));
@@ -292,13 +299,34 @@ export class CampaignDocument {
       activeSessionId = sessions.find((session) => session.status !== "completed")?.id ?? "";
     }
 
+    const threads = CampaignDocument.#normalizeThreads(stored?.threads);
+    const storyThreads = CampaignDocument.#normalizeStoryThreads(stored?.storyThreads);
+    const rawEntries = Array.isArray(stored?.storyEntries)
+      ? stored.storyEntries
+      : Array.isArray(stored?.questEntries) ? stored.questEntries : [];
+    const legacyQuestByEntry = CampaignDocument.#legacyQuestOwners(
+      stored?.threads,
+      rawEntries
+    );
+    const storyEntries = rawEntries.map((entry) =>
+      CampaignDocument.normalizeQuestEntry(entry)
+    );
+    CampaignDocument.#assignStoryEntryOwners({
+      entries: storyEntries,
+      rawEntries,
+      threads,
+      storyThreads,
+      legacyQuestByEntry,
+      allowCreateOwners
+    });
+
     return {
       schemaVersion: CAMPAIGN_SCHEMA_VERSION,
       activeSessionId,
       sessions,
-      threads: CampaignDocument.#normalizeThreads(stored?.threads),
-      questEntries: CampaignDocument.#normalizeQuestEntries(stored?.questEntries),
-      storyThreads: CampaignDocument.#normalizeStoryThreads(stored?.storyThreads),
+      threads,
+      storyEntries,
+      storyThreads,
       factions: CampaignDocument.#normalizeFactions(stored?.factions)
     };
   }
@@ -321,13 +349,67 @@ export class CampaignDocument {
     return value.map((thread) => CampaignDocument.normalizeThread(thread));
   }
 
-  /**
-   * @param {unknown} value
-   * @returns {CampaignQuestEntry[]}
-   */
-  static #normalizeQuestEntries(value) {
-    if (!Array.isArray(value)) return [];
-    return value.map((entry) => CampaignDocument.normalizeQuestEntry(entry));
+  static #legacyQuestOwners(rawThreads, rawEntries) {
+    const owners = new Map();
+    for (const entry of Array.isArray(rawEntries) ? rawEntries : []) {
+      if (typeof entry?.id === "string" && typeof entry?.questId === "string") {
+        owners.set(entry.id, entry.questId);
+      }
+    }
+    for (const quest of Array.isArray(rawThreads) ? rawThreads : []) {
+      if (typeof quest?.id !== "string" || !Array.isArray(quest?.entryIds)) continue;
+      for (const entryId of quest.entryIds) {
+        if (typeof entryId === "string" && !owners.has(entryId)) {
+          owners.set(entryId, quest.id);
+        }
+      }
+    }
+    return owners;
+  }
+
+  static #assignStoryEntryOwners({
+    entries,
+    rawEntries,
+    threads,
+    storyThreads,
+    legacyQuestByEntry,
+    allowCreateOwners = true
+  }) {
+    const storyIds = new Set(storyThreads.map((thread) => thread.id));
+    const questsById = new Map(threads.map((quest) => [quest.id, quest]));
+    const rawById = new Map(
+      rawEntries
+        .filter((entry) => typeof entry?.id === "string")
+        .map((entry) => [entry.id, entry])
+    );
+    const generatedByQuest = new Map();
+
+    for (const entry of entries) {
+      if (entry.storyThreadId && storyIds.has(entry.storyThreadId)) continue;
+      const raw = rawById.get(entry.id);
+      const questId = typeof raw?.questId === "string"
+        ? raw.questId
+        : legacyQuestByEntry.get(entry.id) ?? "";
+      let owner = storyThreads.find(
+        (thread) => questId && thread.relatedQuestIds.includes(questId)
+      );
+      if (!owner && questId) owner = generatedByQuest.get(questId);
+      if (!owner && allowCreateOwners) {
+        const quest = questsById.get(questId);
+        owner = CampaignDocument.normalizeStoryThread({
+          id: foundry.utils.randomID(),
+          title: quest?.title?.trim() || entry.title?.trim() || "Untitled Story Thread",
+          status: quest?.status === "RESOLVED" ? "RESOLVED" : "ACTIVE",
+          relatedQuestIds: quest ? [quest.id] : [],
+          created: entry.created,
+          updated: entry.updated
+        });
+        storyThreads.push(owner);
+        storyIds.add(owner.id);
+        if (questId) generatedByQuest.set(questId, owner);
+      }
+      if (owner) entry.storyThreadId = owner.id;
+    }
   }
 
   /**
@@ -457,7 +539,6 @@ export class CampaignDocument {
             : typeof thread?.notes === "string"
               ? thread.notes
               : "",
-      entryIds: idList(thread?.entryIds),
       description: typeof thread?.description === "string" ? thread.description : "",
       notes: typeof thread?.notes === "string" ? thread.notes : "",
       relatedBeatIds: idList(thread?.relatedBeatIds),
@@ -483,7 +564,8 @@ export class CampaignDocument {
 
     return {
       id: typeof entry?.id === "string" && entry.id ? entry.id : foundry.utils.randomID(),
-      questId: typeof entry?.questId === "string" ? entry.questId : "",
+      storyThreadId:
+        typeof entry?.storyThreadId === "string" ? entry.storyThreadId : "",
       title: typeof entry?.title === "string" ? entry.title : "",
       status,
       speechNotes: typeof entry?.speechNotes === "string" ? entry.speechNotes : "",
@@ -578,7 +660,7 @@ export class CampaignDocument {
       activeSessionId: "",
       sessions: [],
       threads: [],
-      questEntries: [],
+      storyEntries: [],
       storyThreads: [],
       factions: []
     };

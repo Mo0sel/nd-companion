@@ -2,10 +2,10 @@ import { Playbook } from "./playbook.js";
 import { PlaybookPrepare } from "./playbook-prepare.js";
 import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
-import { ThreadService } from "./thread-service.js";
+import { StoryThreadService } from "./story-thread-service.js";
 
 /**
- * PREPARE workflow for cloning campaign Quest Entries into the active Session.
+ * Legacy workflow for cloning campaign Story Entries into the active Session.
  */
 export class SessionBuilder {
   /** @type {WeakMap<HTMLElement, AbortController>} */
@@ -54,25 +54,18 @@ export class SessionBuilder {
     if (!list) return;
     list.replaceChildren();
 
-    const quests = ThreadService.list();
+    const storyThreads = StoryThreadService.list();
     const imported = new Set(
-      PlaybookService.getDocument().beats.map((entry) => entry.sourceQuestEntryId).filter(Boolean)
+      PlaybookService.getDocument().beats.map((entry) => entry.sourceStoryEntryId).filter(Boolean)
     );
     let count = 0;
 
-    for (const category of ["MAIN", "SIDE", "COMPANION"]) {
-      const categoryQuests = quests.filter((quest) => quest.category === category);
-      if (!categoryQuests.length) continue;
-      const categoryHeading = document.createElement("h3");
-      categoryHeading.textContent = `${category} QUESTS`;
-      list.append(categoryHeading);
-
-      for (const quest of categoryQuests) {
-        const entries = QuestEntryService.listForQuest(quest.id);
+    for (const storyThread of storyThreads) {
+        const entries = QuestEntryService.listForStoryThread(storyThread.id);
         if (!entries.length) continue;
         const group = document.createElement("fieldset");
         const legend = document.createElement("legend");
-        legend.textContent = quest.title?.trim() || "Untitled Quest";
+        legend.textContent = storyThread.title?.trim() || "Untitled Story Thread";
         group.append(legend);
 
         for (const entry of entries) {
@@ -95,13 +88,12 @@ export class SessionBuilder {
           count += 1;
         }
         list.append(group);
-      }
     }
 
     if (count === 0) {
       const empty = document.createElement("p");
       empty.className = "nd-campaign-empty";
-      empty.textContent = "No Quest Entries are available to import.";
+      empty.textContent = "No Story Entries are available to import.";
       list.append(empty);
     }
   }
@@ -112,7 +104,7 @@ export class SessionBuilder {
       .map((checkbox) => checkbox.value);
     const entries = ids.map((id) => QuestEntryService.getById(id)).filter(Boolean);
     if (!entries.length) return;
-    await PlaybookService.importQuestEntries(entries);
+    await PlaybookService.importStoryEntries(entries);
     dialog.hidden = true;
     PlaybookPrepare.paint(root);
     Playbook.refreshOpen();

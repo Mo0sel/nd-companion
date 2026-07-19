@@ -29,6 +29,7 @@ Hooks.once("ready", async () => {
   // Beats first (stable ids), then campaign migration + session bridge.
   await PlaybookService.ready();
   await CampaignDocument.ready();
+  await PlaybookService.alignStoryEntrySources();
   await SessionService.ready();
   registerSearchProviders();
   window.nd ??= {};

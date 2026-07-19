@@ -79,4 +79,23 @@ export class StoryThreadService {
     });
     return updated;
   }
+
+  /**
+   * @param {string} id
+   * @returns {Promise<boolean>}
+   */
+  static async delete(id) {
+    if (!id) return false;
+    let removed = false;
+    await CampaignDocument.update((doc) => {
+      const index = doc.storyThreads.findIndex((thread) => thread.id === id);
+      if (index < 0) return;
+      doc.storyThreads.splice(index, 1);
+      doc.storyEntries = doc.storyEntries.filter(
+        (entry) => entry.storyThreadId !== id
+      );
+      removed = true;
+    });
+    return removed;
+  }
 }

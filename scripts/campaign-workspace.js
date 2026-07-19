@@ -31,7 +31,7 @@ const ENTRY_FIELDS = Object.freeze([
 
 /**
  * Campaign authoring workspace.
- * Threads are presented as Quests; Quest Entries are campaign-owned sources.
+ * Quests are player objectives; Story Threads own playable Story Entries.
  */
 export class CampaignWorkspace {
   /** @type {"quest"|"storyThread"|"faction"|"memory"|"entity"} */
@@ -159,10 +159,12 @@ export class CampaignWorkspace {
     if (!entry) return false;
     void CampaignWorkspace.flush(root).catch(() => {});
     CampaignWorkspace.#captureScroll(root);
-    CampaignWorkspace.#view = "quest";
-    CampaignWorkspace.#section = "quests";
-    CampaignWorkspace.#questId = entry.questId;
-    CampaignWorkspace.#lastSelections.set("quests", entry.questId);
+    if (!StoryThreadService.getById(entry.storyThreadId)) return false;
+    CampaignWorkspace.#view = "storyThread";
+    CampaignWorkspace.#section = "storyThreads";
+    CampaignWorkspace.#questId = null;
+    CampaignWorkspace.#storyThreadId = entry.storyThreadId;
+    CampaignWorkspace.#lastSelections.set("storyThreads", entry.storyThreadId);
     CampaignWorkspace.#openEntryId = entry.id;
     CampaignWorkspace.paint(root);
     return true;
@@ -432,8 +434,20 @@ export class CampaignWorkspace {
           return;
         }
 
-        if (target.closest("[data-add-quest-entry]")) {
+        if (target.closest("[data-add-story-entry]")) {
           void CampaignWorkspace.#createEntry(root);
+          return;
+        }
+
+        if (target.closest("[data-load-story-entries]")) {
+          void CampaignWorkspace.#loadStoryEntries(root);
+          return;
+        }
+
+        const loadStoryEntry = target.closest("[data-load-story-entry]");
+        if (loadStoryEntry) {
+          const id = loadStoryEntry.getAttribute("data-load-story-entry");
+          if (id) void CampaignWorkspace.#loadStoryEntry(root, id);
           return;
         }
 
@@ -589,17 +603,20 @@ export class CampaignWorkspace {
 
   static async #saveActive(root) {
     if (CampaignWorkspace.#view === "quest" && CampaignWorkspace.#questId) {
-      const entryIds = [...root.querySelectorAll("[data-quest-entry-id]")]
-        .map((entry) => entry.getAttribute("data-quest-entry-id"))
-        .filter(Boolean);
-      await Promise.all([
-        CampaignWorkspace.#saveQuest(root, false),
-        ...entryIds.map((id) => CampaignWorkspace.#saveEntry(root, id, false))
-      ]);
+      await CampaignWorkspace.#saveQuest(root, false);
       return;
     }
     if (CampaignWorkspace.#view === "storyThread" && CampaignWorkspace.#storyThreadId) {
-      await CampaignWorkspace.#saveStoryThread(root, false);
+      const view = root.querySelector("[data-story-thread-view]");
+      const entryIds = view
+        ? [...view.querySelectorAll("[data-quest-entry-id]")]
+            .map((entry) => entry.getAttribute("data-quest-entry-id"))
+            .filter(Boolean)
+        : [];
+      await Promise.all([
+        CampaignWorkspace.#saveStoryThread(root, false),
+        ...entryIds.map((id) => CampaignWorkspace.#saveEntry(root, id, false))
+      ]);
       return;
     }
     if (CampaignWorkspace.#view === "faction" && CampaignWorkspace.#factionId) {
@@ -710,6 +727,33 @@ export class CampaignWorkspace {
         EntityMentions.extract(`${thread.description ?? ""}${thread.currentState ?? ""}`)
       )
     );
+
+    const list = view.querySelector("[data-story-entry-list]");
+    const entries = QuestEntryService.listForStoryThread(thread.id);
+    if (list instanceof HTMLElement) {
+      list.replaceChildren();
+      if (!entries.length) {
+        const empty = document.createElement("div");
+        empty.className = "nd-quest-empty nd-quest-empty--entries";
+        empty.textContent = "No Story Entries yet.";
+        list.append(empty);
+      } else {
+        for (const entry of entries) list.append(CampaignWorkspace.#entryElement(entry));
+      }
+    }
+    const load = view.querySelector("[data-load-story-entries]");
+    if (load instanceof HTMLButtonElement) {
+      const imported = new Set(
+        PlaybookService.getDocument().beats
+          .map((beat) => beat.sourceStoryEntryId)
+          .filter(Boolean)
+      );
+      const available = entries.filter((entry) => !imported.has(entry.id)).length;
+      load.disabled = available === 0;
+      load.textContent = available > 0
+        ? `Load into Play (${available})`
+        : "Loaded into Play";
+    }
 
     ContextPanel.paint(
       view.querySelector("[data-context-panel=\"storyThread\"]"),
@@ -1038,20 +1082,6 @@ export class CampaignWorkspace {
     if (category instanceof HTMLSelectElement) category.value = quest.category ?? "SIDE";
     if (overview instanceof HTMLElement) overview.innerHTML = RichText.sanitize(quest.overview ?? "");
 
-    const list = editor.querySelector("[data-quest-entry-list]");
-    if (list) {
-      list.replaceChildren();
-      const entries = QuestEntryService.listForQuest(quest.id);
-      if (!entries.length) {
-        const noEntries = document.createElement("div");
-        noEntries.className = "nd-quest-empty nd-quest-empty--entries";
-        noEntries.textContent = "No playable entries yet.";
-        list.append(noEntries);
-      } else {
-        for (const entry of entries) list.append(CampaignWorkspace.#entryElement(entry));
-      }
-    }
-
     ContextPanel.paint(
       editor.querySelector("[data-context-panel=\"quest\"]"),
       ContextEngine.getContext({ kind: "quest", id: quest.id })
@@ -1164,6 +1194,19 @@ export class CampaignWorkspace {
 
     const references = CampaignWorkspace.#referencesElement(entry);
     body.append(references);
+
+    const playActions = document.createElement("div");
+    playActions.className = "nd-quest-actions";
+    const load = document.createElement("button");
+    load.type = "button";
+    load.dataset.loadStoryEntry = entry.id;
+    const isLoaded = PlaybookService.getDocument().beats.some(
+      (beat) => beat.sourceStoryEntryId === entry.id
+    );
+    load.disabled = isLoaded;
+    load.textContent = isLoaded ? "Loaded into Play" : "Load into Play";
+    playActions.append(load);
+    body.append(playActions);
 
     const entryContext = ContextEngine.getContext({ kind: "questEntry", id: entry.id });
     const historySection = document.createElement("section");
@@ -1643,10 +1686,29 @@ export class CampaignWorkspace {
   }
 
   static async #createEntry(root) {
-    if (!CampaignWorkspace.#questId) return;
-    const entry = await QuestEntryService.create(CampaignWorkspace.#questId);
+    if (!CampaignWorkspace.#storyThreadId) return;
+    const entry = await QuestEntryService.create(CampaignWorkspace.#storyThreadId);
     if (!entry) return;
     CampaignWorkspace.#openEntryId = entry.id;
+    CampaignWorkspace.paint(root);
+  }
+
+  static async #loadStoryEntries(root) {
+    if (!CampaignWorkspace.#storyThreadId) return;
+    await CampaignWorkspace.flush(root);
+    const entries = QuestEntryService.listForStoryThread(
+      CampaignWorkspace.#storyThreadId
+    );
+    await PlaybookService.importStoryEntries(entries);
+    CampaignWorkspace.paint(root);
+  }
+
+  static async #loadStoryEntry(root, id) {
+    const entry = QuestEntryService.getById(id);
+    if (!entry || entry.storyThreadId !== CampaignWorkspace.#storyThreadId) return;
+    await CampaignWorkspace.flush(root);
+    await PlaybookService.importStoryEntries([QuestEntryService.getById(id)]);
+    CampaignWorkspace.#openEntryId = id;
     CampaignWorkspace.paint(root);
   }
 

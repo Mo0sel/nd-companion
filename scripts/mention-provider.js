@@ -9,7 +9,7 @@ const GROUP_LABELS = Object.freeze({
   scene: "Locations",
   journal: "Journals",
   rollTable: "Roll Tables",
-  beat: "Entries",
+  beat: "Story Entries",
   quest: "Quests",
   session: "Chronicle Sessions",
   storyThread: "Story Threads",
@@ -94,7 +94,7 @@ export class MentionProvider {
 
     const campaignEntries = QuestEntryService.list();
     const legacySessionEntries = PlaybookService.getDocument().beats.filter(
-      (entry) => !entry.sourceQuestEntryId
+      (entry) => !entry.sourceStoryEntryId
     );
     const beatEntries = [...campaignEntries, ...legacySessionEntries]
       .filter((beat) => matches(beat.title))

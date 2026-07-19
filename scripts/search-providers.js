@@ -136,14 +136,15 @@ export function registerSearchProviders() {
   });
 
   SearchService.registerProvider({
-    id: "quest-entries",
-    label: "Quest Entries",
+    id: "story-entries",
+    label: "Story Entries",
     getItems: () =>
       QuestEntryService.list().map((entry) => ({
         id: entry.id,
         title: entry.title?.trim() || "Untitled Entry",
-        subtitle: ThreadService.getById(entry.questId)?.title || "Quest Entry",
-        group: "QUEST ENTRY"
+        subtitle:
+          StoryThreadService.getById(entry.storyThreadId)?.title || "Story Entry",
+        group: "STORY ENTRY"
       })),
     open: (id, context) => {
       context.openQuestEntry(id);

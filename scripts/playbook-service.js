@@ -1,4 +1,5 @@
 import { CompanionStorage } from "./storage.js";
+import { CampaignDocument } from "./campaign-document.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { SessionService } from "./session-service.js";
 
@@ -21,8 +22,8 @@ import { SessionService } from "./session-service.js";
  * @property {string} setup
  * @property {string} twist
  * @property {string} possibleOutcomes
- * @property {string} sourceQuestId
- * @property {string} sourceQuestEntryId
+ * @property {string} sourceStoryThreadId
+ * @property {string} sourceStoryEntryId
  * @property {string[]} relatedBeatIds
  * @property {string[]} relatedCharacterIds
  * @property {string[]} relatedLocationIds
@@ -152,6 +153,26 @@ export class PlaybookService {
    */
   static reload() {
     PlaybookService.#doc = PlaybookService.#normalize(CompanionStorage.getPlaybook());
+  }
+
+  /**
+   * Resolve migrated Story Entry ownership without changing Beat ids or order.
+   */
+  static async alignStoryEntrySources() {
+    const owners = new Map(
+      CampaignDocument.get().storyEntries.map((entry) => [
+        entry.id,
+        entry.storyThreadId
+      ])
+    );
+    let changed = false;
+    for (const beat of PlaybookService.#doc.beats) {
+      const owner = owners.get(beat.sourceStoryEntryId);
+      if (!owner || beat.sourceStoryThreadId === owner) continue;
+      beat.sourceStoryThreadId = owner;
+      changed = true;
+    }
+    if (changed) await PlaybookService.#persist();
   }
 
   /**
@@ -316,7 +337,7 @@ export class PlaybookService {
 
   /**
    * Clear the completed session plan before the next live session.
-   * Campaign Quest Entries remain untouched and can be imported again.
+   * Campaign Story Entries remain untouched and can be imported again.
    * @returns {Promise<void>}
    */
   static async reset() {
@@ -328,15 +349,15 @@ export class PlaybookService {
   }
 
   /**
-   * Clone campaign Quest Entries into independent Session Beats.
+   * Clone campaign Story Entries into independent Session Beats.
    * Existing imports from the same source entry are skipped.
    * @param {import("./campaign-document.js").CampaignQuestEntry[]} entries
    * @returns {Promise<number[]>} Imported beat indices
    */
-  static async importQuestEntries(entries) {
+  static async importStoryEntries(entries) {
     if (!Array.isArray(entries)) return [];
     const importedSources = new Set(
-      PlaybookService.#doc.beats.map((beat) => beat.sourceQuestEntryId).filter(Boolean)
+      PlaybookService.#doc.beats.map((beat) => beat.sourceStoryEntryId).filter(Boolean)
     );
     const indices = [];
 
@@ -351,8 +372,8 @@ export class PlaybookService {
         setup: entry.setup,
         twist: entry.twist,
         possibleOutcomes: entry.possibleOutcomes,
-        sourceQuestId: entry.questId,
-        sourceQuestEntryId: entry.id,
+        sourceStoryThreadId: entry.storyThreadId,
+        sourceStoryEntryId: entry.id,
         relatedBeatIds: entry.relatedBeatIds,
         relatedCharacterIds: entry.relatedCharacterIds,
         relatedLocationIds: entry.relatedLocationIds,
@@ -365,6 +386,11 @@ export class PlaybookService {
 
     if (indices.length) await PlaybookService.#persist();
     return indices;
+  }
+
+  // Compatibility alias for pre-v0.3.10 integrations.
+  static importQuestEntries(entries) {
+    return PlaybookService.importStoryEntries(entries);
   }
 
   /**
@@ -501,9 +527,14 @@ export class PlaybookService {
       twist: typeof beat?.twist === "string" ? beat.twist : "",
       possibleOutcomes:
         typeof beat?.possibleOutcomes === "string" ? beat.possibleOutcomes : "",
-      sourceQuestId: typeof beat?.sourceQuestId === "string" ? beat.sourceQuestId : "",
-      sourceQuestEntryId:
-        typeof beat?.sourceQuestEntryId === "string" ? beat.sourceQuestEntryId : "",
+      sourceStoryThreadId:
+        typeof beat?.sourceStoryThreadId === "string"
+          ? beat.sourceStoryThreadId
+          : "",
+      sourceStoryEntryId:
+        typeof beat?.sourceStoryEntryId === "string"
+          ? beat.sourceStoryEntryId
+          : typeof beat?.sourceQuestEntryId === "string" ? beat.sourceQuestEntryId : "",
       relatedBeatIds: idList(beat?.relatedBeatIds),
       relatedCharacterIds: idList(beat?.relatedCharacterIds),
       relatedLocationIds: idList(beat?.relatedLocationIds),
@@ -529,8 +560,8 @@ export class PlaybookService {
       setup: beat.setup ?? "",
       twist: beat.twist ?? "",
       possibleOutcomes: beat.possibleOutcomes ?? "",
-      sourceQuestId: beat.sourceQuestId ?? "",
-      sourceQuestEntryId: beat.sourceQuestEntryId ?? "",
+      sourceStoryThreadId: beat.sourceStoryThreadId ?? "",
+      sourceStoryEntryId: beat.sourceStoryEntryId ?? "",
       relatedBeatIds: [...(beat.relatedBeatIds ?? [])],
       relatedCharacterIds: [...(beat.relatedCharacterIds ?? [])],
       relatedLocationIds: [...(beat.relatedLocationIds ?? [])],
@@ -556,8 +587,8 @@ export class PlaybookService {
       setup: "",
       twist: "",
       possibleOutcomes: "",
-      sourceQuestId: "",
-      sourceQuestEntryId: "",
+      sourceStoryThreadId: "",
+      sourceStoryEntryId: "",
       relatedBeatIds: [],
       relatedCharacterIds: [],
       relatedLocationIds: [],

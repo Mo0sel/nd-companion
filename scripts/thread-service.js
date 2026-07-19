@@ -44,7 +44,6 @@ export class ThreadService {
       type: typeof seed.type === "string" ? seed.type : "",
       category: seed.category,
       overview: typeof seed.overview === "string" ? seed.overview : "",
-      entryIds: [],
       description: typeof seed.description === "string" ? seed.description : "",
       notes: typeof seed.notes === "string" ? seed.notes : "",
       relatedBeatIds: [],
@@ -127,7 +126,6 @@ export class ThreadService {
       const index = doc.threads.findIndex((thread) => thread.id === id);
       if (index < 0) return;
       doc.threads.splice(index, 1);
-      doc.questEntries = doc.questEntries.filter((entry) => entry.questId !== id);
       ok = true;
     });
     return ok;

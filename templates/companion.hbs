@@ -456,19 +456,6 @@
               ></div>
             </div>
 
-            <section class="nd-quest-entries">
-              <header>
-                <div>
-                  <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Playable Content</div>
-                  <h3 class="nd-hierarchy-group">Quest Entries</h3>
-                </div>
-                <button type="button" class="nd-campaign-new-thread" data-add-quest-entry>
-                  + New Entry
-                </button>
-              </header>
-              <div data-quest-entry-list></div>
-            </section>
-
             <section data-context-panel="quest" hidden></section>
           </section>
 
@@ -519,6 +506,22 @@
                 aria-label="Story Thread Current State"
               ></div>
             </div>
+
+            <section class="nd-quest-entries nd-story-entries">
+              <header>
+                <div>
+                  <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Playable Content</div>
+                  <h3 class="nd-hierarchy-group">Story Entries</h3>
+                </div>
+                <div class="nd-story-entries__actions">
+                  <button type="button" data-load-story-entries>Load into Play</button>
+                  <button type="button" class="nd-campaign-new-thread" data-add-story-entry>
+                    + New Story Entry
+                  </button>
+                </div>
+              </header>
+              <div data-story-entry-list></div>
+            </section>
 
             <section data-context-panel="storyThread" hidden></section>
           </section>

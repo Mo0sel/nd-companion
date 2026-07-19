@@ -446,6 +446,13 @@
   margin-bottom: var(--nd-space-3);
 }
 
+.nd-story-entries__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--nd-space-2);
+}
+
 .nd-quest-entries h3 {
   margin: 2px 0 0;
 }
