@@ -28,7 +28,7 @@ Engine
 - Live Notes
 - Timeline
 - NPC Brain
-- Session Summary
+- Session Log
 - AI Assistant
 
 Knowledge Packs

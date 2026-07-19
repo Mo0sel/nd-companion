@@ -64,13 +64,18 @@ export class CampaignMemoryParser {
     }
 
     const seenNames = new Set();
+    const occupied = [];
     for (const candidate of CampaignMemoryParser.#catalog()) {
       const key = candidate.name.toLocaleLowerCase();
       if (seenNames.has(key)) continue;
       seenNames.add(key);
 
-      const ranges = CampaignMemoryParser.#findNameRanges(text, candidate.name);
+      const ranges = CampaignMemoryParser.#findNameRanges(text, candidate.name)
+        .filter((range) => !occupied.some(
+          (used) => range.start < used.end && range.end > used.start
+        ));
       if (!ranges.length) continue;
+      occupied.push(...ranges);
 
       // Resolve across all kinds so same-name Actor/Item collisions ask for confirmation.
       const match = CampaignMemoryParser.#resolveName(candidate.name, {
@@ -184,12 +189,16 @@ export class CampaignMemoryParser {
    */
   static #extractMentions(text) {
     const mentions = [];
-    const pattern = /@([A-Za-z][\w'-]*(?:\s+[A-Za-z][\w'-]*){0,5})/g;
-    let match;
-    while ((match = pattern.exec(text)) !== null) {
-      const name = match[1]?.trim();
-      if (!name) continue;
-      mentions.push({ name, kind: null });
+    const seen = new Set();
+    for (const candidate of CampaignMemoryParser.#catalog()) {
+      const name = candidate.name.trim();
+      const key = name.toLocaleLowerCase();
+      if (!name || seen.has(key)) continue;
+      const prefixed = `@${name}`;
+      if (CampaignMemoryParser.#findNameRanges(text, prefixed).length) {
+        mentions.push({ name, kind: null });
+        seen.add(key);
+      }
     }
     return mentions;
   }

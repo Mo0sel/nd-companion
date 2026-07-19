@@ -100,7 +100,10 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     badge.hidden = false;
     const isActive = session.status === "active";
     badge.toggleAttribute("data-idle", !isActive);
-    label.textContent = `${session.title?.trim() || "Session"}${isActive ? " · Live" : ""}`;
+    const sessionLabel = session.title?.trim()
+      ? `Session ${session.sessionNumber} · ${session.title.trim()}`
+      : `Session ${session.sessionNumber}`;
+    label.textContent = `${sessionLabel}${isActive ? " · Live" : ""}`;
   }
 
   async _onRender(_context, _options) {
@@ -110,7 +113,51 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     CampaignAwareness.paint(this.element, CampaignContext.get());
     FocusPanel.paint(this.element, FocusManager.get());
     Playbook.paint(this.element, Playbook.get());
-    Playbook.attach(this.element);
+    Playbook.attach(this.element, {
+      onEndSession: async () => {
+        const active = SessionService.getActive();
+        if (!active) {
+          ui.notifications?.warn("There is no active session to end.");
+          return;
+        }
+
+        const log = this.element.querySelector("[data-storage=\"sessionLog\"]");
+        if (log instanceof HTMLElement) {
+          await SessionService.setActiveSessionLog(log.textContent ?? "");
+        }
+
+        const nextNumber = active.sessionNumber + 1;
+        if (SessionService.list().some(
+          (session) => session.id !== active.id && session.sessionNumber === nextNumber
+        )) {
+          ui.notifications?.warn(
+            `Session ${nextNumber} already exists. Resolve that Chronicle entry before ending this session.`
+          );
+          return;
+        }
+        const confirmed = await foundry.applications.api.DialogV2.confirm({
+          window: { title: "End Session" },
+          content:
+            `<p>Archive <strong>Session ${active.sessionNumber}</strong> in Chronicle ` +
+            `and start <strong>Session ${nextNumber}</strong>?</p>`,
+          rejectClose: false,
+          modal: true
+        });
+        if (confirmed !== true) return;
+
+        const result = await SessionService.endActiveSession();
+        if (!result) {
+          ui.notifications?.error("The session could not be archived.");
+          return;
+        }
+
+        await PlaybookService.reset();
+        ui.notifications?.info(
+          `Session ${result.archived.sessionNumber} archived. Session ${result.next.sessionNumber} is ready.`
+        );
+        await this.render({ force: true });
+      }
+    });
     PlaybookPrepare.paint(this.element);
     PlaybookPrepare.attach(this.element);
     SessionBuilder.attach(this.element);
@@ -133,6 +180,10 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     PanelResizer.attach(this.element);
     GlobalSearch.attach(this.element, {
       openSession: (id) => {
+        if (SessionService.getActive()?.id === id) {
+          this.setWorkspace("play");
+          return;
+        }
         if (!CampaignWorkspace.selectSession(this.element, id)) return;
         this.setWorkspace("campaign");
       },

@@ -306,6 +306,19 @@ export class PlaybookService {
   }
 
   /**
+   * Clear the completed session plan before the next live session.
+   * Campaign Quest Entries remain untouched and can be imported again.
+   * @returns {Promise<void>}
+   */
+  static async reset() {
+    PlaybookService.#doc = {
+      currentIndex: 0,
+      beats: []
+    };
+    await PlaybookService.#persist();
+  }
+
+  /**
    * Clone campaign Quest Entries into independent Session Beats.
    * Existing imports from the same source entry are skipped.
    * @param {import("./campaign-document.js").CampaignQuestEntry[]} entries

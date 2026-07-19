@@ -19,7 +19,9 @@ export class CompanionStorage {
    *   getNotes: () => string,
    *   setNotes: (value: string) => Promise<string>,
    *   getSummary: () => string,
-   *   setSummary: (value: string) => Promise<string>
+ *   setSummary: (value: string) => Promise<string>,
+ *   getLog?: () => string,
+ *   setLog?: (value: string) => Promise<string>
    * }|null}
    */
   static #sessionBridge = null;
@@ -92,8 +94,7 @@ export class CompanionStorage {
         activeSessionId: "",
         sessions: [],
         threads: [],
-        questEntries: [],
-        memoryRecords: []
+        questEntries: []
       }
     });
   }
@@ -113,6 +114,11 @@ export class CompanionStorage {
         ? CompanionStorage.#sessionBridge.getSummary()
         : CompanionStorage.getLegacySessionSummary();
     }
+    if (key === "sessionLog") {
+      return CompanionStorage.#sessionBridge?.getLog?.()
+        ?? CompanionStorage.#sessionBridge?.getSummary?.()
+        ?? CompanionStorage.getLegacySessionSummary();
+    }
     return game.settings.get(MODULE_ID, key) ?? "";
   }
 
@@ -130,6 +136,15 @@ export class CompanionStorage {
     }
     if (key === "sessionSummary") {
       if (CompanionStorage.#sessionBridge) {
+        return CompanionStorage.#sessionBridge.setSummary(value ?? "");
+      }
+      return game.settings.set(MODULE_ID, "sessionSummary", value ?? "");
+    }
+    if (key === "sessionLog") {
+      if (CompanionStorage.#sessionBridge?.setLog) {
+        return CompanionStorage.#sessionBridge.setLog(value ?? "");
+      }
+      if (CompanionStorage.#sessionBridge?.setSummary) {
         return CompanionStorage.#sessionBridge.setSummary(value ?? "");
       }
       return game.settings.set(MODULE_ID, "sessionSummary", value ?? "");
@@ -164,7 +179,7 @@ export class CompanionStorage {
   }
 
   /**
-   * @returns {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], questEntries: object[], memoryRecords: object[] }}
+   * @returns {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], questEntries: object[] }}
    */
   static getCampaign() {
     const doc = game.settings.get(MODULE_ID, CAMPAIGN_SETTING);
@@ -174,14 +189,13 @@ export class CompanionStorage {
         activeSessionId: "",
         sessions: [],
         threads: [],
-        questEntries: [],
-        memoryRecords: []
+        questEntries: []
       }
     );
   }
 
   /**
-   * @param {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], questEntries: object[], memoryRecords?: object[] }} value
+   * @param {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], questEntries: object[] }} value
    * @returns {Promise<object>}
    */
   static async setCampaign(value) {
@@ -194,8 +208,7 @@ export class CompanionStorage {
           activeSessionId: "",
           sessions: [],
           threads: [],
-          questEntries: [],
-          memoryRecords: []
+          questEntries: []
         }
       )
     );

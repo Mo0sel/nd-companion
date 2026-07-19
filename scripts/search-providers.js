@@ -25,9 +25,11 @@ export function registerSearchProviders() {
     getItems: () =>
       SessionService.list().map((session) => ({
         id: session.id,
-        title: session.title || `Session ${session.sessionNumber}`,
-        subtitle: `Session ${session.sessionNumber}`,
-        group: "Sessions"
+        title: CampaignMemoryService.label(session),
+        subtitle: session.status === "active"
+          ? "Current Session"
+          : session.source === "imported" ? "Imported" : "Live",
+        group: session.status === "active" ? "Sessions" : "Chronicle"
       })),
     getQuickAccess: () => {
       const session = SessionService.getActive();
@@ -111,25 +113,6 @@ export function registerSearchProviders() {
       })),
     open: (id, context) => {
       context.openQuestEntry(id);
-      return true;
-    }
-  });
-
-  SearchService.registerProvider({
-    id: "memory",
-    label: "Campaign Memory",
-    getItems: () =>
-      CampaignMemoryService.list().map((record) => ({
-        id: record.id,
-        title: record.title?.trim()
-          ? `Session ${record.sessionNumber} · ${record.title.trim()}`
-          : `Session ${record.sessionNumber}`,
-        subtitle: record.summary.slice(0, 80) || "Campaign Memory",
-        group: "Campaign Memory"
-      })),
-    open: (id, context) => {
-      if (typeof context.openMemory !== "function") return false;
-      context.openMemory(id);
       return true;
     }
   });

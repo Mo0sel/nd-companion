@@ -470,7 +470,7 @@ export class Playbook {
   /**
    * @param {HTMLElement} root
    */
-  static attach(root) {
+  static attach(root, options = {}) {
     if (!(root instanceof HTMLElement)) return;
     const panel = root.querySelector("[data-playbook]");
     if (!panel) return;
@@ -494,6 +494,11 @@ export class Playbook {
           const direction = nav.getAttribute("data-playbook-nav");
           if (direction === "prev") void Playbook.prev();
           else if (direction === "next") void Playbook.next();
+          return;
+        }
+
+        if (target.closest("[data-end-session]")) {
+          void Promise.resolve(options.onEndSession?.());
           return;
         }
 

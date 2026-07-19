@@ -28,7 +28,7 @@
 
 # v0.4
 
-- [ ] Session Summary
+- [x] Session Log
 
 - [ ] AI Updates
 

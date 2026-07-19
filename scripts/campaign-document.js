@@ -14,7 +14,14 @@ import { CompanionStorage } from "./storage.js";
  * @property {string} inGameDate
  * @property {string} realDate
  * @property {string} notes
- * @property {string} summary
+ * @property {string} sessionLog
+ * @property {string} createdDate
+ * @property {"imported"|"live"} source
+ * @property {string[]} relatedActors
+ * @property {string[]} relatedLocations
+ * @property {string[]} relatedItems
+ * @property {string[]} relatedQuests
+ * @property {string[]} relatedQuestEntries
  * @property {string[]} beatIds
  * @property {number} created
  * @property {number} updated
@@ -62,34 +69,15 @@ import { CompanionStorage } from "./storage.js";
  */
 
 /**
- * Historical campaign knowledge imported from session summaries.
- * Separate from live Sessions used by PLAY/PREPARE.
- * Unknown future keys are preserved by normalizeMemoryRecord.
- * @typedef {object} CampaignMemoryRecord
- * @property {string} id
- * @property {number} sessionNumber
- * @property {string} title
- * @property {string} summary
- * @property {string[]} relatedCharacterIds
- * @property {string[]} relatedQuestIds
- * @property {string[]} relatedBeatIds
- * @property {string[]} relatedLocationIds
- * @property {string[]} relatedItemIds
- * @property {number} created
- * @property {number} updated
- */
-
-/**
  * @typedef {object} CampaignDocumentData
  * @property {number} schemaVersion
  * @property {string} activeSessionId
  * @property {CampaignSession[]} sessions
  * @property {CampaignThread[]} threads
  * @property {CampaignQuestEntry[]} questEntries
- * @property {CampaignMemoryRecord[]} memoryRecords
  */
 
-export const CAMPAIGN_SCHEMA_VERSION = 3;
+export const CAMPAIGN_SCHEMA_VERSION = 4;
 
 export const SESSION_STATUSES = Object.freeze(["planned", "active", "completed"]);
 export const THREAD_STATUSES = Object.freeze(["OPEN", "ACTIVE", "RESOLVED"]);
@@ -186,26 +174,33 @@ export class CampaignDocument {
     /** @type {CampaignSession} */
     const session = {
       id: sessionId,
-      title: "Session 1",
+      title: "",
       sessionNumber: 1,
       status: "active",
       inGameDate: "",
       realDate: new Date().toISOString().slice(0, 10),
       notes,
-      summary,
+      sessionLog: CampaignDocument.#plainText(summary),
+      createdDate: new Date(now).toISOString(),
+      source: "live",
+      relatedActors: [],
+      relatedLocations: [],
+      relatedItems: [],
+      relatedQuests: [],
+      relatedQuestEntries: [],
       beatIds,
       created: now,
       updated: now
     };
 
-    return {
+    return CampaignDocument.#normalize({
       schemaVersion: CAMPAIGN_SCHEMA_VERSION,
       activeSessionId: sessionId,
       sessions: [session],
       threads: CampaignDocument.#normalizeThreads(stored?.threads),
       questEntries: CampaignDocument.#normalizeQuestEntries(stored?.questEntries),
-      memoryRecords: CampaignDocument.#normalizeMemoryRecords(stored?.memoryRecords)
-    };
+      memoryRecords: stored?.memoryRecords
+    });
   }
 
   /**
@@ -214,11 +209,18 @@ export class CampaignDocument {
    */
   static #normalize(stored) {
     const sessions = CampaignDocument.#normalizeSessions(stored?.sessions);
+    const migratedMemory = CampaignDocument.#normalizeMemorySessions(stored?.memoryRecords);
+    const knownIds = new Set(sessions.map((session) => session.id));
+    for (const session of migratedMemory) {
+      if (!knownIds.has(session.id)) sessions.push(session);
+    }
     let activeSessionId =
       typeof stored?.activeSessionId === "string" ? stored.activeSessionId : "";
 
-    if (!sessions.some((session) => session.id === activeSessionId)) {
-      activeSessionId = sessions[0]?.id ?? "";
+    if (!sessions.some(
+      (session) => session.id === activeSessionId && session.status !== "completed"
+    )) {
+      activeSessionId = sessions.find((session) => session.status !== "completed")?.id ?? "";
     }
 
     return {
@@ -226,8 +228,7 @@ export class CampaignDocument {
       activeSessionId,
       sessions,
       threads: CampaignDocument.#normalizeThreads(stored?.threads),
-      questEntries: CampaignDocument.#normalizeQuestEntries(stored?.questEntries),
-      memoryRecords: CampaignDocument.#normalizeMemoryRecords(stored?.memoryRecords)
+      questEntries: CampaignDocument.#normalizeQuestEntries(stored?.questEntries)
     };
   }
 
@@ -258,13 +259,20 @@ export class CampaignDocument {
     return value.map((entry) => CampaignDocument.normalizeQuestEntry(entry));
   }
 
-  /**
-   * @param {unknown} value
-   * @returns {CampaignMemoryRecord[]}
-   */
-  static #normalizeMemoryRecords(value) {
+  static #normalizeMemorySessions(value) {
     if (!Array.isArray(value)) return [];
-    return value.map((record) => CampaignDocument.normalizeMemoryRecord(record));
+    return value.map((record) => CampaignDocument.normalizeSession({
+      ...record,
+      sessionLog: record?.sessionLog ?? record?.summary,
+      createdDate: record?.createdDate,
+      source: record?.source ?? "imported",
+      status: "completed",
+      relatedActors: record?.relatedActors ?? record?.relatedCharacterIds,
+      relatedLocations: record?.relatedLocations ?? record?.relatedLocationIds,
+      relatedItems: record?.relatedItems ?? record?.relatedItemIds,
+      relatedQuests: record?.relatedQuests ?? record?.relatedQuestIds,
+      relatedQuestEntries: record?.relatedQuestEntries ?? record?.relatedBeatIds
+    }));
   }
 
   /**
@@ -274,11 +282,21 @@ export class CampaignDocument {
   static normalizeSession(session) {
     const now = Date.now();
     const status = SESSION_STATUSES.includes(session?.status) ? session.status : "planned";
-    const beatIds = Array.isArray(session?.beatIds)
-      ? [...new Set(session.beatIds.filter((id) => typeof id === "string" && id))]
-      : [];
+    const idList = (value) =>
+      Array.isArray(value)
+        ? [...new Set(value.filter((id) => typeof id === "string" && id))]
+        : [];
+    const created = Number.isFinite(session?.created) ? session.created : now;
+    const legacyLog = typeof session?.summary === "string"
+      ? CampaignDocument.#plainText(session.summary)
+      : "";
+    const createdDate = typeof session?.createdDate === "string" && session.createdDate
+      ? session.createdDate
+      : typeof session?.realDate === "string" && session.realDate
+        ? session.realDate
+        : new Date(created).toISOString();
 
-    return {
+    const normalized = {
       id: typeof session?.id === "string" && session.id ? session.id : foundry.utils.randomID(),
       title: typeof session?.title === "string" ? session.title : "",
       sessionNumber: Number.isFinite(session?.sessionNumber)
@@ -288,11 +306,34 @@ export class CampaignDocument {
       inGameDate: typeof session?.inGameDate === "string" ? session.inGameDate : "",
       realDate: typeof session?.realDate === "string" ? session.realDate : "",
       notes: typeof session?.notes === "string" ? session.notes : "",
-      summary: typeof session?.summary === "string" ? session.summary : "",
-      beatIds,
-      created: Number.isFinite(session?.created) ? session.created : now,
+      sessionLog: typeof session?.sessionLog === "string" ? session.sessionLog : legacyLog,
+      createdDate,
+      source: session?.source === "imported" ? "imported" : "live",
+      relatedActors: idList(session?.relatedActors),
+      relatedLocations: idList(session?.relatedLocations),
+      relatedItems: idList(session?.relatedItems),
+      relatedQuests: idList(session?.relatedQuests),
+      relatedQuestEntries: idList(session?.relatedQuestEntries),
+      beatIds: idList(session?.beatIds),
+      created,
       updated: Number.isFinite(session?.updated) ? session.updated : now
     };
+    if (session && typeof session === "object") {
+      const legacyKeys = new Set([
+        "summary",
+        "memoryRecords",
+        "relatedCharacterIds",
+        "relatedLocationIds",
+        "relatedItemIds",
+        "relatedQuestIds",
+        "relatedBeatIds"
+      ]);
+      for (const [key, value] of Object.entries(session)) {
+        if (legacyKeys.has(key)) continue;
+        if (!(key in normalized) && value !== undefined) normalized[key] = value;
+      }
+    }
+    return normalized;
   }
 
   /**
@@ -372,44 +413,6 @@ export class CampaignDocument {
     };
   }
 
-  /**
-   * @param {unknown} record
-   * @returns {CampaignMemoryRecord}
-   */
-  static normalizeMemoryRecord(record) {
-    const now = Date.now();
-    const idList = (value) =>
-      Array.isArray(value)
-        ? [...new Set(value.filter((id) => typeof id === "string" && id))]
-        : [];
-
-    /** @type {CampaignMemoryRecord} */
-    const normalized = {
-      id: typeof record?.id === "string" && record.id ? record.id : foundry.utils.randomID(),
-      sessionNumber: Number.isFinite(record?.sessionNumber)
-        ? Math.max(1, Math.trunc(record.sessionNumber))
-        : 1,
-      title: typeof record?.title === "string" ? record.title : "",
-      summary: typeof record?.summary === "string" ? record.summary : "",
-      relatedCharacterIds: idList(record?.relatedCharacterIds),
-      relatedQuestIds: idList(record?.relatedQuestIds),
-      relatedBeatIds: idList(record?.relatedBeatIds),
-      relatedLocationIds: idList(record?.relatedLocationIds),
-      relatedItemIds: idList(record?.relatedItemIds),
-      created: Number.isFinite(record?.created) ? record.created : now,
-      updated: Number.isFinite(record?.updated) ? record.updated : now
-    };
-
-    // Preserve unknown keys so future fields do not require a migration bump.
-    if (record && typeof record === "object") {
-      for (const [key, value] of Object.entries(record)) {
-        if (!(key in normalized) && value !== undefined) normalized[key] = value;
-      }
-    }
-
-    return normalized;
-  }
-
   /** @returns {CampaignDocumentData} */
   static #empty() {
     return {
@@ -417,9 +420,16 @@ export class CampaignDocument {
       activeSessionId: "",
       sessions: [],
       threads: [],
-      questEntries: [],
-      memoryRecords: []
+      questEntries: []
     };
+  }
+
+  static #plainText(value) {
+    const container = document.createElement("div");
+    container.innerHTML = String(value ?? "");
+    return (container.innerText || container.textContent || "")
+      .replace(/\u00a0/g, " ")
+      .trim();
   }
 
   /**

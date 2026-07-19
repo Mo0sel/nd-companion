@@ -1,4 +1,5 @@
 import { CampaignDocument, SESSION_STATUSES } from "./campaign-document.js";
+import { CampaignMemoryParser } from "./campaign-memory-parser.js";
 import { CompanionStorage } from "./storage.js";
 
 /**
@@ -15,8 +16,10 @@ export class SessionService {
     CompanionStorage.setSessionBridge({
       getNotes: () => SessionService.getActiveNotes(),
       setNotes: (value) => SessionService.setActiveNotes(value),
-      getSummary: () => SessionService.getActiveSummary(),
-      setSummary: (value) => SessionService.setActiveSummary(value)
+      getSummary: () => SessionService.getActiveSessionLog(),
+      setSummary: (value) => SessionService.setActiveSessionLog(value),
+      getLog: () => SessionService.getActiveSessionLog(),
+      setLog: (value) => SessionService.setActiveSessionLog(value)
     });
 
     const playbook = CompanionStorage.getPlaybook();
@@ -72,21 +75,77 @@ export class SessionService {
   }
 
   /**
-   * Summary for the active session (Live Notes compatibility).
+   * Canonical Session Log for the active session.
    * @returns {string}
    */
-  static getActiveSummary() {
-    return SessionService.getActive()?.summary ?? "";
+  static getActiveSessionLog() {
+    return SessionService.getActive()?.sessionLog ?? "";
   }
 
   /**
    * @param {string} value
    * @returns {Promise<string>}
    */
-  static async setActiveSummary(value) {
-    const summary = value ?? "";
-    await SessionService.#patchActive({ summary });
-    return summary;
+  static async setActiveSessionLog(value) {
+    const sessionLog = value ?? "";
+    await SessionService.#patchActive({ sessionLog });
+    return sessionLog;
+  }
+
+  // Compatibility for callers using the pre-Chronicle method names.
+  static getActiveSummary() {
+    return SessionService.getActiveSessionLog();
+  }
+
+  static setActiveSummary(value) {
+    return SessionService.setActiveSessionLog(value);
+  }
+
+  /**
+   * Finalize the current live session and create the next empty live session.
+   * @returns {Promise<{ archived: import("./campaign-document.js").CampaignSession, next: import("./campaign-document.js").CampaignSession }|null>}
+   */
+  static async endActiveSession() {
+    const active = SessionService.getActive();
+    if (!active) return null;
+
+    const refs = await CampaignMemoryParser.resolveReferences(
+      CampaignMemoryParser.parse(active.sessionLog)
+    );
+    const now = Date.now();
+    const nextNumber = active.sessionNumber + 1;
+    const next = CampaignDocument.normalizeSession({
+      id: foundry.utils.randomID(),
+      sessionNumber: nextNumber,
+      title: "",
+      sessionLog: "",
+      notes: "",
+      status: "active",
+      source: "live",
+      createdDate: new Date(now).toISOString(),
+      beatIds: [],
+      created: now,
+      updated: now
+    });
+    let archived = null;
+
+    await CampaignDocument.update((doc) => {
+      const session = doc.sessions.find((entry) => entry.id === doc.activeSessionId);
+      if (!session) return;
+      session.status = "completed";
+      session.source = "live";
+      session.relatedActors = refs.relatedCharacterIds ?? [];
+      session.relatedLocations = refs.relatedLocationIds ?? [];
+      session.relatedItems = refs.relatedItemIds ?? [];
+      session.relatedQuests = refs.relatedQuestIds ?? [];
+      session.relatedQuestEntries = refs.relatedBeatIds ?? [];
+      session.updated = now;
+      archived = foundry.utils.duplicate(session);
+      doc.sessions.push(next);
+      doc.activeSessionId = next.id;
+    });
+
+    return archived ? { archived, next: foundry.utils.duplicate(next) } : null;
   }
 
   /**
@@ -123,7 +182,7 @@ export class SessionService {
       if (typeof patch.inGameDate === "string") session.inGameDate = patch.inGameDate;
       if (typeof patch.realDate === "string") session.realDate = patch.realDate;
       if (typeof patch.notes === "string") session.notes = patch.notes;
-      if (typeof patch.summary === "string") session.summary = patch.summary;
+      if (typeof patch.sessionLog === "string") session.sessionLog = patch.sessionLog;
       if (Array.isArray(patch.beatIds)) {
         session.beatIds = [...new Set(patch.beatIds.filter((id) => typeof id === "string" && id))];
       }

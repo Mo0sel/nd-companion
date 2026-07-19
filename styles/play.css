@@ -632,3 +632,30 @@
     padding-right: 16px;
   }
 }
+
+.nd-play-end-session {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 20px 18px;
+}
+
+.nd-play-end-session__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 9px 16px;
+  color: #fff;
+  background: var(--nd-blue);
+  border: 1px solid var(--nd-blue);
+  border-radius: var(--nd-radius-md);
+  box-shadow: none;
+  font: inherit;
+  font-size: var(--nd-text-caption);
+  font-weight: var(--nd-weight-semibold);
+  cursor: pointer;
+}
+
+.nd-play-end-session__button:hover {
+  background: rgba(91, 142, 255, 0.85);
+}

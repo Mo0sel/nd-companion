@@ -116,8 +116,7 @@ export class FocusPanel {
 
     const history = CampaignMemoryService.historyFor({ kind: "actor", id: uuid });
     const hasHistory = history.mentionCount > 0;
-    historySection.hidden = !hasHistory;
-    if (!hasHistory) return;
+    historySection.hidden = false;
 
     const first = historySection.querySelector("[data-actor-history-first]");
     const last = historySection.querySelector("[data-actor-history-last]");
@@ -125,10 +124,19 @@ export class FocusPanel {
     const list = historySection.querySelector("[data-actor-history-list]");
     if (first) first.textContent = history.firstAppearance?.label ?? "—";
     if (last) last.textContent = history.lastAppearance?.label ?? "—";
-    if (count) count.textContent = String(history.mentionCount);
+    if (count) {
+      count.textContent = `${history.mentionCount} ${history.mentionCount === 1 ? "session" : "sessions"}`;
+    }
     if (!list) return;
 
     list.replaceChildren();
+    if (!hasHistory) {
+      const empty = document.createElement("div");
+      empty.className = "nd-campaign-reference-empty";
+      empty.textContent = "No Chronicle appearances yet.";
+      list.append(empty);
+      return;
+    }
     for (const appearance of history.appearsIn) {
       const item = document.createElement("div");
       item.className = "nd-object-history__item nd-object-history__item--static";

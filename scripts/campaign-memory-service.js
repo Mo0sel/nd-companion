@@ -5,26 +5,38 @@ import { QuestEntryService } from "./quest-entry-service.js";
 import { ThreadService } from "./thread-service.js";
 
 /**
- * Campaign Memory — searchable historical session knowledge.
- * Not a session manager. Live PLAY sessions remain in SessionService.
+ * Chronicle queries and imports over the canonical Session collection.
+ * Live session lifecycle remains owned by SessionService.
  */
 export class CampaignMemoryService {
+  static label(session) {
+    if (!session) return "Session";
+    const base = `Session ${session.sessionNumber}`;
+    const title = session.title?.trim() ?? "";
+    return title && title.toLocaleLowerCase() !== base.toLocaleLowerCase()
+      ? `${base} · ${title}`
+      : base;
+  }
+
   /**
-   * @returns {import("./campaign-document.js").CampaignMemoryRecord[]}
+   * Archived sessions, newest first.
+   * @returns {import("./campaign-document.js").CampaignSession[]}
    */
   static list() {
-    return CampaignDocument.get().memoryRecords
+    const activeId = CampaignDocument.get().activeSessionId;
+    return CampaignDocument.get().sessions
+      .filter((session) => session.id !== activeId && session.status === "completed")
       .slice()
       .sort((a, b) => b.sessionNumber - a.sessionNumber || b.updated - a.updated);
   }
 
   /**
    * @param {string} id
-   * @returns {import("./campaign-document.js").CampaignMemoryRecord|null}
+   * @returns {import("./campaign-document.js").CampaignSession|null}
    */
   static getById(id) {
     if (!id) return null;
-    return CampaignDocument.get().memoryRecords.find((record) => record.id === id) ?? null;
+    return CampaignMemoryService.list().find((session) => session.id === id) ?? null;
   }
 
   /**
@@ -33,53 +45,71 @@ export class CampaignMemoryService {
    * @param {{
    *   sessionNumber: number,
    *   title?: string,
-   *   summary: string
+   *   sessionLog: string
    * }} input
-   * @returns {Promise<import("./campaign-document.js").CampaignMemoryRecord|null>}
+   * @returns {Promise<{ ok: true, session: import("./campaign-document.js").CampaignSession }|{ ok: false, reason: "invalid"|"duplicate" }>}
    */
   static async importSession(input) {
     const sessionNumber = Number(input?.sessionNumber);
-    if (!Number.isFinite(sessionNumber) || sessionNumber < 1) return null;
+    if (!Number.isFinite(sessionNumber) || sessionNumber < 1) {
+      return { ok: false, reason: "invalid" };
+    }
 
-    const summary = typeof input.summary === "string" ? input.summary.trim() : "";
-    if (!summary) return null;
+    const sessionLog = typeof input.sessionLog === "string" ? input.sessionLog.trim() : "";
+    if (!sessionLog) return { ok: false, reason: "invalid" };
+    if (CampaignDocument.get().sessions.some(
+      (session) => session.sessionNumber === Math.trunc(sessionNumber)
+    )) {
+      return { ok: false, reason: "duplicate" };
+    }
 
     const title = typeof input.title === "string" ? input.title.trim() : "";
-    const matches = CampaignMemoryParser.parse(summary);
+    const matches = CampaignMemoryParser.parse(sessionLog);
     const refs = await CampaignMemoryParser.resolveReferences(matches);
 
-    const record = CampaignDocument.normalizeMemoryRecord({
+    const session = CampaignDocument.normalizeSession({
       id: foundry.utils.randomID(),
       sessionNumber: Math.trunc(sessionNumber),
       title,
-      summary,
-      ...refs,
+      sessionLog,
+      source: "imported",
+      status: "completed",
+      createdDate: new Date().toISOString(),
+      ...CampaignMemoryService.#sessionRefs(refs),
       created: Date.now(),
       updated: Date.now()
     });
 
     await CampaignDocument.update((doc) => {
-      doc.memoryRecords ??= [];
-      doc.memoryRecords.push(record);
+      doc.sessions.push(session);
     });
 
-    return foundry.utils.duplicate(record);
+    return { ok: true, session: foundry.utils.duplicate(session) };
   }
 
   /**
+   * Edit the canonical log and recompute every inferred relationship.
    * @param {string} id
-   * @returns {Promise<boolean>}
+   * @param {string} sessionLog
+   * @returns {Promise<import("./campaign-document.js").CampaignSession|null>}
    */
-  static async delete(id) {
-    if (!id) return false;
-    let removed = false;
+  static async updateSessionLog(id, sessionLog) {
+    const current = CampaignMemoryService.getById(id);
+    if (!current) return null;
+    const value = String(sessionLog ?? "").trim();
+    const refs = await CampaignMemoryParser.resolveReferences(
+      CampaignMemoryParser.parse(value)
+    );
+    let updated = null;
     await CampaignDocument.update((doc) => {
-      const index = (doc.memoryRecords ?? []).findIndex((record) => record.id === id);
-      if (index < 0) return;
-      doc.memoryRecords.splice(index, 1);
-      removed = true;
+      const session = doc.sessions.find((entry) => entry.id === id);
+      if (!session) return;
+      session.sessionLog = value;
+      Object.assign(session, CampaignMemoryService.#sessionRefs(refs));
+      session.updated = Date.now();
+      updated = foundry.utils.duplicate(session);
     });
-    return removed;
+    return updated;
   }
 
   /**
@@ -104,14 +134,12 @@ export class CampaignMemoryService {
     if (!field) return empty;
 
     const appearsIn = CampaignMemoryService.list()
-      .filter((record) => (record[field] ?? []).includes(target.id))
-      .map((record) => ({
-        id: record.id,
-        sessionNumber: record.sessionNumber,
-        title: record.title?.trim() || `Session ${record.sessionNumber}`,
-        label: record.title?.trim()
-          ? `Session ${record.sessionNumber} · ${record.title.trim()}`
-          : `Session ${record.sessionNumber}`
+      .filter((session) => (session[field] ?? []).includes(target.id))
+      .map((session) => ({
+        id: session.id,
+        sessionNumber: session.sessionNumber,
+        title: CampaignMemoryService.label(session),
+        label: CampaignMemoryService.label(session)
       }))
       .sort((a, b) => a.sessionNumber - b.sessionNumber);
 
@@ -127,7 +155,7 @@ export class CampaignMemoryService {
 
   /**
    * Resolve display labels for related IDs on a memory record.
-   * @param {import("./campaign-document.js").CampaignMemoryRecord} record
+   * @param {import("./campaign-document.js").CampaignSession} record
    * @returns {{ kind: string, id: string, name: string }[]}
    */
   static relatedLabels(record) {
@@ -135,35 +163,35 @@ export class CampaignMemoryService {
     /** @type {{ kind: string, id: string, name: string }[]} */
     const labels = [];
 
-    for (const id of record.relatedCharacterIds ?? []) {
+    for (const id of record.relatedActors ?? []) {
       labels.push({
         kind: "actor",
         id,
         name: EntityRegistry.findByUUID(id)?.name ?? id
       });
     }
-    for (const id of record.relatedQuestIds ?? []) {
+    for (const id of record.relatedQuests ?? []) {
       labels.push({
         kind: "quest",
         id,
         name: ThreadService.getById(id)?.title?.trim() || id
       });
     }
-    for (const id of record.relatedBeatIds ?? []) {
+    for (const id of record.relatedQuestEntries ?? []) {
       labels.push({
         kind: "beat",
         id,
         name: QuestEntryService.getById(id)?.title?.trim() || id
       });
     }
-    for (const id of record.relatedLocationIds ?? []) {
+    for (const id of record.relatedLocations ?? []) {
       labels.push({
         kind: "scene",
         id,
         name: EntityRegistry.findByUUID(id)?.name ?? id
       });
     }
-    for (const id of record.relatedItemIds ?? []) {
+    for (const id of record.relatedItems ?? []) {
       labels.push({
         kind: "item",
         id,
@@ -175,23 +203,33 @@ export class CampaignMemoryService {
 
   /**
    * @param {string} kind
-   * @returns {keyof import("./campaign-document.js").CampaignMemoryRecord|null}
+   * @returns {keyof import("./campaign-document.js").CampaignSession|null}
    */
   static #fieldForKind(kind) {
     switch (kind) {
       case "actor":
-        return "relatedCharacterIds";
+        return "relatedActors";
       case "quest":
-        return "relatedQuestIds";
+        return "relatedQuests";
       case "beat":
-        return "relatedBeatIds";
+        return "relatedQuestEntries";
       case "scene":
-        return "relatedLocationIds";
+        return "relatedLocations";
       case "item":
-        return "relatedItemIds";
+        return "relatedItems";
       default:
         return null;
     }
+  }
+
+  static #sessionRefs(refs) {
+    return {
+      relatedActors: refs.relatedCharacterIds ?? [],
+      relatedLocations: refs.relatedLocationIds ?? [],
+      relatedItems: refs.relatedItemIds ?? [],
+      relatedQuests: refs.relatedQuestIds ?? [],
+      relatedQuestEntries: refs.relatedBeatIds ?? []
+    };
   }
 }
 

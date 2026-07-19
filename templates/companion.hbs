@@ -232,14 +232,14 @@
           </section>
 
           <section
-            class="nd-play-notes nd-play-summary"
+            class="nd-play-notes nd-play-log"
             data-live-notes-root
-            data-resizable-panel="play-session-summary"
+            data-resizable-panel="play-session-log"
             data-resize-min="120"
-            aria-label="Session Summary"
+            aria-label="Session Log"
           >
             <header class="nd-play-notes__header">
-              <span class="nd-play-notes__title">Session Summary</span>
+              <span class="nd-play-notes__title">Session Log</span>
               <div class="nd-play-notes__saved">
                 <span class="nd-play-notes__dot" aria-hidden="true"></span>
                 <span>auto-saved</span>
@@ -248,13 +248,19 @@
             </header>
             <div
               class="nd-live-notes nd-play-notes__editor nd-richtext"
-              data-storage="sessionSummary"
-              data-storage-html
-              data-placeholder="Permanent session summary..."
+              data-storage="sessionLog"
+              data-placeholder="Record what happened this session..."
               role="textbox"
-              aria-label="Session Summary"
+              aria-label="Session Log"
             ></div>
           </section>
+        </div>
+
+        <div class="nd-play-end-session">
+          <button type="button" class="nd-play-end-session__button" data-end-session>
+            <span aria-hidden="true">🏁</span>
+            End Session
+          </button>
         </div>
       </div>
     </section>
@@ -272,34 +278,56 @@
           <div class="nd-quest-sidebar__head">
             <div class="nd-quest-sidebar__title">Campaign</div>
             <p class="nd-quest-sidebar__session" data-campaign-current-session>Session 1</p>
+            <nav class="nd-campaign-nav" aria-label="Campaign sections">
+              <button type="button" class="is-active" data-campaign-section="quests">Quests</button>
+              <button type="button" data-campaign-section="actors">Actors</button>
+              <button type="button" data-campaign-section="locations">Locations</button>
+              <button type="button" data-campaign-section="items">Items</button>
+              <button type="button" data-campaign-section="chronicle">Chronicle</button>
+            </nav>
           </div>
 
           <div class="nd-quest-sidebar__scroll">
-            <div class="nd-quest-sidebar__section" data-quest-category="MAIN">
-              <div class="nd-quest-sidebar__heading">
-                <span>Main Quests</span>
-                <button type="button" data-new-quest="MAIN" aria-label="New Main Quest">+</button>
+            <div data-campaign-nav-panel="quests">
+              <div class="nd-quest-sidebar__section" data-quest-category="MAIN">
+                <div class="nd-quest-sidebar__heading">
+                  <span>Main Quests</span>
+                  <button type="button" data-new-quest="MAIN" aria-label="New Main Quest">+</button>
+                </div>
+                <div data-quest-list="MAIN"></div>
               </div>
-              <div data-quest-list="MAIN"></div>
-            </div>
-            <div class="nd-quest-sidebar__section" data-quest-category="SIDE">
-              <div class="nd-quest-sidebar__heading">
-                <span>Side Quests</span>
-                <button type="button" data-new-quest="SIDE" aria-label="New Side Quest">+</button>
+              <div class="nd-quest-sidebar__section" data-quest-category="SIDE">
+                <div class="nd-quest-sidebar__heading">
+                  <span>Side Quests</span>
+                  <button type="button" data-new-quest="SIDE" aria-label="New Side Quest">+</button>
+                </div>
+                <div data-quest-list="SIDE"></div>
               </div>
-              <div data-quest-list="SIDE"></div>
-            </div>
-            <div class="nd-quest-sidebar__section" data-quest-category="COMPANION">
-              <div class="nd-quest-sidebar__heading">
-                <span>Companion Quests</span>
-                <button type="button" data-new-quest="COMPANION" aria-label="New Companion Quest">+</button>
+              <div class="nd-quest-sidebar__section" data-quest-category="COMPANION">
+                <div class="nd-quest-sidebar__heading">
+                  <span>Companion Quests</span>
+                  <button type="button" data-new-quest="COMPANION" aria-label="New Companion Quest">+</button>
+                </div>
+                <div data-quest-list="COMPANION"></div>
               </div>
-              <div data-quest-list="COMPANION"></div>
             </div>
 
-            <div class="nd-quest-sidebar__section nd-quest-sidebar__section--memory">
+            <div data-campaign-nav-panel="entities" hidden>
+              <div class="nd-quest-sidebar__section">
+                <div class="nd-quest-sidebar__heading">
+                  <span data-campaign-entity-heading>Actors</span>
+                </div>
+                <div data-campaign-entity-list></div>
+              </div>
+            </div>
+
+            <div
+              class="nd-quest-sidebar__section nd-quest-sidebar__section--memory"
+              data-campaign-nav-panel="chronicle"
+              hidden
+            >
               <div class="nd-quest-sidebar__heading nd-quest-sidebar__heading--memory">
-                <span>Memory</span>
+                <span>Chronicle</span>
               </div>
               <button type="button" class="nd-memory-import-open" data-open-memory-import>
                 Import Session
@@ -399,15 +427,15 @@
               </header>
               <dl class="nd-object-history__meta">
                 <div>
-                  <dt>First Appearance</dt>
+                  <dt>First Seen</dt>
                   <dd data-quest-history-first>—</dd>
                 </div>
                 <div>
-                  <dt>Last Appearance</dt>
+                  <dt>Last Seen</dt>
                   <dd data-quest-history-last>—</dd>
                 </div>
                 <div>
-                  <dt>Mentions</dt>
+                  <dt>Appeared In</dt>
                   <dd data-quest-history-count>0</dd>
                 </div>
               </dl>
@@ -415,45 +443,58 @@
             </section>
           </section>
 
-          <section data-memory-view hidden aria-label="Campaign Memory record">
+          <section data-campaign-entity-view hidden aria-label="Campaign object history">
             <header class="nd-campaign-panel__header">
               <div class="nd-campaign-panel__headline">
                 <div class="nd-campaign-panel__eyebrow">Campaign Memory</div>
-                <h2 class="nd-hierarchy-primary" data-memory-title>Session</h2>
+                <h2 class="nd-hierarchy-primary" data-campaign-entity-title>Object</h2>
               </div>
-              <button type="button" class="nd-memory-delete" data-delete-memory aria-label="Delete memory record">
-                Delete
-              </button>
             </header>
-            <section class="nd-campaign-content-block">
-              <h3 class="nd-hierarchy-group">Summary</h3>
-              <p class="nd-memory-summary" data-memory-summary></p>
-            </section>
-            <section class="nd-campaign-content-block">
-              <h3 class="nd-hierarchy-group">Related</h3>
-              <div class="nd-memory-related" data-memory-related></div>
+            <section class="nd-object-history" data-campaign-entity-history hidden>
+              <dl class="nd-object-history__meta">
+                <div>
+                  <dt>First Seen</dt>
+                  <dd data-entity-history-first>—</dd>
+                </div>
+                <div>
+                  <dt>Last Seen</dt>
+                  <dd data-entity-history-last>—</dd>
+                </div>
+                <div>
+                  <dt>Appeared In</dt>
+                  <dd data-entity-history-count>0 sessions</dd>
+                </div>
+              </dl>
+              <div class="nd-object-history__list" data-entity-history-list></div>
             </section>
           </section>
 
-          <section data-quest-session-view hidden>
+          <section data-memory-view hidden aria-label="Chronicle session">
             <header class="nd-campaign-panel__header">
-              <div>
-                <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Current Session</div>
-                <h2 class="nd-hierarchy-primary" data-campaign-session="title">Session 1</h2>
+              <div class="nd-campaign-panel__headline">
+                <div class="nd-campaign-panel__eyebrow">Chronicle</div>
+                <h2 class="nd-hierarchy-primary" data-memory-title>Session</h2>
               </div>
-              <span class="nd-campaign-status" data-campaign-session="status">active</span>
+              <span class="nd-campaign-status" data-memory-source>Imported</span>
             </header>
-            <section class="nd-campaign-content-block">
-              <h3 class="nd-hierarchy-group">Session Summary</h3>
-              <div class="nd-richtext" data-campaign-session="summary"></div>
+            <section class="nd-campaign-content-block nd-chronicle-log">
+              <h3 class="nd-hierarchy-group">Session Log</h3>
+              <textarea data-memory-session-log rows="12" aria-label="Session Log"></textarea>
+              <div class="nd-quest-actions">
+                <button type="button" class="nd-campaign-save" data-save-memory-log>
+                  Save &amp; Refresh Links
+                </button>
+              </div>
             </section>
             <section class="nd-campaign-content-block">
-              <h3 class="nd-hierarchy-group">Session Notes</h3>
-              <div class="nd-richtext" data-campaign-session="notes"></div>
-            </section>
-            <section class="nd-campaign-content-block">
-              <h3 class="nd-hierarchy-group">Session Plan</h3>
-              <div class="nd-campaign-beats" data-campaign-session-beats></div>
+              <h3 class="nd-hierarchy-group">Detected Relationships</h3>
+              <div class="nd-chronicle-relationships">
+                <div><strong>Actors</strong><div data-memory-related="actor"></div></div>
+                <div><strong>Locations</strong><div data-memory-related="scene"></div></div>
+                <div><strong>Items</strong><div data-memory-related="item"></div></div>
+                <div><strong>Quests</strong><div data-memory-related="quest"></div></div>
+                <div><strong>Quest Entries</strong><div data-memory-related="beat"></div></div>
+              </div>
             </section>
           </section>
         </main>
@@ -462,7 +503,7 @@
       <section class="nd-memory-import" data-memory-import hidden aria-label="Import historical session">
         <header class="nd-memory-import__header">
           <div>
-            <div class="nd-campaign-panel__eyebrow">Campaign Memory</div>
+            <div class="nd-campaign-panel__eyebrow">Chronicle</div>
             <h2>Import Session</h2>
           </div>
           <button type="button" data-close-memory-import aria-label="Close">×</button>
@@ -473,15 +514,15 @@
             <input type="number" min="1" step="1" data-memory-import-number placeholder="6" required>
           </label>
           <label class="nd-campaign-field">
-            <span>Session Name <small>Optional</small></span>
+            <span>Title <small>Optional</small></span>
             <input type="text" data-memory-import-title placeholder="Karlov Manor">
           </label>
           <label class="nd-campaign-field nd-campaign-field--wide">
-            <span>Session Summary</span>
+            <span>Session Log</span>
             <textarea
-              data-memory-import-summary
+              data-memory-import-log
               rows="10"
-              placeholder="Write the session summary in plain text. Use @names or full Actor, Quest, Location, and Item names."
+              placeholder="Paste the Session Log. Use @names or full Actor, Quest, Location, and Item names."
             ></textarea>
           </label>
         </div>
@@ -538,15 +579,15 @@
               </header>
               <dl class="nd-object-history__meta">
                 <div>
-                  <dt>First Appearance</dt>
+                  <dt>First Seen</dt>
                   <dd data-actor-history-first>—</dd>
                 </div>
                 <div>
-                  <dt>Last Appearance</dt>
+                  <dt>Last Seen</dt>
                   <dd data-actor-history-last>—</dd>
                 </div>
                 <div>
-                  <dt>Mentions</dt>
+                  <dt>Appeared In</dt>
                   <dd data-actor-history-count>0</dd>
                 </div>
               </dl>
