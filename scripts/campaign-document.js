@@ -62,15 +62,34 @@ import { CompanionStorage } from "./storage.js";
  */
 
 /**
+ * Historical campaign knowledge imported from session summaries.
+ * Separate from live Sessions used by PLAY/PREPARE.
+ * Unknown future keys are preserved by normalizeMemoryRecord.
+ * @typedef {object} CampaignMemoryRecord
+ * @property {string} id
+ * @property {number} sessionNumber
+ * @property {string} title
+ * @property {string} summary
+ * @property {string[]} relatedCharacterIds
+ * @property {string[]} relatedQuestIds
+ * @property {string[]} relatedBeatIds
+ * @property {string[]} relatedLocationIds
+ * @property {string[]} relatedItemIds
+ * @property {number} created
+ * @property {number} updated
+ */
+
+/**
  * @typedef {object} CampaignDocumentData
  * @property {number} schemaVersion
  * @property {string} activeSessionId
  * @property {CampaignSession[]} sessions
  * @property {CampaignThread[]} threads
  * @property {CampaignQuestEntry[]} questEntries
+ * @property {CampaignMemoryRecord[]} memoryRecords
  */
 
-export const CAMPAIGN_SCHEMA_VERSION = 2;
+export const CAMPAIGN_SCHEMA_VERSION = 3;
 
 export const SESSION_STATUSES = Object.freeze(["planned", "active", "completed"]);
 export const THREAD_STATUSES = Object.freeze(["OPEN", "ACTIVE", "RESOLVED"]);
@@ -157,7 +176,8 @@ export class CampaignDocument {
         activeSessionId: stored?.activeSessionId,
         sessions: existingSessions,
         threads: stored?.threads,
-        questEntries: stored?.questEntries
+        questEntries: stored?.questEntries,
+        memoryRecords: stored?.memoryRecords
       });
       return normalized;
     }
@@ -183,7 +203,8 @@ export class CampaignDocument {
       activeSessionId: sessionId,
       sessions: [session],
       threads: CampaignDocument.#normalizeThreads(stored?.threads),
-      questEntries: CampaignDocument.#normalizeQuestEntries(stored?.questEntries)
+      questEntries: CampaignDocument.#normalizeQuestEntries(stored?.questEntries),
+      memoryRecords: CampaignDocument.#normalizeMemoryRecords(stored?.memoryRecords)
     };
   }
 
@@ -205,7 +226,8 @@ export class CampaignDocument {
       activeSessionId,
       sessions,
       threads: CampaignDocument.#normalizeThreads(stored?.threads),
-      questEntries: CampaignDocument.#normalizeQuestEntries(stored?.questEntries)
+      questEntries: CampaignDocument.#normalizeQuestEntries(stored?.questEntries),
+      memoryRecords: CampaignDocument.#normalizeMemoryRecords(stored?.memoryRecords)
     };
   }
 
@@ -234,6 +256,15 @@ export class CampaignDocument {
   static #normalizeQuestEntries(value) {
     if (!Array.isArray(value)) return [];
     return value.map((entry) => CampaignDocument.normalizeQuestEntry(entry));
+  }
+
+  /**
+   * @param {unknown} value
+   * @returns {CampaignMemoryRecord[]}
+   */
+  static #normalizeMemoryRecords(value) {
+    if (!Array.isArray(value)) return [];
+    return value.map((record) => CampaignDocument.normalizeMemoryRecord(record));
   }
 
   /**
@@ -341,6 +372,44 @@ export class CampaignDocument {
     };
   }
 
+  /**
+   * @param {unknown} record
+   * @returns {CampaignMemoryRecord}
+   */
+  static normalizeMemoryRecord(record) {
+    const now = Date.now();
+    const idList = (value) =>
+      Array.isArray(value)
+        ? [...new Set(value.filter((id) => typeof id === "string" && id))]
+        : [];
+
+    /** @type {CampaignMemoryRecord} */
+    const normalized = {
+      id: typeof record?.id === "string" && record.id ? record.id : foundry.utils.randomID(),
+      sessionNumber: Number.isFinite(record?.sessionNumber)
+        ? Math.max(1, Math.trunc(record.sessionNumber))
+        : 1,
+      title: typeof record?.title === "string" ? record.title : "",
+      summary: typeof record?.summary === "string" ? record.summary : "",
+      relatedCharacterIds: idList(record?.relatedCharacterIds),
+      relatedQuestIds: idList(record?.relatedQuestIds),
+      relatedBeatIds: idList(record?.relatedBeatIds),
+      relatedLocationIds: idList(record?.relatedLocationIds),
+      relatedItemIds: idList(record?.relatedItemIds),
+      created: Number.isFinite(record?.created) ? record.created : now,
+      updated: Number.isFinite(record?.updated) ? record.updated : now
+    };
+
+    // Preserve unknown keys so future fields do not require a migration bump.
+    if (record && typeof record === "object") {
+      for (const [key, value] of Object.entries(record)) {
+        if (!(key in normalized) && value !== undefined) normalized[key] = value;
+      }
+    }
+
+    return normalized;
+  }
+
   /** @returns {CampaignDocumentData} */
   static #empty() {
     return {
@@ -348,7 +417,8 @@ export class CampaignDocument {
       activeSessionId: "",
       sessions: [],
       threads: [],
-      questEntries: []
+      questEntries: [],
+      memoryRecords: []
     };
   }
 

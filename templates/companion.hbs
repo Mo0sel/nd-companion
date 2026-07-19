@@ -296,6 +296,16 @@
               </div>
               <div data-quest-list="COMPANION"></div>
             </div>
+
+            <div class="nd-quest-sidebar__section nd-quest-sidebar__section--memory">
+              <div class="nd-quest-sidebar__heading nd-quest-sidebar__heading--memory">
+                <span>Memory</span>
+              </div>
+              <button type="button" class="nd-memory-import-open" data-open-memory-import>
+                Import Session
+              </button>
+              <div data-memory-list></div>
+            </div>
           </div>
         </aside>
 
@@ -381,6 +391,48 @@
               </header>
               <div data-quest-entry-list></div>
             </section>
+
+            <section class="nd-object-history" data-quest-history hidden aria-label="Quest history">
+              <header>
+                <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Campaign Memory</div>
+                <h3 class="nd-hierarchy-group">History</h3>
+              </header>
+              <dl class="nd-object-history__meta">
+                <div>
+                  <dt>First Appearance</dt>
+                  <dd data-quest-history-first>—</dd>
+                </div>
+                <div>
+                  <dt>Last Appearance</dt>
+                  <dd data-quest-history-last>—</dd>
+                </div>
+                <div>
+                  <dt>Mentions</dt>
+                  <dd data-quest-history-count>0</dd>
+                </div>
+              </dl>
+              <div class="nd-object-history__list" data-quest-history-list></div>
+            </section>
+          </section>
+
+          <section data-memory-view hidden aria-label="Campaign Memory record">
+            <header class="nd-campaign-panel__header">
+              <div class="nd-campaign-panel__headline">
+                <div class="nd-campaign-panel__eyebrow">Campaign Memory</div>
+                <h2 class="nd-hierarchy-primary" data-memory-title>Session</h2>
+              </div>
+              <button type="button" class="nd-memory-delete" data-delete-memory aria-label="Delete memory record">
+                Delete
+              </button>
+            </header>
+            <section class="nd-campaign-content-block">
+              <h3 class="nd-hierarchy-group">Summary</h3>
+              <p class="nd-memory-summary" data-memory-summary></p>
+            </section>
+            <section class="nd-campaign-content-block">
+              <h3 class="nd-hierarchy-group">Related</h3>
+              <div class="nd-memory-related" data-memory-related></div>
+            </section>
           </section>
 
           <section data-quest-session-view hidden>
@@ -406,6 +458,40 @@
           </section>
         </main>
       </div>
+
+      <section class="nd-memory-import" data-memory-import hidden aria-label="Import historical session">
+        <header class="nd-memory-import__header">
+          <div>
+            <div class="nd-campaign-panel__eyebrow">Campaign Memory</div>
+            <h2>Import Session</h2>
+          </div>
+          <button type="button" data-close-memory-import aria-label="Close">×</button>
+        </header>
+        <div class="nd-memory-import__fields">
+          <label class="nd-campaign-field">
+            <span>Session Number</span>
+            <input type="number" min="1" step="1" data-memory-import-number placeholder="6" required>
+          </label>
+          <label class="nd-campaign-field">
+            <span>Session Name <small>Optional</small></span>
+            <input type="text" data-memory-import-title placeholder="Karlov Manor">
+          </label>
+          <label class="nd-campaign-field nd-campaign-field--wide">
+            <span>Session Summary</span>
+            <textarea
+              data-memory-import-summary
+              rows="10"
+              placeholder="Write the session summary in plain text. Use @names or full Actor, Quest, Location, and Item names."
+            ></textarea>
+          </label>
+        </div>
+        <footer>
+          <button type="button" data-close-memory-import>Cancel</button>
+          <button type="button" class="nd-campaign-save" data-import-memory-session>
+            Import Session
+          </button>
+        </footer>
+      </section>
 
     </section>
 
@@ -445,6 +531,27 @@
               aria-label="Companion Memory"
               hidden
             ></div>
+            <section class="nd-object-history nd-object-history--compact" data-actor-history hidden aria-label="Actor history">
+              <header>
+                <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Campaign Memory</div>
+                <h3 class="nd-hierarchy-group">History</h3>
+              </header>
+              <dl class="nd-object-history__meta">
+                <div>
+                  <dt>First Appearance</dt>
+                  <dd data-actor-history-first>—</dd>
+                </div>
+                <div>
+                  <dt>Last Appearance</dt>
+                  <dd data-actor-history-last>—</dd>
+                </div>
+                <div>
+                  <dt>Mentions</dt>
+                  <dd data-actor-history-count>0</dd>
+                </div>
+              </dl>
+              <div class="nd-object-history__list" data-actor-history-list></div>
+            </section>
           </div>
         </section>
 

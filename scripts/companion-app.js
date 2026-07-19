@@ -152,6 +152,10 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
         if (!CampaignWorkspace.selectQuestEntry(this.element, id)) return;
         this.setWorkspace("campaign");
       },
+      openMemory: (id) => {
+        if (!CampaignWorkspace.selectMemory(this.element, id)) return;
+        this.setWorkspace("campaign");
+      },
       openEntity: async (uuid, kind) => {
         const entity = EntityRegistry.findByUUID(uuid);
         if (!entity) return false;

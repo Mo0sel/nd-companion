@@ -106,6 +106,59 @@
   display: none !important;
 }
 
+.nd-companion-memory-card .nd-object-history {
+  margin-top: var(--nd-space-4);
+  padding-top: var(--nd-space-4);
+  border-top: 1px solid var(--nd-border);
+}
+
+.nd-companion-memory-card .nd-object-history[hidden] {
+  display: none !important;
+}
+
+.nd-companion-memory-card .nd-object-history__meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--nd-space-2);
+  margin: 0 0 var(--nd-space-3);
+}
+
+.nd-companion-memory-card .nd-object-history__meta > div {
+  padding: 8px 10px;
+  background: var(--nd-surface-2);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-md);
+}
+
+.nd-companion-memory-card .nd-object-history__meta dt {
+  margin: 0 0 4px;
+  color: var(--nd-text-3);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-bold);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.nd-companion-memory-card .nd-object-history__meta dd {
+  margin: 0;
+  color: var(--nd-text-1);
+  font-size: var(--nd-text-caption);
+}
+
+.nd-companion-memory-card .nd-object-history__list {
+  display: grid;
+  gap: 4px;
+}
+
+.nd-companion-memory-card .nd-object-history__item {
+  padding: 7px 9px;
+  color: var(--nd-text-2);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-md);
+  font-size: var(--nd-text-caption);
+}
+
 @container nd-companion (max-width: 560px) {
   .nd-actors-grid {
     grid-template-columns: 1fr;

@@ -1,3 +1,4 @@
+import { CampaignMemoryService } from "./campaign-memory-service.js";
 import { CampaignWorkspace } from "./campaign-workspace.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { PlaybookService } from "./playbook-service.js";
@@ -110,6 +111,25 @@ export function registerSearchProviders() {
       })),
     open: (id, context) => {
       context.openQuestEntry(id);
+      return true;
+    }
+  });
+
+  SearchService.registerProvider({
+    id: "memory",
+    label: "Campaign Memory",
+    getItems: () =>
+      CampaignMemoryService.list().map((record) => ({
+        id: record.id,
+        title: record.title?.trim()
+          ? `Session ${record.sessionNumber} · ${record.title.trim()}`
+          : `Session ${record.sessionNumber}`,
+        subtitle: record.summary.slice(0, 80) || "Campaign Memory",
+        group: "Campaign Memory"
+      })),
+    open: (id, context) => {
+      if (typeof context.openMemory !== "function") return false;
+      context.openMemory(id);
       return true;
     }
   });

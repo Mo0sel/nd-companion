@@ -92,7 +92,8 @@ export class CompanionStorage {
         activeSessionId: "",
         sessions: [],
         threads: [],
-        questEntries: []
+        questEntries: [],
+        memoryRecords: []
       }
     });
   }
@@ -163,17 +164,24 @@ export class CompanionStorage {
   }
 
   /**
-   * @returns {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], questEntries: object[] }}
+   * @returns {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], questEntries: object[], memoryRecords: object[] }}
    */
   static getCampaign() {
     const doc = game.settings.get(MODULE_ID, CAMPAIGN_SETTING);
     return foundry.utils.duplicate(
-      doc ?? { schemaVersion: 0, activeSessionId: "", sessions: [], threads: [], questEntries: [] }
+      doc ?? {
+        schemaVersion: 0,
+        activeSessionId: "",
+        sessions: [],
+        threads: [],
+        questEntries: [],
+        memoryRecords: []
+      }
     );
   }
 
   /**
-   * @param {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], questEntries: object[] }} value
+   * @param {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], questEntries: object[], memoryRecords?: object[] }} value
    * @returns {Promise<object>}
    */
   static async setCampaign(value) {
@@ -181,7 +189,14 @@ export class CompanionStorage {
       MODULE_ID,
       CAMPAIGN_SETTING,
       foundry.utils.duplicate(
-        value ?? { schemaVersion: 0, activeSessionId: "", sessions: [], threads: [], questEntries: [] }
+        value ?? {
+          schemaVersion: 0,
+          activeSessionId: "",
+          sessions: [],
+          threads: [],
+          questEntries: [],
+          memoryRecords: []
+        }
       )
     );
   }

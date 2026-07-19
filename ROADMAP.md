@@ -24,7 +24,7 @@
 
 - [ ] Timeline
 
-- [ ] Campaign Memory
+- [x] Campaign Memory
 
 # v0.4
 

@@ -1,3 +1,4 @@
+import { CampaignMemoryService } from "./campaign-memory-service.js";
 import { LiveNotes } from "./live-notes.js";
 import { RichText } from "./rich-text.js";
 import { RichTextToolbar } from "./rich-text-toolbar.js";
@@ -88,6 +89,7 @@ export class FocusPanel {
         html: true,
         sanitize: RichText.sanitize
       });
+      FocusPanel.#paintHistory(section, model.uuid);
       return;
     }
 
@@ -96,5 +98,42 @@ export class FocusPanel {
     editorEl.hidden = true;
     editorEl.innerHTML = "";
     emptyEl.hidden = false;
+    FocusPanel.#paintHistory(section, null);
+  }
+
+  /**
+   * @param {HTMLElement} section
+   * @param {string|null} uuid
+   */
+  static #paintHistory(section, uuid) {
+    const historySection = section.querySelector("[data-actor-history]");
+    if (!(historySection instanceof HTMLElement)) return;
+
+    if (!uuid) {
+      historySection.hidden = true;
+      return;
+    }
+
+    const history = CampaignMemoryService.historyFor({ kind: "actor", id: uuid });
+    const hasHistory = history.mentionCount > 0;
+    historySection.hidden = !hasHistory;
+    if (!hasHistory) return;
+
+    const first = historySection.querySelector("[data-actor-history-first]");
+    const last = historySection.querySelector("[data-actor-history-last]");
+    const count = historySection.querySelector("[data-actor-history-count]");
+    const list = historySection.querySelector("[data-actor-history-list]");
+    if (first) first.textContent = history.firstAppearance?.label ?? "—";
+    if (last) last.textContent = history.lastAppearance?.label ?? "—";
+    if (count) count.textContent = String(history.mentionCount);
+    if (!list) return;
+
+    list.replaceChildren();
+    for (const appearance of history.appearsIn) {
+      const item = document.createElement("div");
+      item.className = "nd-object-history__item nd-object-history__item--static";
+      item.textContent = appearance.label;
+      list.append(item);
+    }
   }
 }

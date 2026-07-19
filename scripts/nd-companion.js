@@ -1,6 +1,7 @@
 import { CompanionApp } from "./companion-app.js";
 import { CampaignAwareness } from "./campaign-context.js";
 import { CampaignDocument } from "./campaign-document.js";
+import { CampaignMemoryService } from "./campaign-memory-service.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { FocusManager } from "./focus-manager.js";
 import { Navigation } from "./navigation.js";
@@ -35,6 +36,7 @@ Hooks.once("ready", async () => {
   window.nd.SessionService = SessionService;
   window.nd.ThreadService = ThreadService;
   window.nd.CampaignDocument = CampaignDocument;
+  window.nd.CampaignMemoryService = CampaignMemoryService;
   window.nd.SearchService = SearchService;
   CampaignAwareness.registerHooks();
   FocusManager.registerHooks();
