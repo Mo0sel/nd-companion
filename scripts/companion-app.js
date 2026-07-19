@@ -82,16 +82,24 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       const campaignName = game.world?.title?.trim() || "Campaign";
       const date = new Date().toISOString().slice(0, 10);
       const filename = `${CompanionApp.#safeFilenamePart(campaignName)}_${date}.ndcompanion.json`;
-      const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+      const blob = new Blob([json], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
       anchor.download = filename;
-      anchor.hidden = true;
+      // Foundry's chrome installs document-level anchor handlers and a base
+      // target that reroute bubbled clicks into a new tab. Force same-frame
+      // navigation and dispatch a non-bubbling click so only the anchor's
+      // default download action runs.
+      anchor.target = "_self";
+      anchor.rel = "noopener";
+      anchor.style.display = "none";
       document.body.append(anchor);
-      anchor.click();
+      anchor.dispatchEvent(new MouseEvent("click", { bubbles: false, cancelable: true }));
       anchor.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 0);
+      // Revoke after the download has been handed to the browser; revoking in
+      // the same task can abort the transfer for large payloads.
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
 
       const sessions = Array.isArray(payload.campaign?.sessions)
         ? payload.campaign.sessions.length
