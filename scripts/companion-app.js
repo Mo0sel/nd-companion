@@ -10,22 +10,20 @@ import { LiveNotes } from "./live-notes.js";
 import { Navigation } from "./navigation.js";
 import { PanelResizer } from "./panel-resizer.js";
 import { Playbook } from "./playbook.js";
-import { PlaybookPrepare } from "./playbook-prepare.js";
 import { PlaybookService } from "./playbook-service.js";
 import { RichText } from "./rich-text.js";
-import { SessionBuilder } from "./session-builder.js";
 import { SessionService } from "./session-service.js";
 import { CompanionStorage } from "./storage.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
-const WORKSPACES = new Set(["play", "prepare", "campaign", "notes"]);
+const WORKSPACES = new Set(["play", "campaign", "notes"]);
 
 /**
  * The N&D Companion window.
  */
 export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
-  /** @type {"play"|"prepare"|"campaign"|"notes"} */
+  /** @type {"play"|"campaign"|"notes"} */
   workspace = "play";
 
   static DEFAULT_OPTIONS = {
@@ -56,10 +54,16 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /**
    * Switch the lower workspace region. Safe to call from actions or future hotkeys.
-   * @param {"play"|"prepare"|"campaign"|"notes"} workspace
+   * @param {"play"|"campaign"|"notes"} workspace
    */
   setWorkspace(workspace) {
     if (!WORKSPACES.has(workspace)) return;
+    if (this.element instanceof HTMLElement) {
+      if (this.workspace === "campaign") {
+        void CampaignWorkspace.flush(this.element).catch(() => {});
+      }
+      void LiveNotes.flushAll(this.element).catch(() => {});
+    }
     this.workspace = workspace;
     this.#applyWorkspace();
     if (workspace === "campaign") CampaignWorkspace.paint(this.element);
@@ -358,6 +362,22 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     label.textContent = `${sessionLabel}${isActive ? " · Live" : ""}`;
   }
 
+  async close(options = {}) {
+    if (this.element instanceof HTMLElement) {
+      try {
+        await Promise.all([
+          CampaignWorkspace.flush(this.element),
+          LiveNotes.flushAll(this.element)
+        ]);
+      } catch (error) {
+        console.error("N&D Companion: close blocked by unsaved changes", error);
+        ui.notifications.error("N&D Companion still has unsaved changes. Saving will retry automatically.");
+        return this;
+      }
+    }
+    return super.close(options);
+  }
+
   async _onRender(_context, _options) {
     await super._onRender(_context, _options);
     this.#applyWorkspace();
@@ -366,6 +386,15 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     FocusPanel.paint(this.element, FocusManager.get());
     Playbook.paint(this.element, Playbook.get());
     Playbook.attach(this.element, {
+      onSelectSession: async (id) => {
+        try {
+          await LiveNotes.flushAll(this.element);
+        } catch {
+          return;
+        }
+        if (!await SessionService.setActive(id)) return;
+        await this.render({ force: true });
+      },
       onOpenStoryThread: (id) => {
         if (CampaignWorkspace.selectStoryThread(this.element, id)) {
           this.setWorkspace("campaign");
@@ -420,9 +449,6 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
         await this.render({ force: true });
       }
     });
-    PlaybookPrepare.paint(this.element);
-    PlaybookPrepare.attach(this.element);
-    SessionBuilder.attach(this.element);
     CampaignWorkspace.paint(this.element);
     CampaignWorkspace.attach(this.element, {
       onOpenBeat: async (index) => {

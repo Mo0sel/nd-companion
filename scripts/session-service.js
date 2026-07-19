@@ -57,6 +57,29 @@ export class SessionService {
   }
 
   /**
+   * Select a non-archived Session as the live working Session.
+   * @param {string} id
+   * @returns {Promise<boolean>}
+   */
+  static async setActive(id) {
+    const selected = SessionService.getById(id);
+    if (!selected || selected.status === "completed") return false;
+    await CampaignDocument.update((doc) => {
+      for (const session of doc.sessions) {
+        if (session.id === id) {
+          session.status = "active";
+          session.updated = Date.now();
+        } else if (session.status === "active") {
+          session.status = "planned";
+          session.updated = Date.now();
+        }
+      }
+      doc.activeSessionId = id;
+    });
+    return true;
+  }
+
+  /**
    * Notes for the active session (Live Notes compatibility).
    * @returns {string}
    */

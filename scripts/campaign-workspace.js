@@ -73,6 +73,21 @@ export class CampaignWorkspace {
   /** @type {Set<HTMLElement>} */
   static #mentionEditors = new Set();
 
+  /** @type {ReturnType<typeof setTimeout>|null} */
+  static #autosaveTimer = null;
+
+  /** @type {ReturnType<typeof setTimeout>|null} */
+  static #autosaveStatusTimer = null;
+
+  /** @type {ReturnType<typeof setTimeout>|null} */
+  static #autosaveRetryTimer = null;
+
+  /** @type {number} */
+  static #autosaveRevision = 0;
+
+  /** @type {boolean} */
+  static #autosaveDirty = false;
+
   /** @returns {string|null} */
   static getSelectedThreadId() {
     return CampaignWorkspace.#view === "quest" ? CampaignWorkspace.#questId : null;
@@ -81,6 +96,37 @@ export class CampaignWorkspace {
   /** @returns {string|null} */
   static getSelectedQuestId() {
     return CampaignWorkspace.getSelectedThreadId();
+  }
+
+  /**
+   * Capture all visible Campaign edits before navigation or close.
+   * @param {HTMLElement} root
+   */
+  static async flush(root) {
+    clearTimeout(CampaignWorkspace.#autosaveTimer);
+    CampaignWorkspace.#autosaveTimer = null;
+    const panel = root?.querySelector?.("[data-campaign-workspace]");
+    if (!(panel instanceof HTMLElement)) return;
+    const revision = CampaignWorkspace.#autosaveRevision;
+    try {
+      await Promise.all([
+        CampaignWorkspace.#autosaveDirty
+          ? CampaignWorkspace.#saveActive(root)
+          : Promise.resolve(),
+        LiveNotes.flushAll(panel)
+      ]);
+      if (revision === CampaignWorkspace.#autosaveRevision) {
+        CampaignWorkspace.#autosaveDirty = false;
+      }
+    } catch (error) {
+      CampaignWorkspace.#setAutosaveStatus(root, "Unsaved changes");
+      clearTimeout(CampaignWorkspace.#autosaveRetryTimer);
+      CampaignWorkspace.#autosaveRetryTimer = setTimeout(() => {
+        CampaignWorkspace.#autosaveRetryTimer = null;
+        void CampaignWorkspace.#runAutosave(root);
+      }, 1500);
+      throw error;
+    }
   }
 
   static selectThread(root, id) {
@@ -93,6 +139,7 @@ export class CampaignWorkspace {
    */
   static selectQuest(root, id) {
     if (!ThreadService.getById(id)) return false;
+    void CampaignWorkspace.flush(root).catch(() => {});
     CampaignWorkspace.#captureScroll(root);
     CampaignWorkspace.#view = "quest";
     CampaignWorkspace.#section = "quests";
@@ -110,6 +157,7 @@ export class CampaignWorkspace {
   static selectQuestEntry(root, id) {
     const entry = QuestEntryService.getById(id);
     if (!entry) return false;
+    void CampaignWorkspace.flush(root).catch(() => {});
     CampaignWorkspace.#captureScroll(root);
     CampaignWorkspace.#view = "quest";
     CampaignWorkspace.#section = "quests";
@@ -126,6 +174,7 @@ export class CampaignWorkspace {
    */
   static selectMemory(root, id) {
     if (!CampaignMemoryService.getById(id)) return false;
+    void CampaignWorkspace.flush(root).catch(() => {});
     CampaignWorkspace.#captureScroll(root);
     CampaignWorkspace.#view = "memory";
     CampaignWorkspace.#section = "chronicle";
@@ -138,6 +187,7 @@ export class CampaignWorkspace {
 
   static selectStoryThread(root, id) {
     if (!StoryThreadService.getById(id)) return false;
+    void CampaignWorkspace.flush(root).catch(() => {});
     CampaignWorkspace.#captureScroll(root);
     CampaignWorkspace.#view = "storyThread";
     CampaignWorkspace.#section = "storyThreads";
@@ -149,6 +199,7 @@ export class CampaignWorkspace {
 
   static selectFaction(root, id) {
     if (!FactionService.getById(id)) return false;
+    void CampaignWorkspace.flush(root).catch(() => {});
     CampaignWorkspace.#captureScroll(root);
     CampaignWorkspace.#view = "faction";
     CampaignWorkspace.#section = "factions";
@@ -177,6 +228,7 @@ export class CampaignWorkspace {
     if (!entity || entity.kind !== kind || !["actor", "scene", "item"].includes(kind)) {
       return false;
     }
+    void CampaignWorkspace.flush(root).catch(() => {});
     CampaignWorkspace.#captureScroll(root);
     const section =
       kind === "actor" ? "actors" : kind === "scene" ? "locations" : "items";
@@ -315,27 +367,6 @@ export class CampaignWorkspace {
           return;
         }
 
-        if (target.closest("[data-save-story-thread]")) {
-          void CampaignWorkspace.#saveStoryThread(root);
-          return;
-        }
-
-        if (target.closest("[data-add-story-question]")) {
-          const list = panel.querySelector("[data-story-thread-questions]");
-          if (list instanceof HTMLElement) {
-            list.append(CampaignWorkspace.#storyQuestionElement(""));
-            CampaignWorkspace.#attachRichEditors(panel);
-            list.lastElementChild?.querySelector("[data-story-question]")?.focus();
-          }
-          return;
-        }
-
-        const removeQuestion = target.closest("[data-remove-story-question]");
-        if (removeQuestion) {
-          removeQuestion.closest("[data-story-question-row]")?.remove();
-          return;
-        }
-
         const storyThreadButton = target.closest("[data-story-thread-nav-id]");
         if (storyThreadButton) {
           const id = storyThreadButton.getAttribute("data-story-thread-nav-id");
@@ -345,11 +376,6 @@ export class CampaignWorkspace {
 
         if (target.closest("[data-new-faction]")) {
           void CampaignWorkspace.#createFaction(root);
-          return;
-        }
-
-        if (target.closest("[data-save-faction]")) {
-          void CampaignWorkspace.#saveFaction(root);
           return;
         }
 
@@ -366,6 +392,7 @@ export class CampaignWorkspace {
             list.append(CampaignWorkspace.#factionObjectiveElement(""));
             CampaignWorkspace.#attachRichEditors(panel);
             list.lastElementChild?.querySelector("[data-faction-objective]")?.focus();
+            CampaignWorkspace.#scheduleAutosave(root);
           }
           return;
         }
@@ -373,6 +400,7 @@ export class CampaignWorkspace {
         const removeObjective = target.closest("[data-remove-faction-objective]");
         if (removeObjective) {
           removeObjective.closest("[data-faction-objective-row]")?.remove();
+          CampaignWorkspace.#scheduleAutosave(root);
           return;
         }
 
@@ -382,7 +410,10 @@ export class CampaignWorkspace {
           if (picker instanceof HTMLSelectElement && list instanceof HTMLElement && picker.value) {
             const exists = [...list.querySelectorAll("[data-faction-leader-id]")]
               .some((row) => row.getAttribute("data-faction-leader-id") === picker.value);
-            if (!exists) list.append(CampaignWorkspace.#factionLeaderElement(picker.value));
+            if (!exists) {
+              list.append(CampaignWorkspace.#factionLeaderElement(picker.value));
+              CampaignWorkspace.#scheduleAutosave(root);
+            }
           }
           return;
         }
@@ -390,6 +421,7 @@ export class CampaignWorkspace {
         const removeLeader = target.closest("[data-remove-faction-leader]");
         if (removeLeader) {
           removeLeader.closest("[data-faction-leader-id]")?.remove();
+          CampaignWorkspace.#scheduleAutosave(root);
           return;
         }
 
@@ -397,11 +429,6 @@ export class CampaignWorkspace {
         if (newQuest) {
           const category = newQuest.getAttribute("data-new-quest") || "SIDE";
           void CampaignWorkspace.#createQuest(root, category);
-          return;
-        }
-
-        if (target.closest("[data-save-quest]")) {
-          void CampaignWorkspace.#saveQuest(root);
           return;
         }
 
@@ -414,13 +441,6 @@ export class CampaignWorkspace {
         if (questButton) {
           const id = questButton.getAttribute("data-quest-nav-id");
           if (id) CampaignWorkspace.selectQuest(root, id);
-          return;
-        }
-
-        const saveEntry = target.closest("[data-save-quest-entry]");
-        if (saveEntry) {
-          const id = saveEntry.getAttribute("data-save-quest-entry");
-          if (id) void CampaignWorkspace.#saveEntry(root, id);
           return;
         }
 
@@ -476,7 +496,125 @@ export class CampaignWorkspace {
       { signal: controller.signal }
     );
 
+    panel.addEventListener(
+      "input",
+      (event) => {
+        if (CampaignWorkspace.#autosaveField(event.target)) {
+          CampaignWorkspace.#scheduleAutosave(root);
+        }
+      },
+      { signal: controller.signal }
+    );
+    panel.addEventListener(
+      "change",
+      (event) => {
+        if (CampaignWorkspace.#autosaveField(event.target)) {
+          CampaignWorkspace.#scheduleAutosave(root);
+          void CampaignWorkspace.#runAutosave(root);
+        }
+      },
+      { signal: controller.signal }
+    );
+    panel.addEventListener(
+      "focusout",
+      (event) => {
+        if (CampaignWorkspace.#autosaveField(event.target)) {
+          void CampaignWorkspace.#runAutosave(root);
+        }
+      },
+      { signal: controller.signal }
+    );
+
     CampaignWorkspace.#attachRichEditors(panel);
+  }
+
+  static #autosaveField(target) {
+    if (!(target instanceof Element)) return null;
+    return target.closest([
+      "[data-quest-title]",
+      "[data-quest-status]",
+      "[data-quest-category]",
+      "[data-quest-overview]",
+      "[data-entry-field]",
+      "[data-story-thread-title]",
+      "[data-story-thread-status]",
+      "[data-story-thread-description]",
+      "[data-story-thread-current-state]",
+      "[data-faction-name]",
+      "[data-faction-icon]",
+      "[data-faction-description]",
+      "[data-faction-current-status]",
+      "[data-faction-resources]",
+      "[data-faction-reputation]",
+      "[data-faction-objective]"
+    ].join(","));
+  }
+
+  static #scheduleAutosave(root) {
+    CampaignWorkspace.#autosaveRevision += 1;
+    CampaignWorkspace.#autosaveDirty = true;
+    clearTimeout(CampaignWorkspace.#autosaveTimer);
+    clearTimeout(CampaignWorkspace.#autosaveRetryTimer);
+    CampaignWorkspace.#autosaveTimer = setTimeout(() => {
+      CampaignWorkspace.#autosaveTimer = null;
+      void CampaignWorkspace.#runAutosave(root);
+    }, 650);
+  }
+
+  static async #runAutosave(root) {
+    clearTimeout(CampaignWorkspace.#autosaveTimer);
+    CampaignWorkspace.#autosaveTimer = null;
+    if (!CampaignWorkspace.#autosaveDirty) return;
+    const revision = CampaignWorkspace.#autosaveRevision;
+    CampaignWorkspace.#setAutosaveStatus(root, "Saving...");
+    try {
+      await CampaignWorkspace.#saveActive(root);
+      if (revision !== CampaignWorkspace.#autosaveRevision) return;
+      CampaignWorkspace.#autosaveDirty = false;
+      CampaignWorkspace.#setAutosaveStatus(root, "Saved");
+      clearTimeout(CampaignWorkspace.#autosaveStatusTimer);
+      CampaignWorkspace.#autosaveStatusTimer = setTimeout(() => {
+        CampaignWorkspace.#setAutosaveStatus(root, "");
+      }, 1200);
+    } catch (error) {
+      console.error("N&D Companion: campaign autosave failed", error);
+      CampaignWorkspace.#setAutosaveStatus(root, "Unsaved changes");
+      clearTimeout(CampaignWorkspace.#autosaveRetryTimer);
+      CampaignWorkspace.#autosaveRetryTimer = setTimeout(() => {
+        CampaignWorkspace.#autosaveRetryTimer = null;
+        void CampaignWorkspace.#runAutosave(root);
+      }, 1500);
+    }
+  }
+
+  static async #saveActive(root) {
+    if (CampaignWorkspace.#view === "quest" && CampaignWorkspace.#questId) {
+      const entryIds = [...root.querySelectorAll("[data-quest-entry-id]")]
+        .map((entry) => entry.getAttribute("data-quest-entry-id"))
+        .filter(Boolean);
+      await Promise.all([
+        CampaignWorkspace.#saveQuest(root, false),
+        ...entryIds.map((id) => CampaignWorkspace.#saveEntry(root, id, false))
+      ]);
+      return;
+    }
+    if (CampaignWorkspace.#view === "storyThread" && CampaignWorkspace.#storyThreadId) {
+      await CampaignWorkspace.#saveStoryThread(root, false);
+      return;
+    }
+    if (CampaignWorkspace.#view === "faction" && CampaignWorkspace.#factionId) {
+      await CampaignWorkspace.#saveFaction(root, false);
+    }
+  }
+
+  static #setAutosaveStatus(root, text) {
+    const status = root.querySelector("[data-campaign-autosave-status]");
+    if (!(status instanceof HTMLElement)) return;
+    status.textContent = text;
+    status.hidden = !text;
+    status.dataset.state = text === "Unsaved changes"
+      ? "error"
+      : text === "Saving..." ? "saving" : "saved";
   }
 
   static #paintQuestLists(panel, quests) {
@@ -567,14 +705,11 @@ export class CampaignWorkspace {
     if (currentState instanceof HTMLElement) {
       currentState.innerHTML = RichText.sanitize(thread.currentState ?? "");
     }
-
-    const questions = view.querySelector("[data-story-thread-questions]");
-    if (questions instanceof HTMLElement) {
-      questions.replaceChildren();
-      for (const question of thread.openQuestions ?? []) {
-        questions.append(CampaignWorkspace.#storyQuestionElement(question));
-      }
-    }
+    view.dataset.storyVisibleReferences = JSON.stringify(
+      CampaignWorkspace.#storyReferencePatch(
+        EntityMentions.extract(`${thread.description ?? ""}${thread.currentState ?? ""}`)
+      )
+    );
 
     ContextPanel.paint(
       view.querySelector("[data-context-panel=\"storyThread\"]"),
@@ -586,37 +721,6 @@ export class CampaignWorkspace {
       }
     );
 
-    const notes = view.querySelector("[data-story-thread-notes]");
-    if (notes instanceof HTMLElement) {
-      LiveNotes.attach(notes, `storyThread:${thread.id}`, {
-        memory: true,
-        html: true,
-        sanitize: RichText.sanitize
-      });
-    }
-  }
-
-  static #storyQuestionElement(question) {
-    const row = document.createElement("div");
-    row.className = "nd-story-thread-question";
-    row.dataset.storyQuestionRow = "";
-    const editor = document.createElement("div");
-    editor.className = "nd-richtext nd-story-thread-question__editor";
-    editor.dataset.storyQuestion = "";
-    editor.dataset.richtextEditor = "";
-    editor.dataset.placeholder = "What remains unanswered?";
-    editor.contentEditable = "true";
-    editor.setAttribute("role", "textbox");
-    editor.setAttribute("aria-label", "Open Question");
-    editor.innerHTML = RichText.sanitize(question ?? "");
-    const remove = document.createElement("button");
-    remove.type = "button";
-    remove.className = "nd-story-thread-question__remove";
-    remove.dataset.removeStoryQuestion = "";
-    remove.setAttribute("aria-label", "Remove question");
-    remove.textContent = "×";
-    row.append(editor, remove);
-    return row;
   }
 
   static #paintFactionList(panel) {
@@ -789,6 +893,7 @@ export class CampaignWorkspace {
       "chronicle"
     ]);
     if (!allowed.has(section)) return;
+    void CampaignWorkspace.flush(root).catch(() => {});
     CampaignWorkspace.#captureScroll(root);
     CampaignWorkspace.#section = section;
 
@@ -1087,16 +1192,6 @@ export class CampaignWorkspace {
     historySection.append(heading, historySummary, appearances);
     body.append(historySection);
 
-    const actions = document.createElement("div");
-    actions.className = "nd-quest-actions";
-    const save = document.createElement("button");
-    save.type = "button";
-    save.className = "nd-campaign-save";
-    save.dataset.saveQuestEntry = entry.id;
-    save.textContent = "Save Entry";
-    actions.append(save);
-    body.append(actions);
-
     details.append(summary, body);
     return details;
   }
@@ -1349,7 +1444,7 @@ export class CampaignWorkspace {
     requestAnimationFrame(() => root.querySelector("[data-faction-name]")?.focus());
   }
 
-  static async #saveFaction(root) {
+  static async #saveFaction(root, repaint = true) {
     const view = root.querySelector("[data-faction-view]");
     if (!(view instanceof HTMLElement)) return;
     const id = view.dataset.factionId;
@@ -1401,7 +1496,7 @@ export class CampaignWorkspace {
         leadershipActorIds
       )
     });
-    CampaignWorkspace.paint(root);
+    if (repaint) CampaignWorkspace.paint(root);
   }
 
   static #factionReferencePatch(mentions, factionId, leadershipActorIds) {
@@ -1436,7 +1531,7 @@ export class CampaignWorkspace {
     requestAnimationFrame(() => root.querySelector("[data-story-thread-title]")?.focus());
   }
 
-  static async #saveStoryThread(root) {
+  static async #saveStoryThread(root, repaint = true) {
     const view = root.querySelector("[data-story-thread-view]");
     if (!(view instanceof HTMLElement)) return;
     const id = view.dataset.storyThreadId;
@@ -1445,32 +1540,36 @@ export class CampaignWorkspace {
     const status = view.querySelector("[data-story-thread-status]");
     const description = view.querySelector("[data-story-thread-description]");
     const currentState = view.querySelector("[data-story-thread-current-state]");
-    const notes = view.querySelector("[data-story-thread-notes]");
     const safeDescription = description instanceof HTMLElement
       ? RichText.sanitize(description.innerHTML)
       : "";
     const safeCurrentState = currentState instanceof HTMLElement
       ? RichText.sanitize(currentState.innerHTML)
       : "";
-    const openQuestions = [...view.querySelectorAll("[data-story-question]")]
-      .filter((question) => question instanceof HTMLElement)
-      .map((question) => RichText.sanitize(question.innerHTML))
-      .filter((question) => RichText.hasContent(question));
-    const mentionHtml = [
-      safeDescription,
-      safeCurrentState,
-      notes instanceof HTMLElement ? RichText.sanitize(notes.innerHTML) : "",
-      ...openQuestions
-    ].join("");
+    const mentionHtml = [safeDescription, safeCurrentState].join("");
+    const detectedReferences = CampaignWorkspace.#storyReferencePatch(
+      EntityMentions.extract(mentionHtml)
+    );
+    const existing = StoryThreadService.getById(id);
+    let previousVisibleReferences = {};
+    try {
+      previousVisibleReferences = JSON.parse(view.dataset.storyVisibleReferences ?? "{}");
+    } catch {
+      previousVisibleReferences = {};
+    }
+    const references = CampaignWorkspace.#mergeStoryReferences(
+      existing,
+      previousVisibleReferences,
+      detectedReferences
+    );
     await StoryThreadService.update(id, {
       title: title instanceof HTMLInputElement ? title.value.trim() : "",
       status: status instanceof HTMLSelectElement ? status.value : "ACTIVE",
       description: safeDescription,
       currentState: safeCurrentState,
-      openQuestions,
-      ...CampaignWorkspace.#storyReferencePatch(EntityMentions.extract(mentionHtml))
+      ...references
     });
-    CampaignWorkspace.paint(root);
+    if (repaint) CampaignWorkspace.paint(root);
   }
 
   static #storyReferencePatch(mentions) {
@@ -1486,6 +1585,23 @@ export class CampaignWorkspace {
       relatedQuestIds: ids("quest", false),
       relatedSessionIds: ids("session", false)
     };
+  }
+
+  static #mergeStoryReferences(existing, previousVisible, nextVisible) {
+    const result = {};
+    for (const key of [
+      "relatedActorIds",
+      "relatedLocationIds",
+      "relatedItemIds",
+      "relatedQuestIds",
+      "relatedSessionIds"
+    ]) {
+      const prior = new Set(Array.isArray(previousVisible?.[key]) ? previousVisible[key] : []);
+      const preserved = (Array.isArray(existing?.[key]) ? existing[key] : [])
+        .filter((id) => !prior.has(id));
+      result[key] = [...new Set([...preserved, ...(nextVisible[key] ?? [])])];
+    }
+    return result;
   }
 
   static async #createQuest(root, category) {
@@ -1504,7 +1620,7 @@ export class CampaignWorkspace {
     requestAnimationFrame(() => root.querySelector("[data-quest-title]")?.focus());
   }
 
-  static async #saveQuest(root) {
+  static async #saveQuest(root, repaint = true) {
     const editor = root.querySelector("[data-quest-editor]");
     if (!(editor instanceof HTMLElement)) return;
     const id = editor.dataset.questId;
@@ -1523,7 +1639,7 @@ export class CampaignWorkspace {
       description: RichText.plainText(safeOverview),
       ...refs
     });
-    CampaignWorkspace.paint(root);
+    if (repaint) CampaignWorkspace.paint(root);
   }
 
   static async #createEntry(root) {
@@ -1534,7 +1650,7 @@ export class CampaignWorkspace {
     CampaignWorkspace.paint(root);
   }
 
-  static async #saveEntry(root, id) {
+  static async #saveEntry(root, id, repaint = true) {
     const details = root.querySelector(`[data-quest-entry-id="${id}"]`);
     if (!(details instanceof HTMLElement)) return;
     const patch = {};
@@ -1555,7 +1671,7 @@ export class CampaignWorkspace {
     ));
     await QuestEntryService.update(id, patch);
     CampaignWorkspace.#openEntryId = id;
-    CampaignWorkspace.paint(root);
+    if (repaint) CampaignWorkspace.paint(root);
   }
 
   static #referencePatch(mentions) {

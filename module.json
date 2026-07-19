@@ -3,7 +3,7 @@
   "type": "module",
   "title": "N&D Companion",
   "description": "DM Companion for Foundry VTT",
-  "version": "0.3.9",
+  "version": "0.3.10",
 
   "authors": [
     {
@@ -26,7 +26,6 @@
     "styles/nd-richtext.css",
     "styles/nd-layout.css",
     "styles/play.css",
-    "styles/prepare.css",
     "styles/campaign.css",
     "styles/notes.css",
     "styles/nd-companion.css"

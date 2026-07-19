@@ -71,6 +71,24 @@
   white-space: nowrap;
 }
 
+.nd-campaign-autosave {
+  display: inline-block;
+  min-height: 14px;
+  margin-top: 4px;
+  color: var(--nd-text-3);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  transition: opacity 180ms ease;
+}
+
+.nd-campaign-autosave[data-state="saved"] {
+  color: var(--nd-status-done-color);
+}
+
+.nd-campaign-autosave[data-state="error"] {
+  color: var(--nd-danger);
+}
+
 .nd-campaign-nav {
   display: grid;
   gap: 2px;

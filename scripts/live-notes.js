@@ -8,6 +8,9 @@ const SAVED_VISIBLE_MS = 1000;
  * Supports CompanionStorage keys or custom load/save callbacks (same debounce + status UX).
  */
 export class LiveNotes {
+  /** @type {WeakMap<HTMLElement, { flush: () => Promise<void> }>} */
+  static #states = new WeakMap();
+
   /**
    * Load content and attach autosave behavior to a contenteditable element.
    * Safe to call again when the binding changes (replaces prior listeners).
@@ -64,6 +67,10 @@ export class LiveNotes {
 
     let debounceId = null;
     let statusClearId = null;
+    let retryId = null;
+    let dirty = false;
+    let saving = null;
+    let revision = 0;
     const statusEl = element
       .closest("[data-live-notes-root], .nd-card")
       ?.querySelector("[data-live-notes-status]");
@@ -75,23 +82,54 @@ export class LiveNotes {
     };
 
     const save = async () => {
+      if (saving) {
+        await saving.catch(() => {});
+        if (dirty) return save();
+        return;
+      }
       const raw = useHtml ? element.innerHTML : element.textContent ?? "";
       const value = useHtml ? sanitize(raw) : raw;
+      const savingRevision = revision;
       setStatus("Saving...");
-      await write(value);
-      setStatus("Saved");
-      clearTimeout(statusClearId);
-      statusClearId = setTimeout(() => setStatus(""), SAVED_VISIBLE_MS);
+      saving = Promise.resolve(write(value))
+        .then(() => {
+          dirty = revision !== savingRevision;
+          clearTimeout(retryId);
+          if (dirty) {
+            retryId = setTimeout(() => {
+              retryId = null;
+              void save();
+            }, 0);
+          } else {
+            setStatus("Saved");
+            clearTimeout(statusClearId);
+            statusClearId = setTimeout(() => setStatus(""), SAVED_VISIBLE_MS);
+          }
+        })
+        .catch((err) => {
+          console.error("N&D Companion: failed to save live note", key ?? "callback", err);
+          dirty = true;
+          setStatus("Unsaved changes");
+          clearTimeout(retryId);
+          retryId = setTimeout(() => {
+            retryId = null;
+            void save();
+          }, 1500);
+          throw err;
+        })
+        .finally(() => {
+          saving = null;
+        });
+      return saving;
     };
 
     const onInput = () => {
+      revision += 1;
+      dirty = true;
       clearTimeout(debounceId);
       debounceId = setTimeout(() => {
         debounceId = null;
-        save().catch((err) => {
-          console.error("N&D Companion: failed to save live note", key ?? "callback", err);
-          setStatus("");
-        });
+        void save().catch(() => {});
       }, DEBOUNCE_MS);
     };
 
@@ -99,22 +137,49 @@ export class LiveNotes {
       if (debounceId === null) return;
       clearTimeout(debounceId);
       debounceId = null;
-      save().catch((err) => {
-        console.error("N&D Companion: failed to save live note", key ?? "callback", err);
-        setStatus("");
-      });
+      void save().catch(() => {});
     };
 
     element.addEventListener("input", onInput);
     element.addEventListener("blur", onBlur);
+    const flush = async () => {
+      if (debounceId !== null) {
+        clearTimeout(debounceId);
+        debounceId = null;
+      }
+      if (!dirty) {
+        if (saving) await saving;
+        return;
+      }
+      await save();
+    };
+    LiveNotes.#states.set(element, { flush });
 
     element._ndLiveNotesCleanup = () => {
       clearTimeout(debounceId);
       clearTimeout(statusClearId);
+      clearTimeout(retryId);
       element.removeEventListener("input", onInput);
       element.removeEventListener("blur", onBlur);
+      LiveNotes.#states.delete(element);
       setStatus("");
     };
+  }
+
+  /** @param {HTMLElement} element */
+  static async flush(element) {
+    const state = LiveNotes.#states.get(element);
+    if (state) await state.flush();
+  }
+
+  /** @param {HTMLElement} root */
+  static async flushAll(root) {
+    if (!(root instanceof HTMLElement)) return;
+    const elements = [
+      ...(LiveNotes.#states.has(root) ? [root] : []),
+      ...root.querySelectorAll("[contenteditable=\"true\"]")
+    ].filter((element) => element instanceof HTMLElement && LiveNotes.#states.has(element));
+    await Promise.all(elements.map((element) => LiveNotes.flush(element)));
   }
 
   /**

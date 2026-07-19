@@ -6,6 +6,7 @@ import { PlaybookEntities } from "./playbook-entities.js";
 import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
 import { RichText } from "./rich-text.js";
+import { SessionService } from "./session-service.js";
 import { StoryThreadService } from "./story-thread-service.js";
 
 /**
@@ -183,6 +184,7 @@ export class Playbook {
     }
 
     Playbook.#paintStatus(panel, snapshot.total > 0 ? status : "idle");
+    Playbook.#paintRunControls(root);
 
     const prevBtn = panel.querySelector("[data-playbook-nav=\"prev\"]");
     const nextBtn = panel.querySelector("[data-playbook-nav=\"next\"]");
@@ -217,6 +219,43 @@ export class Playbook {
       state.textContent = RichText.plainText(thread.currentState ?? "") || "No current state";
       button.append(title, state);
       list.append(button);
+    }
+  }
+
+  static #paintRunControls(root) {
+    const campaign = root.querySelector("[data-play-campaign-select]");
+    const session = root.querySelector("[data-play-session-select]");
+    const beat = root.querySelector("[data-play-beat-select]");
+    if (campaign instanceof HTMLSelectElement) {
+      campaign.replaceChildren(new Option(game.world?.title?.trim() || "Campaign", ""));
+    }
+    if (session instanceof HTMLSelectElement) {
+      const activeId = SessionService.getActive()?.id ?? "";
+      const sessions = SessionService.list()
+        .filter((entry) => entry.status !== "completed")
+        .sort((a, b) => a.sessionNumber - b.sessionNumber);
+      session.replaceChildren();
+      for (const entry of sessions) {
+        const label = entry.title?.trim()
+          ? `Session ${entry.sessionNumber} · ${entry.title.trim()}`
+          : `Session ${entry.sessionNumber}`;
+        session.add(new Option(label, entry.id, false, entry.id === activeId));
+      }
+      session.disabled = sessions.length <= 1;
+    }
+    if (beat instanceof HTMLSelectElement) {
+      const current = PlaybookService.getIndex();
+      const beats = PlaybookService.listBeats();
+      beat.replaceChildren();
+      for (const entry of beats) {
+        beat.add(new Option(
+          `${entry.index + 1}. ${entry.title}`,
+          String(entry.index),
+          false,
+          entry.index === current
+        ));
+      }
+      beat.disabled = beats.length === 0;
     }
   }
 
@@ -526,7 +565,8 @@ export class Playbook {
    * @param {{
    *   onEndSession?: () => Promise<void>|void,
    *   onOpenStoryThread?: (id: string) => Promise<void>|void,
-   *   onOpenFaction?: (id: string) => Promise<void>|void
+   *   onOpenFaction?: (id: string) => Promise<void>|void,
+   *   onSelectSession?: (id: string) => Promise<void>|void
    * }} [options]
    */
   static attach(root, options = {}) {
@@ -623,6 +663,25 @@ export class Playbook {
         const entity = EntityRegistry.findByUUID(uuid);
         if (!entity || !Navigation.canNavigate(entity)) return;
         void Navigation.navigate(entity);
+      },
+      { signal: controller.signal }
+    );
+    playRoot.addEventListener(
+      "change",
+      (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLSelectElement)) return;
+        if (target.matches("[data-play-beat-select]")) {
+          const index = Number(target.value);
+          if (!Number.isInteger(index)) return;
+          void PlaybookService.setCurrentIndex(index).then((moved) => {
+            if (moved) Playbook.paint(root, Playbook.get());
+          });
+          return;
+        }
+        if (target.matches("[data-play-session-select]") && target.value) {
+          void Promise.resolve(options.onSelectSession?.(target.value));
+        }
       },
       { signal: controller.signal }
     );

@@ -60,13 +60,6 @@
       type="button"
       class="nd-workspace-switcher__button"
       data-action="setWorkspace"
-      data-workspace="prepare"
-      aria-pressed="false"
-    ><span class="nd-workspace-switcher__icon" aria-hidden="true">✦</span>Prepare</button>
-    <button
-      type="button"
-      class="nd-workspace-switcher__button"
-      data-action="setWorkspace"
       data-workspace="campaign"
       aria-pressed="false"
     ><span class="nd-workspace-switcher__icon" aria-hidden="true">⬡</span>Campaign</button>
@@ -84,21 +77,22 @@
     {{!-- PLAY — stable live-session dashboard (design/current PlayWorkspace) --}}
     <section class="nd-workspace nd-play" data-workspace-panel="play" data-playbook aria-label="Play workspace">
 
-      {{!-- Context bar: campaign-level information + entry status --}}
-      <div class="nd-play-context" data-play-campaign aria-label="Campaign Context">
-        <div class="nd-play-context__campaign">
-          <span class="nd-play-context__eyebrow">Campaign</span>
-          <span class="nd-play-context__name" data-context="campaign-title"></span>
-        </div>
-        <div class="nd-play-context__divider" aria-hidden="true"></div>
-        <div class="nd-play-context__chip nd-play-context__chip--scene" data-context="scene">
-          <span class="nd-play-context__pin" aria-hidden="true">◆</span>
-          <span data-context-value>No active scene</span>
-        </div>
-        <div class="nd-play-context__chip nd-play-context__chip--focus">
-          <span class="nd-play-context__avatar" data-focus="initials" aria-hidden="true">P</span>
-          <span data-focus="name">Party</span>
-        </div>
+      {{!-- Run controls: choose today's campaign context without leaving PLAY --}}
+      <div class="nd-play-context nd-play-run-controls" aria-label="Current run">
+        <label>
+          <span>Campaign</span>
+          <select data-play-campaign-select disabled></select>
+        </label>
+        <span class="nd-play-run-controls__arrow" aria-hidden="true">↓</span>
+        <label>
+          <span>Session</span>
+          <select data-play-session-select></select>
+        </label>
+        <span class="nd-play-run-controls__arrow" aria-hidden="true">↓</span>
+        <label>
+          <span>Beat</span>
+          <select data-play-beat-select></select>
+        </label>
         <div class="nd-play-context__spacer" aria-hidden="true"></div>
         <div class="nd-entry-status" data-playbook-state data-state="active" role="status" aria-label="Entry status">
           <span class="nd-entry-status__pill nd-entry-status__pill--active">Active</span>
@@ -125,21 +119,21 @@
       {{!-- Scrollable dashboard content --}}
       <div class="nd-play-content">
 
-        <section class="nd-play-story-threads" data-play-story-threads hidden>
-          <header>
+        <details class="nd-play-story-threads" data-play-story-threads hidden open>
+          <summary>
             <span class="nd-play-card__label">Active Story Threads</span>
             <span class="nd-play-story-threads__count" data-play-story-thread-count></span>
-          </header>
+          </summary>
           <div class="nd-play-story-threads__list" data-play-story-thread-list></div>
-        </section>
+        </details>
 
-        <section class="nd-play-factions" data-play-factions hidden>
-          <header>
+        <details class="nd-play-factions" data-play-factions hidden open>
+          <summary>
             <span class="nd-play-card__label">Faction Status</span>
             <span class="nd-play-story-threads__count" data-play-faction-count></span>
-          </header>
+          </summary>
           <div class="nd-play-factions__list" data-play-faction-list></div>
-        </section>
+        </details>
 
         {{!-- Scene Flow group --}}
         <h3 class="nd-play-section-title nd-play-section-title--scene-flow">Scene Flow</h3>
@@ -170,6 +164,14 @@
               <div class="nd-playbook-card__chips" data-playbook="entities"></div>
             </div>
           </details>
+
+          <section class="nd-play-card" data-playbook-field-block="npcs">
+            <div class="nd-play-card__labelrow">
+              <span class="nd-play-card__label">NPCs</span>
+            </div>
+            <div class="nd-play-npcs" data-play-npcs></div>
+            <p class="nd-play-card__empty" data-play-npcs-empty>No NPCs linked to this Beat.</p>
+          </section>
 
           <section class="nd-play-card" data-playbook-field-block="objective">
             <div class="nd-play-card__labelrow">
@@ -306,6 +308,7 @@
           <div class="nd-quest-sidebar__head">
             <div class="nd-quest-sidebar__title">Campaign</div>
             <p class="nd-quest-sidebar__session" data-campaign-current-session>Session 1</p>
+            <span class="nd-campaign-autosave" data-campaign-autosave-status hidden></span>
             <nav class="nd-campaign-nav" aria-label="Campaign sections">
               <button type="button" data-campaign-section="storyThreads">Story Threads</button>
               <button type="button" data-campaign-section="factions">Factions</button>
@@ -453,10 +456,6 @@
               ></div>
             </div>
 
-            <div class="nd-quest-actions">
-              <button type="button" class="nd-campaign-save" data-save-quest>Save Quest</button>
-            </div>
-
             <section class="nd-quest-entries">
               <header>
                 <div>
@@ -521,44 +520,7 @@
               ></div>
             </div>
 
-            <section class="nd-story-thread-questions">
-              <header>
-                <div>
-                  <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Manual</div>
-                  <h3 class="nd-hierarchy-group">Open Questions</h3>
-                </div>
-                <button type="button" class="nd-campaign-new-thread" data-add-story-question>
-                  + Add Question
-                </button>
-              </header>
-              <div data-story-thread-questions></div>
-            </section>
-
-            <div class="nd-quest-actions">
-              <button type="button" class="nd-campaign-save" data-save-story-thread>
-                Save Story Thread
-              </button>
-            </div>
-
             <section data-context-panel="storyThread" hidden></section>
-
-            <section class="nd-story-thread-notes" data-live-notes-root>
-              <header>
-                <div>
-                  <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Private</div>
-                  <h3 class="nd-hierarchy-group">DM Notes</h3>
-                </div>
-                <span class="nd-live-notes__status" data-live-notes-status hidden></span>
-              </header>
-              <div
-                class="nd-richtext nd-richtext--editor nd-story-thread-editor"
-                data-story-thread-notes
-                data-richtext-editor
-                data-placeholder="Private notes about this Story Thread..."
-                role="textbox"
-                aria-label="Story Thread DM Notes"
-              ></div>
-            </section>
           </section>
 
           <section class="nd-faction-view" data-faction-view hidden>
@@ -658,12 +620,6 @@
                 <button type="button" data-add-faction-leader>Add Leader</button>
               </div>
             </section>
-
-            <div class="nd-quest-actions">
-              <button type="button" class="nd-campaign-save" data-save-faction>
-                Save Faction
-              </button>
-            </div>
 
             <section data-context-panel="faction" hidden></section>
 
@@ -840,7 +796,7 @@
       </div>
     </section>
 
-    <section class="nd-workspace" data-workspace-panel="prepare" aria-label="Prepare workspace" hidden>
+    <template data-removed-prepare-workspace>
       <article class="nd-card nd-card--playbook-prepare" data-playbook-prepare data-live-notes-root aria-label="Session Builder">
         <div class="nd-playbook-prepare">
           <div class="nd-playbook-prepare__main">
@@ -1032,7 +988,7 @@
           </footer>
         </section>
       </article>
-    </section>
+    </template>
 
   </div>
 
