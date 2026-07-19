@@ -5,6 +5,7 @@ import { PlaybookEntities } from "./playbook-entities.js";
 import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
 import { RichText } from "./rich-text.js";
+import { StoryThreadService } from "./story-thread-service.js";
 
 /**
  * @typedef {import("./playbook-service.js").PlaybookBeat} PlaybookBeat
@@ -189,6 +190,32 @@ export class Playbook {
 
     Playbook.#attachInlineEditors(root, snapshot);
     Playbook.#paintSessionNpcs(root, snapshot);
+    Playbook.#paintStoryThreads(root);
+  }
+
+  static #paintStoryThreads(root) {
+    const card = root.querySelector("[data-play-story-threads]");
+    const list = root.querySelector("[data-play-story-thread-list]");
+    const count = root.querySelector("[data-play-story-thread-count]");
+    if (!(card instanceof HTMLElement) || !(list instanceof HTMLElement)) return;
+    const threads = StoryThreadService.list()
+      .filter((thread) => thread.status === "ACTIVE")
+      .sort((a, b) => a.title.localeCompare(b.title));
+    card.hidden = threads.length === 0;
+    list.replaceChildren();
+    if (count) count.textContent = String(threads.length);
+    for (const thread of threads) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "nd-play-story-thread";
+      button.dataset.playStoryThreadId = thread.id;
+      const title = document.createElement("strong");
+      title.textContent = thread.title?.trim() || "Untitled Story Thread";
+      const state = document.createElement("span");
+      state.textContent = RichText.plainText(thread.currentState ?? "") || "No current state";
+      button.append(title, state);
+      list.append(button);
+    }
   }
 
   /**
@@ -469,6 +496,10 @@ export class Playbook {
 
   /**
    * @param {HTMLElement} root
+   * @param {{
+   *   onEndSession?: () => Promise<void>|void,
+   *   onOpenStoryThread?: (id: string) => Promise<void>|void
+   * }} [options]
    */
   static attach(root, options = {}) {
     if (!(root instanceof HTMLElement)) return;
@@ -499,6 +530,13 @@ export class Playbook {
 
         if (target.closest("[data-end-session]")) {
           void Promise.resolve(options.onEndSession?.());
+          return;
+        }
+
+        const storyThread = target.closest("[data-play-story-thread-id]");
+        if (storyThread) {
+          const id = storyThread.getAttribute("data-play-story-thread-id");
+          if (id) void Promise.resolve(options.onOpenStoryThread?.(id));
           return;
         }
 

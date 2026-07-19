@@ -5,6 +5,7 @@ import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
 import { SearchService } from "./search-service.js";
 import { SessionService } from "./session-service.js";
+import { StoryThreadService } from "./story-thread-service.js";
 import { ThreadService } from "./thread-service.js";
 
 const ENTITY_GROUPS = Object.freeze({
@@ -97,6 +98,22 @@ export function registerSearchProviders() {
     },
     open: (id, context) => {
       context.openThread(id);
+      return true;
+    }
+  });
+
+  SearchService.registerProvider({
+    id: "story-threads",
+    label: "Story Threads",
+    getItems: () =>
+      StoryThreadService.list().map((thread) => ({
+        id: thread.id,
+        title: thread.title?.trim() || "Untitled Story Thread",
+        subtitle: thread.status,
+        group: "STORY THREAD"
+      })),
+    open: (id, context) => {
+      context.openStoryThread(id);
       return true;
     }
   });

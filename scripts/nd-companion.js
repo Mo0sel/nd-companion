@@ -9,6 +9,7 @@ import { Navigation } from "./navigation.js";
 import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
 import { SessionService } from "./session-service.js";
+import { StoryThreadService } from "./story-thread-service.js";
 import { registerSearchProviders } from "./search-providers.js";
 import { SearchService } from "./search-service.js";
 import { CompanionStorage } from "./storage.js";
@@ -36,6 +37,7 @@ Hooks.once("ready", async () => {
   window.nd.QuestEntryService = QuestEntryService;
   window.nd.SessionService = SessionService;
   window.nd.ThreadService = ThreadService;
+  window.nd.StoryThreadService = StoryThreadService;
   window.nd.CampaignDocument = CampaignDocument;
   window.nd.CampaignMemoryService = CampaignMemoryService;
   window.nd.ContextEngine = ContextEngine;

@@ -63,6 +63,7 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     this.workspace = workspace;
     this.#applyWorkspace();
     if (workspace === "campaign") CampaignWorkspace.paint(this.element);
+    if (workspace === "play") Playbook.paint(this.element, Playbook.get());
   }
 
   /**
@@ -197,6 +198,9 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const questEntries = Array.isArray(campaign.questEntries)
       ? campaign.questEntries.length
       : 0;
+    const storyThreads = Array.isArray(campaign.storyThreads)
+      ? campaign.storyThreads.length
+      : 0;
     const row = (label, value) =>
       `<div><dt>${foundry.utils.escapeHTML(label)}</dt>` +
       `<dd>${foundry.utils.escapeHTML(String(value))}</dd></div>`;
@@ -206,7 +210,8 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       row("Schema Version", payload.schemaVersion),
       row("Export Date", payload.exportedAt || "Not provided"),
       row("Sessions", sessions),
-      row("Threads", threads),
+      row("Quests", threads),
+      row("Story Threads", storyThreads),
       row("Quest Entries", questEntries)
     ].join("");
 
@@ -267,6 +272,12 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
     if (target.kind === "quest") {
       if (CampaignWorkspace.selectQuest(this.element, target.id)) {
+        this.setWorkspace("campaign");
+      }
+      return;
+    }
+    if (target.kind === "storyThread") {
+      if (CampaignWorkspace.selectStoryThread(this.element, target.id)) {
         this.setWorkspace("campaign");
       }
       return;
@@ -347,6 +358,11 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     FocusPanel.paint(this.element, FocusManager.get());
     Playbook.paint(this.element, Playbook.get());
     Playbook.attach(this.element, {
+      onOpenStoryThread: (id) => {
+        if (CampaignWorkspace.selectStoryThread(this.element, id)) {
+          this.setWorkspace("campaign");
+        }
+      },
       onEndSession: async () => {
         const active = SessionService.getActive();
         if (!active) {
@@ -431,6 +447,10 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       },
       openThread: (id) => {
         if (!CampaignWorkspace.selectThread(this.element, id)) return;
+        this.setWorkspace("campaign");
+      },
+      openStoryThread: (id) => {
+        if (!CampaignWorkspace.selectStoryThread(this.element, id)) return;
         this.setWorkspace("campaign");
       },
       openQuestEntry: (id) => {

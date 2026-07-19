@@ -24,6 +24,9 @@ export class ContextEngine {
   /** @type {Map<string, object>} */
   static #entries = new Map();
 
+  /** @type {Map<string, object>} */
+  static #storyThreads = new Map();
+
   /**
    * @param {object} entity Actor, Quest, Location, Item, or Chronicle Session
    * @returns {ContextResult}
@@ -67,7 +70,12 @@ export class ContextEngine {
       actors: unique(related.filter((node) => node.kind === "actor")).sort(byLabel),
       locations: unique(related.filter((node) => node.kind === "location")).sort(byLabel),
       items: unique(related.filter((node) => node.kind === "item")).sort(byLabel),
-      currentStatus: CompanionStorage.getMemory(ContextEngine.currentStatusKey(target)),
+      storyThreads: unique(
+        related.filter((node) => node.kind === "storyThread")
+      ).sort(byLabel),
+      currentStatus: target.kind === "storyThread"
+        ? ContextEngine.#storyThreads.get(target.id)?.currentState ?? ""
+        : CompanionStorage.getMemory(ContextEngine.currentStatusKey(target)),
       campaignMemory: CompanionStorage.getMemory(
         `${ContextEngine.#storageKind(target.kind)}:${target.id}`
       )
@@ -104,6 +112,9 @@ export class ContextEngine {
     );
     ContextEngine.#quests = new Map(doc.threads.map((quest) => [quest.id, quest]));
     ContextEngine.#entries = new Map(doc.questEntries.map((entry) => [entry.id, entry]));
+    ContextEngine.#storyThreads = new Map(
+      doc.storyThreads.map((thread) => [thread.id, thread])
+    );
 
     for (const session of ContextEngine.#sessions.values()) {
       const sessionEntryIds = session.relatedQuestEntries ?? [];
@@ -148,6 +159,17 @@ export class ContextEngine {
       ]);
     }
 
+    for (const thread of ContextEngine.#storyThreads.values()) {
+      ContextEngine.#connectGroup([
+        { kind: "storyThread", id: thread.id },
+        ...(thread.relatedSessionIds ?? []).map((id) => ({ kind: "session", id })),
+        ...(thread.relatedActorIds ?? []).map((id) => ({ kind: "actor", id })),
+        ...(thread.relatedLocationIds ?? []).map((id) => ({ kind: "location", id })),
+        ...(thread.relatedItemIds ?? []).map((id) => ({ kind: "item", id })),
+        ...(thread.relatedQuestIds ?? []).map((id) => ({ kind: "quest", id }))
+      ]);
+    }
+
     ContextEngine.#revision = CampaignDocument.revision;
   }
 
@@ -182,7 +204,15 @@ export class ContextEngine {
     if (!kind && (entity.category || Array.isArray(entity.entryIds))) kind = "quest";
     const id = entity.uuid || entity.id;
     if (
-      !["actor", "quest", "questEntry", "location", "item", "session"].includes(kind) ||
+      ![
+        "actor",
+        "quest",
+        "questEntry",
+        "storyThread",
+        "location",
+        "item",
+        "session"
+      ].includes(kind) ||
       !id
     ) {
       return null;
@@ -224,6 +254,12 @@ export class ContextEngine {
         ? { kind, id, label: entry.title?.trim() || "Untitled Entry" }
         : null;
     }
+    if (kind === "storyThread") {
+      const thread = ContextEngine.#storyThreads.get(id);
+      return thread
+        ? { kind, id, label: thread.title?.trim() || "Untitled Story Thread" }
+        : null;
+    }
     const registryKind = ContextEngine.#storageKind(kind);
     const entity = EntityRegistry.findByUUID(id);
     if (!entity || entity.kind !== registryKind) return null;
@@ -254,6 +290,7 @@ export class ContextEngine {
       actors: [],
       locations: [],
       items: [],
+      storyThreads: [],
       currentStatus: "",
       campaignMemory: ""
     };
@@ -262,7 +299,7 @@ export class ContextEngine {
 
 /**
  * @typedef {object} ContextNode
- * @property {"actor"|"quest"|"questEntry"|"location"|"item"|"session"} kind
+ * @property {"actor"|"quest"|"questEntry"|"storyThread"|"location"|"item"|"session"} kind
  * @property {string} id
  * @property {string} label
  * @property {number} [sessionNumber]
@@ -281,6 +318,7 @@ export class ContextEngine {
  * @property {ContextNode[]} actors
  * @property {ContextNode[]} locations
  * @property {ContextNode[]} items
+ * @property {ContextNode[]} storyThreads
  * @property {string} currentStatus
  * @property {string} campaignMemory
  */

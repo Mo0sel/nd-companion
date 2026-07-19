@@ -4,6 +4,7 @@ import { CompanionStorage } from "./storage.js";
 /** @typedef {"OPEN"|"ACTIVE"|"RESOLVED"} ThreadStatus */
 /** @typedef {"MAIN"|"SIDE"|"COMPANION"} QuestCategory */
 /** @typedef {"PLANNED"|"ACTIVE"|"COMPLETED"} QuestEntryStatus */
+/** @typedef {"ACTIVE"|"DORMANT"|"RESOLVED"|"HIDDEN"} StoryThreadStatus */
 
 /**
  * @typedef {object} CampaignSession
@@ -69,12 +70,32 @@ import { CompanionStorage } from "./storage.js";
  */
 
 /**
+ * Long-running narrative arc. Relationships are authored through mentions and
+ * stored once on the Story Thread.
+ * @typedef {object} CampaignStoryThread
+ * @property {string} id
+ * @property {string} title
+ * @property {string} description
+ * @property {StoryThreadStatus} status
+ * @property {string} currentState
+ * @property {string[]} openQuestions
+ * @property {string[]} relatedActorIds
+ * @property {string[]} relatedLocationIds
+ * @property {string[]} relatedItemIds
+ * @property {string[]} relatedQuestIds
+ * @property {string[]} relatedSessionIds
+ * @property {number} created
+ * @property {number} updated
+ */
+
+/**
  * @typedef {object} CampaignDocumentData
  * @property {number} schemaVersion
  * @property {string} activeSessionId
  * @property {CampaignSession[]} sessions
  * @property {CampaignThread[]} threads
  * @property {CampaignQuestEntry[]} questEntries
+ * @property {CampaignStoryThread[]} storyThreads
  */
 
 export const CAMPAIGN_SCHEMA_VERSION = 4;
@@ -83,6 +104,7 @@ export const SESSION_STATUSES = Object.freeze(["planned", "active", "completed"]
 export const THREAD_STATUSES = Object.freeze(["OPEN", "ACTIVE", "RESOLVED"]);
 export const QUEST_CATEGORIES = Object.freeze(["MAIN", "SIDE", "COMPANION"]);
 export const QUEST_ENTRY_STATUSES = Object.freeze(["PLANNED", "ACTIVE", "COMPLETED"]);
+export const STORY_THREAD_STATUSES = Object.freeze(["ACTIVE", "DORMANT", "RESOLVED", "HIDDEN"]);
 
 /**
  * In-memory campaign document (sessions + threads).
@@ -175,6 +197,7 @@ export class CampaignDocument {
         sessions: existingSessions,
         threads: stored?.threads,
         questEntries: stored?.questEntries,
+        storyThreads: stored?.storyThreads,
         memoryRecords: stored?.memoryRecords
       });
       return normalized;
@@ -209,6 +232,7 @@ export class CampaignDocument {
       sessions: [session],
       threads: CampaignDocument.#normalizeThreads(stored?.threads),
       questEntries: CampaignDocument.#normalizeQuestEntries(stored?.questEntries),
+      storyThreads: CampaignDocument.#normalizeStoryThreads(stored?.storyThreads),
       memoryRecords: stored?.memoryRecords
     });
   }
@@ -238,7 +262,8 @@ export class CampaignDocument {
       activeSessionId,
       sessions,
       threads: CampaignDocument.#normalizeThreads(stored?.threads),
-      questEntries: CampaignDocument.#normalizeQuestEntries(stored?.questEntries)
+      questEntries: CampaignDocument.#normalizeQuestEntries(stored?.questEntries),
+      storyThreads: CampaignDocument.#normalizeStoryThreads(stored?.storyThreads)
     };
   }
 
@@ -267,6 +292,15 @@ export class CampaignDocument {
   static #normalizeQuestEntries(value) {
     if (!Array.isArray(value)) return [];
     return value.map((entry) => CampaignDocument.normalizeQuestEntry(entry));
+  }
+
+  /**
+   * @param {unknown} value
+   * @returns {CampaignStoryThread[]}
+   */
+  static #normalizeStoryThreads(value) {
+    if (!Array.isArray(value)) return [];
+    return value.map((thread) => CampaignDocument.normalizeStoryThread(thread));
   }
 
   static #normalizeMemorySessions(value) {
@@ -423,6 +457,37 @@ export class CampaignDocument {
     };
   }
 
+  /**
+   * @param {unknown} thread
+   * @returns {CampaignStoryThread}
+   */
+  static normalizeStoryThread(thread) {
+    const now = Date.now();
+    const idList = (value) =>
+      Array.isArray(value)
+        ? [...new Set(value.filter((id) => typeof id === "string" && id))]
+        : [];
+    return {
+      id: typeof thread?.id === "string" && thread.id
+        ? thread.id
+        : foundry.utils.randomID(),
+      title: typeof thread?.title === "string" ? thread.title : "",
+      description: typeof thread?.description === "string" ? thread.description : "",
+      status: STORY_THREAD_STATUSES.includes(thread?.status) ? thread.status : "ACTIVE",
+      currentState: typeof thread?.currentState === "string" ? thread.currentState : "",
+      openQuestions: Array.isArray(thread?.openQuestions)
+        ? thread.openQuestions.filter((question) => typeof question === "string")
+        : [],
+      relatedActorIds: idList(thread?.relatedActorIds),
+      relatedLocationIds: idList(thread?.relatedLocationIds),
+      relatedItemIds: idList(thread?.relatedItemIds),
+      relatedQuestIds: idList(thread?.relatedQuestIds),
+      relatedSessionIds: idList(thread?.relatedSessionIds),
+      created: Number.isFinite(thread?.created) ? thread.created : now,
+      updated: Number.isFinite(thread?.updated) ? thread.updated : now
+    };
+  }
+
   /** @returns {CampaignDocumentData} */
   static #empty() {
     return {
@@ -430,7 +495,8 @@ export class CampaignDocument {
       activeSessionId: "",
       sessions: [],
       threads: [],
-      questEntries: []
+      questEntries: [],
+      storyThreads: []
     };
   }
 

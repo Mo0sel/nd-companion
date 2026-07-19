@@ -12,7 +12,11 @@ export class ContextPanel {
   /**
    * @param {HTMLElement|null} container
    * @param {import("./context-engine.js").ContextResult} context
-   * @param {{ showCampaignMemory?: boolean, showHeader?: boolean }} [options]
+   * @param {{
+   *   showCampaignMemory?: boolean,
+   *   showCurrentStatus?: boolean,
+   *   showHeader?: boolean
+   * }} [options]
    */
   static paint(container, context, options = {}) {
     if (!(container instanceof HTMLElement)) return;
@@ -25,7 +29,7 @@ export class ContextPanel {
     container.className = "nd-context-panel";
 
     const statusKey = ContextEngine.currentStatusKey(context.target);
-    const hasStatus = Boolean(statusKey);
+    const hasStatus = options.showCurrentStatus !== false && Boolean(statusKey);
     const hasMemory =
       options.showCampaignMemory !== false && RichText.hasContent(context.campaignMemory);
     const hasKnowledge = Boolean(
@@ -35,7 +39,8 @@ export class ContextPanel {
       context.questEntries.length ||
       context.actors.length ||
       context.locations.length ||
-      context.items.length
+      context.items.length ||
+      context.storyThreads.length
     );
     const hasContent = hasStatus || hasKnowledge || hasMemory;
     container.hidden = !hasContent;
@@ -163,11 +168,12 @@ export class ContextPanel {
 
   static #appendRelationships(container, context) {
     const groups = [
-      ["Quests", context.quests],
-      ["Quest Entries", context.questEntries],
+      ["Story Threads", context.storyThreads],
       ["Actors", context.actors],
       ["Locations", context.locations],
-      ["Items", context.items]
+      ["Items", context.items],
+      ["Quests", context.quests],
+      ["Quest Entries", context.questEntries]
     ].filter(([, nodes]) => nodes.length);
     if (!groups.length) return;
 

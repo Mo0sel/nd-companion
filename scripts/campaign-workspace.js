@@ -3,11 +3,13 @@ import { ContextEngine } from "./context-engine.js";
 import { ContextPanel } from "./context-panel.js";
 import { EntityMentions } from "./entity-mentions.js";
 import { EntityRegistry } from "./entity-registry.js";
+import { LiveNotes } from "./live-notes.js";
 import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
 import { RichText } from "./rich-text.js";
 import { RichTextToolbar } from "./rich-text-toolbar.js";
 import { SessionService } from "./session-service.js";
+import { StoryThreadService } from "./story-thread-service.js";
 import { ThreadService } from "./thread-service.js";
 
 const CATEGORY_LABELS = Object.freeze({
@@ -31,10 +33,10 @@ const ENTRY_FIELDS = Object.freeze([
  * Threads are presented as Quests; Quest Entries are campaign-owned sources.
  */
 export class CampaignWorkspace {
-  /** @type {"quest"|"memory"|"entity"} */
+  /** @type {"quest"|"storyThread"|"memory"|"entity"} */
   static #view = "quest";
 
-  /** @type {"quests"|"actors"|"locations"|"items"|"chronicle"} */
+  /** @type {"quests"|"storyThreads"|"actors"|"locations"|"items"|"chronicle"} */
   static #section = "quests";
 
   /** @type {string|null} */
@@ -42,6 +44,9 @@ export class CampaignWorkspace {
 
   /** @type {string|null} */
   static #memoryId = null;
+
+  /** @type {string|null} */
+  static #storyThreadId = null;
 
   /** @type {"actor"|"scene"|"item"|null} */
   static #entityKind = null;
@@ -127,6 +132,17 @@ export class CampaignWorkspace {
     return true;
   }
 
+  static selectStoryThread(root, id) {
+    if (!StoryThreadService.getById(id)) return false;
+    CampaignWorkspace.#captureScroll(root);
+    CampaignWorkspace.#view = "storyThread";
+    CampaignWorkspace.#section = "storyThreads";
+    CampaignWorkspace.#storyThreadId = id;
+    CampaignWorkspace.#lastSelections.set("storyThreads", id);
+    CampaignWorkspace.paint(root);
+    return true;
+  }
+
   /**
    * Search compatibility: current Session remains reachable without occupying
    * one of the visible Quest sections.
@@ -178,6 +194,7 @@ export class CampaignWorkspace {
 
     const quests = ThreadService.list().sort((a, b) => a.title.localeCompare(b.title));
     CampaignWorkspace.#paintQuestLists(panel, quests);
+    CampaignWorkspace.#paintStoryThreadList(panel);
     CampaignWorkspace.#paintMemoryList(panel);
     CampaignWorkspace.#paintCampaignNavigation(panel);
     CampaignWorkspace.#paintEntityList(panel);
@@ -197,6 +214,17 @@ export class CampaignWorkspace {
       CampaignWorkspace.#lastSelections.delete("chronicle");
       CampaignWorkspace.#memoryId = null;
     }
+    const storyThread = CampaignWorkspace.#storyThreadId
+      ? StoryThreadService.getById(CampaignWorkspace.#storyThreadId)
+      : null;
+    if (
+      CampaignWorkspace.#view === "storyThread" &&
+      CampaignWorkspace.#storyThreadId &&
+      !storyThread
+    ) {
+      CampaignWorkspace.#lastSelections.delete("storyThreads");
+      CampaignWorkspace.#storyThreadId = null;
+    }
 
     CampaignWorkspace.#paintQuest(
       panel,
@@ -206,8 +234,12 @@ export class CampaignWorkspace {
       panel,
       CampaignWorkspace.#view === "memory" ? memory : null
     );
+    CampaignWorkspace.#paintStoryThread(
+      panel,
+      CampaignWorkspace.#view === "storyThread" ? storyThread : null
+    );
     CampaignWorkspace.#paintEntity(panel);
-    CampaignWorkspace.#applyView(panel, quest, memory);
+    CampaignWorkspace.#applyView(panel, quest, memory, storyThread);
     CampaignWorkspace.#attachRichEditors(panel);
     CampaignWorkspace.#restoreScroll(panel);
   }
@@ -248,6 +280,39 @@ export class CampaignWorkspace {
         if (sectionButton) {
           const section = sectionButton.getAttribute("data-campaign-section");
           CampaignWorkspace.#selectSection(root, section);
+          return;
+        }
+
+        if (target.closest("[data-new-story-thread]")) {
+          void CampaignWorkspace.#createStoryThread(root);
+          return;
+        }
+
+        if (target.closest("[data-save-story-thread]")) {
+          void CampaignWorkspace.#saveStoryThread(root);
+          return;
+        }
+
+        if (target.closest("[data-add-story-question]")) {
+          const list = panel.querySelector("[data-story-thread-questions]");
+          if (list instanceof HTMLElement) {
+            list.append(CampaignWorkspace.#storyQuestionElement(""));
+            CampaignWorkspace.#attachRichEditors(panel);
+            list.lastElementChild?.querySelector("[data-story-question]")?.focus();
+          }
+          return;
+        }
+
+        const removeQuestion = target.closest("[data-remove-story-question]");
+        if (removeQuestion) {
+          removeQuestion.closest("[data-story-question-row]")?.remove();
+          return;
+        }
+
+        const storyThreadButton = target.closest("[data-story-thread-nav-id]");
+        if (storyThreadButton) {
+          const id = storyThreadButton.getAttribute("data-story-thread-nav-id");
+          if (id) CampaignWorkspace.selectStoryThread(root, id);
           return;
         }
 
@@ -371,8 +436,122 @@ export class CampaignWorkspace {
     }
   }
 
+  static #paintStoryThreadList(panel) {
+    const list = panel.querySelector("[data-story-thread-list]");
+    if (!(list instanceof HTMLElement)) return;
+    list.replaceChildren();
+    const threads = StoryThreadService.list()
+      .slice()
+      .sort((a, b) => a.title.localeCompare(b.title));
+    if (!threads.length) {
+      const empty = document.createElement("div");
+      empty.className = "nd-quest-sidebar__empty";
+      empty.textContent = "No Story Threads";
+      list.append(empty);
+      return;
+    }
+    for (const thread of threads) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "nd-quest-sidebar__quest";
+      button.dataset.storyThreadNavId = thread.id;
+      button.classList.toggle(
+        "is-active",
+        CampaignWorkspace.#view === "storyThread" &&
+          thread.id === CampaignWorkspace.#storyThreadId
+      );
+      const title = document.createElement("span");
+      title.textContent = thread.title?.trim() || "Untitled Story Thread";
+      const status = document.createElement("span");
+      status.className = "nd-campaign-status";
+      status.dataset.status = thread.status;
+      status.textContent = thread.status;
+      button.append(title, status);
+      list.append(button);
+    }
+  }
+
+  static #paintStoryThread(panel, thread) {
+    const view = panel.querySelector("[data-story-thread-view]");
+    if (!(view instanceof HTMLElement)) return;
+    view.hidden = !thread;
+    if (!thread) return;
+
+    view.dataset.storyThreadId = thread.id;
+    const title = view.querySelector("[data-story-thread-title]");
+    const status = view.querySelector("[data-story-thread-status]");
+    const description = view.querySelector("[data-story-thread-description]");
+    const currentState = view.querySelector("[data-story-thread-current-state]");
+    const notes = view.querySelector("[data-story-thread-notes]");
+    if (title instanceof HTMLInputElement) title.value = thread.title ?? "";
+    if (status instanceof HTMLSelectElement) status.value = thread.status ?? "ACTIVE";
+    if (description instanceof HTMLElement) {
+      description.innerHTML = RichText.sanitize(thread.description ?? "");
+    }
+    if (currentState instanceof HTMLElement) {
+      currentState.innerHTML = RichText.sanitize(thread.currentState ?? "");
+    }
+
+    const questions = view.querySelector("[data-story-thread-questions]");
+    if (questions instanceof HTMLElement) {
+      questions.replaceChildren();
+      for (const question of thread.openQuestions ?? []) {
+        questions.append(CampaignWorkspace.#storyQuestionElement(question));
+      }
+    }
+
+    ContextPanel.paint(
+      view.querySelector("[data-context-panel=\"storyThread\"]"),
+      ContextEngine.getContext({ kind: "storyThread", id: thread.id }),
+      {
+        showCampaignMemory: false,
+        showCurrentStatus: false,
+        showHeader: false
+      }
+    );
+
+    const notes = view.querySelector("[data-story-thread-notes]");
+    if (notes instanceof HTMLElement) {
+      LiveNotes.attach(notes, `storyThread:${thread.id}`, {
+        memory: true,
+        html: true,
+        sanitize: RichText.sanitize
+      });
+    }
+  }
+
+  static #storyQuestionElement(question) {
+    const row = document.createElement("div");
+    row.className = "nd-story-thread-question";
+    row.dataset.storyQuestionRow = "";
+    const editor = document.createElement("div");
+    editor.className = "nd-richtext nd-story-thread-question__editor";
+    editor.dataset.storyQuestion = "";
+    editor.dataset.richtextEditor = "";
+    editor.dataset.placeholder = "What remains unanswered?";
+    editor.contentEditable = "true";
+    editor.setAttribute("role", "textbox");
+    editor.setAttribute("aria-label", "Open Question");
+    editor.innerHTML = RichText.sanitize(question ?? "");
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "nd-story-thread-question__remove";
+    remove.dataset.removeStoryQuestion = "";
+    remove.setAttribute("aria-label", "Remove question");
+    remove.textContent = "×";
+    row.append(editor, remove);
+    return row;
+  }
+
   static #selectSection(root, section) {
-    const allowed = new Set(["quests", "actors", "locations", "items", "chronicle"]);
+    const allowed = new Set([
+      "quests",
+      "storyThreads",
+      "actors",
+      "locations",
+      "items",
+      "chronicle"
+    ]);
     if (!allowed.has(section)) return;
     CampaignWorkspace.#captureScroll(root);
     CampaignWorkspace.#section = section;
@@ -380,6 +559,10 @@ export class CampaignWorkspace {
     if (section === "quests") {
       CampaignWorkspace.#view = "quest";
       CampaignWorkspace.#questId = CampaignWorkspace.#lastSelections.get(section) ?? null;
+    } else if (section === "storyThreads") {
+      CampaignWorkspace.#view = "storyThread";
+      CampaignWorkspace.#storyThreadId =
+        CampaignWorkspace.#lastSelections.get(section) ?? null;
     } else if (section === "chronicle") {
       CampaignWorkspace.#view = "memory";
       CampaignWorkspace.#memoryId = CampaignWorkspace.#lastSelections.get(section) ?? null;
@@ -414,9 +597,13 @@ export class CampaignWorkspace {
       button.setAttribute("aria-pressed", active ? "true" : "false");
     });
     const quests = panel.querySelector("[data-campaign-nav-panel=\"quests\"]");
+    const storyThreads = panel.querySelector("[data-campaign-nav-panel=\"storyThreads\"]");
     const entities = panel.querySelector("[data-campaign-nav-panel=\"entities\"]");
     const chronicle = panel.querySelector("[data-campaign-nav-panel=\"chronicle\"]");
     if (quests instanceof HTMLElement) quests.hidden = CampaignWorkspace.#section !== "quests";
+    if (storyThreads instanceof HTMLElement) {
+      storyThreads.hidden = CampaignWorkspace.#section !== "storyThreads";
+    }
     if (entities instanceof HTMLElement) {
       entities.hidden = !["actors", "locations", "items"].includes(CampaignWorkspace.#section);
     }
@@ -744,16 +931,21 @@ export class CampaignWorkspace {
     return section;
   }
 
-  static #applyView(panel, quest, memory) {
+  static #applyView(panel, quest, memory, storyThread) {
     const questLayout = panel.querySelector("[data-quest-editor]");
     const questEmpty = panel.querySelector("[data-quest-empty]");
     const memoryView = panel.querySelector("[data-memory-view]");
     const entityView = panel.querySelector("[data-campaign-entity-view]");
+    const storyThreadView = panel.querySelector("[data-story-thread-view]");
     if (memoryView instanceof HTMLElement) {
       memoryView.hidden = CampaignWorkspace.#view !== "memory" || !memory;
     }
     if (entityView instanceof HTMLElement) {
       entityView.hidden = CampaignWorkspace.#view !== "entity" || !CampaignWorkspace.#entityId;
+    }
+    if (storyThreadView instanceof HTMLElement) {
+      storyThreadView.hidden =
+        CampaignWorkspace.#view !== "storyThread" || !storyThread;
     }
     if (questLayout instanceof HTMLElement) {
       questLayout.hidden = CampaignWorkspace.#view !== "quest" || !quest;
@@ -766,6 +958,9 @@ export class CampaignWorkspace {
       } else if (CampaignWorkspace.#view === "entity" && !CampaignWorkspace.#entityId) {
         questEmpty.hidden = false;
         questEmpty.textContent = `Select an object to view its History.`;
+      } else if (CampaignWorkspace.#view === "storyThread" && !storyThread) {
+        questEmpty.hidden = false;
+        questEmpty.textContent = "Select a Story Thread or create one.";
       } else if (CampaignWorkspace.#view === "quest" && !quest) {
         questEmpty.hidden = false;
         questEmpty.textContent = "Select a Quest or create one to begin writing your campaign.";
@@ -888,6 +1083,71 @@ export class CampaignWorkspace {
     return RichText.sanitize(
       foundry.utils.escapeHTML(raw).replace(/\r\n|\r|\n/g, "<br>")
     );
+  }
+
+  static async #createStoryThread(root) {
+    const thread = await StoryThreadService.create({
+      title: "Untitled Story Thread",
+      status: "ACTIVE"
+    });
+    CampaignWorkspace.#captureScroll(root);
+    CampaignWorkspace.#view = "storyThread";
+    CampaignWorkspace.#section = "storyThreads";
+    CampaignWorkspace.#storyThreadId = thread.id;
+    CampaignWorkspace.#lastSelections.set("storyThreads", thread.id);
+    CampaignWorkspace.paint(root);
+    requestAnimationFrame(() => root.querySelector("[data-story-thread-title]")?.focus());
+  }
+
+  static async #saveStoryThread(root) {
+    const view = root.querySelector("[data-story-thread-view]");
+    if (!(view instanceof HTMLElement)) return;
+    const id = view.dataset.storyThreadId;
+    if (!id) return;
+    const title = view.querySelector("[data-story-thread-title]");
+    const status = view.querySelector("[data-story-thread-status]");
+    const description = view.querySelector("[data-story-thread-description]");
+    const currentState = view.querySelector("[data-story-thread-current-state]");
+    const safeDescription = description instanceof HTMLElement
+      ? RichText.sanitize(description.innerHTML)
+      : "";
+    const safeCurrentState = currentState instanceof HTMLElement
+      ? RichText.sanitize(currentState.innerHTML)
+      : "";
+    const openQuestions = [...view.querySelectorAll("[data-story-question]")]
+      .filter((question) => question instanceof HTMLElement)
+      .map((question) => RichText.sanitize(question.innerHTML))
+      .filter((question) => RichText.hasContent(question));
+    const mentionHtml = [
+      safeDescription,
+      safeCurrentState,
+      notes instanceof HTMLElement ? RichText.sanitize(notes.innerHTML) : "",
+      ...openQuestions
+    ].join("");
+    await StoryThreadService.update(id, {
+      title: title instanceof HTMLInputElement ? title.value.trim() : "",
+      status: status instanceof HTMLSelectElement ? status.value : "ACTIVE",
+      description: safeDescription,
+      currentState: safeCurrentState,
+      openQuestions,
+      ...CampaignWorkspace.#storyReferencePatch(EntityMentions.extract(mentionHtml))
+    });
+    CampaignWorkspace.paint(root);
+  }
+
+  static #storyReferencePatch(mentions) {
+    const ids = (kind, preferUuid) =>
+      mentions
+        .filter((mention) => mention.kind === kind)
+        .map((mention) => (preferUuid ? mention.uuid : mention.id) || mention.id)
+        .filter(Boolean);
+    return {
+      relatedActorIds: ids("actor", true),
+      relatedLocationIds: ids("scene", true),
+      relatedItemIds: ids("item", true),
+      relatedQuestIds: ids("quest", false),
+      relatedSessionIds: ids("session", false)
+    };
   }
 
   static async #createQuest(root, category) {

@@ -125,6 +125,14 @@
       {{!-- Scrollable dashboard content --}}
       <div class="nd-play-content">
 
+        <section class="nd-play-story-threads" data-play-story-threads hidden>
+          <header>
+            <span class="nd-play-card__label">Active Story Threads</span>
+            <span class="nd-play-story-threads__count" data-play-story-thread-count></span>
+          </header>
+          <div class="nd-play-story-threads__list" data-play-story-thread-list></div>
+        </section>
+
         {{!-- Scene Flow group --}}
         <h3 class="nd-play-section-title nd-play-section-title--scene-flow">Scene Flow</h3>
         <div class="nd-play-entry-grid nd-play-entry-grid--scene-flow">
@@ -292,6 +300,7 @@
             <p class="nd-quest-sidebar__session" data-campaign-current-session>Session 1</p>
             <nav class="nd-campaign-nav" aria-label="Campaign sections">
               <button type="button" class="is-active" data-campaign-section="quests">Quests</button>
+              <button type="button" data-campaign-section="storyThreads">Story Threads</button>
               <button type="button" data-campaign-section="actors">Actors</button>
               <button type="button" data-campaign-section="locations">Locations</button>
               <button type="button" data-campaign-section="items">Items</button>
@@ -321,6 +330,16 @@
                   <button type="button" data-new-quest="COMPANION" aria-label="New Companion Quest">+</button>
                 </div>
                 <div data-quest-list="COMPANION"></div>
+              </div>
+            </div>
+
+            <div data-campaign-nav-panel="storyThreads" hidden>
+              <div class="nd-quest-sidebar__section">
+                <div class="nd-quest-sidebar__heading">
+                  <span>Story Threads</span>
+                  <button type="button" data-new-story-thread aria-label="New Story Thread">+</button>
+                </div>
+                <div data-story-thread-list></div>
               </div>
             </div>
 
@@ -433,6 +452,94 @@
             </section>
 
             <section data-context-panel="quest" hidden></section>
+          </section>
+
+          <section class="nd-story-thread-view" data-story-thread-view hidden>
+            <header class="nd-campaign-panel__header">
+              <div class="nd-campaign-panel__headline">
+                <div class="nd-campaign-panel__eyebrow">Story Thread</div>
+                <input
+                  class="nd-quest-title-input"
+                  type="text"
+                  data-story-thread-title
+                  placeholder="Story Thread title"
+                >
+              </div>
+              <label class="nd-campaign-field nd-campaign-field--compact">
+                <span>Status</span>
+                <select data-story-thread-status>
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="DORMANT">DORMANT</option>
+                  <option value="RESOLVED">RESOLVED</option>
+                  <option value="HIDDEN">HIDDEN</option>
+                </select>
+              </label>
+            </header>
+
+            <div class="nd-campaign-field nd-campaign-field--notes">
+              <span>Description</span>
+              <div
+                class="nd-richtext nd-richtext--editor nd-story-thread-editor"
+                data-story-thread-description
+                data-richtext-editor
+                contenteditable="true"
+                data-placeholder="Describe this arc. Use @ to link campaign knowledge..."
+                role="textbox"
+                aria-label="Story Thread Description"
+              ></div>
+            </div>
+
+            <div class="nd-campaign-field nd-campaign-field--notes">
+              <span>Current State</span>
+              <div
+                class="nd-richtext nd-richtext--editor nd-story-thread-editor"
+                data-story-thread-current-state
+                data-richtext-editor
+                contenteditable="true"
+                data-placeholder="What is true right now? Use @ to link related knowledge..."
+                role="textbox"
+                aria-label="Story Thread Current State"
+              ></div>
+            </div>
+
+            <section class="nd-story-thread-questions">
+              <header>
+                <div>
+                  <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Manual</div>
+                  <h3 class="nd-hierarchy-group">Open Questions</h3>
+                </div>
+                <button type="button" class="nd-campaign-new-thread" data-add-story-question>
+                  + Add Question
+                </button>
+              </header>
+              <div data-story-thread-questions></div>
+            </section>
+
+            <div class="nd-quest-actions">
+              <button type="button" class="nd-campaign-save" data-save-story-thread>
+                Save Story Thread
+              </button>
+            </div>
+
+            <section data-context-panel="storyThread" hidden></section>
+
+            <section class="nd-story-thread-notes" data-live-notes-root>
+              <header>
+                <div>
+                  <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Private</div>
+                  <h3 class="nd-hierarchy-group">DM Notes</h3>
+                </div>
+                <span class="nd-live-notes__status" data-live-notes-status hidden></span>
+              </header>
+              <div
+                class="nd-richtext nd-richtext--editor nd-story-thread-editor"
+                data-story-thread-notes
+                data-richtext-editor
+                data-placeholder="Private notes about this Story Thread..."
+                role="textbox"
+                aria-label="Story Thread DM Notes"
+              ></div>
+            </section>
           </section>
 
           <section data-campaign-entity-view hidden aria-label="Campaign object history">

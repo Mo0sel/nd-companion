@@ -94,7 +94,8 @@ export class CompanionStorage {
         activeSessionId: "",
         sessions: [],
         threads: [],
-        questEntries: []
+        questEntries: [],
+        storyThreads: []
       }
     });
   }
@@ -179,7 +180,7 @@ export class CompanionStorage {
   }
 
   /**
-   * @returns {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], questEntries: object[] }}
+   * @returns {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], questEntries: object[], storyThreads: object[] }}
    */
   static getCampaign() {
     const doc = game.settings.get(MODULE_ID, CAMPAIGN_SETTING);
@@ -189,13 +190,14 @@ export class CompanionStorage {
         activeSessionId: "",
         sessions: [],
         threads: [],
-        questEntries: []
+        questEntries: [],
+        storyThreads: []
       }
     );
   }
 
   /**
-   * @param {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], questEntries: object[] }} value
+   * @param {{ schemaVersion: number, activeSessionId: string, sessions: object[], threads: object[], questEntries: object[], storyThreads: object[] }} value
    * @returns {Promise<object>}
    */
   static async setCampaign(value) {
@@ -208,7 +210,8 @@ export class CompanionStorage {
           activeSessionId: "",
           sessions: [],
           threads: [],
-          questEntries: []
+          questEntries: [],
+          storyThreads: []
         }
       )
     );
@@ -344,6 +347,7 @@ export class CompanionStorage {
     campaign.sessions = Array.isArray(campaign.sessions) ? campaign.sessions : [];
     campaign.threads = Array.isArray(campaign.threads) ? campaign.threads : [];
     campaign.questEntries = Array.isArray(campaign.questEntries) ? campaign.questEntries : [];
+    campaign.storyThreads = Array.isArray(campaign.storyThreads) ? campaign.storyThreads : [];
     campaign.schemaVersion = Number.isFinite(campaign.schemaVersion)
       ? campaign.schemaVersion
       : schemaVersion;
@@ -416,7 +420,7 @@ export class CompanionStorage {
  * @property {number} schemaVersion
  * @property {string} foundryVersion
  * @property {string} exportedAt
- * @property {object} campaign Campaign document (sessions, threads, quest entries)
+ * @property {object} campaign Campaign document (sessions, quests, quest entries, story threads)
  * @property {{ currentIndex: number, beats: object[] }} playbook
  * @property {Record<string, string>} campaignMemory Per-document memory bag
  */

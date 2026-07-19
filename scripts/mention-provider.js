@@ -1,3 +1,4 @@
+import { CampaignDocument } from "./campaign-document.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
@@ -8,7 +9,10 @@ const GROUP_LABELS = Object.freeze({
   scene: "Locations",
   journal: "Journals",
   rollTable: "Roll Tables",
-  beat: "Entries"
+  beat: "Entries",
+  quest: "Quests",
+  session: "Chronicle Sessions",
+  storyThread: "Story Threads"
 });
 
 /**
@@ -42,6 +46,44 @@ export class MentionProvider {
           img: entity.img
         }));
       if (entries.length) groups.push({ label: MentionProvider.#label(kind), entries });
+    }
+
+    const campaign = CampaignDocument.get();
+    const campaignGroups = [
+      {
+        kind: "storyThread",
+        values: campaign.storyThreads,
+        name: (thread) => thread.title?.trim() || "Untitled Story Thread"
+      },
+      {
+        kind: "quest",
+        values: campaign.threads,
+        name: (quest) => quest.title?.trim() || "Untitled Quest"
+      },
+      {
+        kind: "session",
+        values: campaign.sessions.filter((session) => session.status === "completed"),
+        name: (session) => session.title?.trim()
+          ? `Session ${session.sessionNumber} · ${session.title.trim()}`
+          : `Session ${session.sessionNumber}`
+      }
+    ];
+    for (const group of campaignGroups) {
+      const entries = group.values
+        .map((entry) => ({ entry, name: group.name(entry) }))
+        .filter(({ name }) => matches(name))
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .slice(0, limitPerGroup)
+        .map(({ entry, name }) => ({
+          kind: group.kind,
+          id: entry.id,
+          uuid: "",
+          name,
+          img: ""
+        }));
+      if (entries.length) {
+        groups.push({ label: MentionProvider.#label(group.kind), entries });
+      }
     }
 
     const campaignEntries = QuestEntryService.list();
