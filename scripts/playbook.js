@@ -227,9 +227,10 @@ export class Playbook {
     if (count) count.textContent = String(threads.length);
     for (const thread of threads) {
       const quests = QuestEntryService.listForStoryThread(thread.id);
-      const completed = quests.filter((entry) => entry.status === "COMPLETED").length;
-      const total = quests.length;
-      const progress = total ? Math.round((completed / total) * 100) : 0;
+      const actors = (thread.relatedActorIds ?? [])
+        .map((id) => EntityRegistry.findByUUID(id))
+        .filter(Boolean)
+        .slice(0, 3);
 
       const threadCard = document.createElement("article");
       threadCard.className = "nd-play-story-thread nd-quick-edit-host";
@@ -256,24 +257,32 @@ export class Playbook {
 
       const meta = document.createElement("div");
       meta.className = "nd-play-story-thread__meta";
+
+      if (actors.length) {
+        const actorRow = document.createElement("div");
+        actorRow.className = "nd-play-story-thread__actors";
+        for (const actor of actors) {
+          const chip = document.createElement("span");
+          chip.className = "nd-play-story-thread__actor";
+          chip.textContent = actor.name;
+          actorRow.append(chip);
+        }
+        const extra = (thread.relatedActorIds ?? []).length - actors.length;
+        if (extra > 0) {
+          const more = document.createElement("span");
+          more.className = "nd-play-story-thread__actor-more";
+          more.textContent = `+${extra}`;
+          actorRow.append(more);
+        }
+        meta.append(actorRow);
+      }
+
       const questCount = document.createElement("span");
       questCount.className = "nd-play-story-thread__quests";
-      questCount.textContent = total === 1 ? "1 linked Quest" : `${total} linked Quests`;
+      questCount.textContent = quests.length === 1
+        ? "1 linked Quest"
+        : `${quests.length} linked Quests`;
       meta.append(questCount);
-
-      if (total > 0) {
-        const progressWrap = document.createElement("div");
-        progressWrap.className = "nd-play-story-thread__progress";
-        progressWrap.title = `${completed} of ${total} Quests completed`;
-        const bar = document.createElement("span");
-        bar.className = "nd-play-story-thread__progress-bar";
-        bar.style.width = `${progress}%`;
-        const progressLabel = document.createElement("span");
-        progressLabel.className = "nd-play-story-thread__progress-label";
-        progressLabel.textContent = `${completed}/${total}`;
-        progressWrap.append(bar);
-        meta.append(progressWrap, progressLabel);
-      }
 
       open.append(head, state, meta);
 

@@ -1,5 +1,6 @@
 import { CampaignDocument } from "./campaign-document.js";
 import { CampaignMemoryService } from "./campaign-memory-service.js";
+import { EntityLinkService } from "./entity-link-service.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { RichText } from "./rich-text.js";
 import { CompanionStorage } from "./storage.js";
@@ -11,6 +12,9 @@ import { CompanionStorage } from "./storage.js";
 export class ContextEngine {
   /** @type {number} */
   static #revision = -1;
+
+  /** @type {number} */
+  static #linksRevision = -1;
 
   /** @type {Map<string, Set<string>>} */
   static #adjacency = new Map();
@@ -108,7 +112,13 @@ export class ContextEngine {
   }
 
   static #ensureIndex() {
-    if (ContextEngine.#revision === CampaignDocument.revision) return;
+    const linksRevision = CompanionStorage.getEntityLinksRevision();
+    if (
+      ContextEngine.#revision === CampaignDocument.revision &&
+      ContextEngine.#linksRevision === linksRevision
+    ) {
+      return;
+    }
 
     const doc = CampaignDocument.get();
     ContextEngine.#adjacency = new Map();
@@ -205,7 +215,15 @@ export class ContextEngine {
       ]);
     }
 
+    for (const link of EntityLinkService.list()) {
+      ContextEngine.#connectGroup([
+        { kind: link.aKind, id: link.aId },
+        { kind: link.bKind, id: link.bId }
+      ]);
+    }
+
     ContextEngine.#revision = CampaignDocument.revision;
+    ContextEngine.#linksRevision = linksRevision;
   }
 
   /**

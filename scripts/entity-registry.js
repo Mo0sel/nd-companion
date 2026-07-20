@@ -41,6 +41,11 @@ export class EntityRegistry {
     for (const kind of KINDS) this.#rebuildKind(kind);
   }
 
+  /** Force a full rebuild — call before pickers after imports. */
+  static rebuildAll() {
+    for (const kind of KINDS) this.#rebuildKind(kind);
+  }
+
   /**
    * Register create/update/delete hooks for indexed document types.
    */

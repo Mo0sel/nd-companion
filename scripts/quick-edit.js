@@ -5,6 +5,7 @@ import {
 } from "./campaign-document.js";
 import { CompanionStorage } from "./storage.js";
 import { ContextEngine } from "./context-engine.js";
+import { EntityLinkService } from "./entity-link-service.js";
 import { FactionService } from "./faction-service.js";
 import { LiveNotes } from "./live-notes.js";
 import { PlaybookService } from "./playbook-service.js";
@@ -139,24 +140,36 @@ export class QuickEdit {
   }
 
   /**
-   * Persist a relationship onto the owning entity (or the reverse side).
+   * Persist a relationship onto the owning entity (or the reverse side),
+   * falling back to the companion link store for Foundry↔Foundry pairs.
+   * Never throws — returns false on failure.
    * @param {{ kind: string, id: string }} owner
    * @param {{ kind: string, id: string }} related
    * @returns {Promise<boolean>}
    */
   static async addRelationship(owner, related) {
-    if (!owner?.kind || !owner?.id || !related?.kind || !related?.id) return false;
-    if (owner.kind === related.kind && owner.id === related.id) return false;
+    try {
+      if (!owner?.kind || !owner?.id || !related?.kind || !related?.id) return false;
+      const left = QuickEdit.#normalizeRef(owner);
+      const right = QuickEdit.#normalizeRef(related);
+      if (!left || !right) return false;
+      if (left.kind === right.kind && left.id === right.id) return false;
 
-    const direct = QuickEdit.#relationshipPatch(owner.kind, related);
-    if (direct) {
-      return QuickEdit.#applyRelationshipPatch(owner.kind, owner.id, direct);
+      const direct = QuickEdit.#relationshipPatch(left.kind, right);
+      if (direct) {
+        const ok = await QuickEdit.#applyRelationshipPatch(left.kind, left.id, direct);
+        if (ok) return true;
+      }
+      const reverse = QuickEdit.#relationshipPatch(right.kind, left);
+      if (reverse) {
+        const ok = await QuickEdit.#applyRelationshipPatch(right.kind, right.id, reverse);
+        if (ok) return true;
+      }
+      return EntityLinkService.add(left, right);
+    } catch (error) {
+      console.error("N&D Companion: addRelationship failed", error);
+      return false;
     }
-    const reverse = QuickEdit.#relationshipPatch(related.kind, owner);
-    if (reverse) {
-      return QuickEdit.#applyRelationshipPatch(related.kind, related.id, reverse);
-    }
-    return false;
   }
 
   /**
@@ -164,11 +177,19 @@ export class QuickEdit {
    * @param {{ kind: string, id: string }} related
    */
   static canRemoveRelationship(owner, related) {
-    if (!owner?.kind || !owner?.id || !related?.kind || !related?.id) return false;
-    return Boolean(
-      QuickEdit.#relationshipField(owner.kind, related.kind) ||
-      QuickEdit.#relationshipField(related.kind, owner.kind)
-    );
+    try {
+      const left = QuickEdit.#normalizeRef(owner);
+      const right = QuickEdit.#normalizeRef(related);
+      if (!left || !right) return false;
+      return Boolean(
+        QuickEdit.#relationshipField(left.kind, right.kind) ||
+        QuickEdit.#relationshipField(right.kind, left.kind) ||
+        EntityLinkService.has(left, right)
+      );
+    } catch (error) {
+      console.error("N&D Companion: canRemoveRelationship failed", error);
+      return false;
+    }
   }
 
   /**
@@ -177,17 +198,33 @@ export class QuickEdit {
    * @returns {Promise<boolean>}
    */
   static async removeRelationship(owner, related) {
-    if (!QuickEdit.canRemoveRelationship(owner, related)) return false;
+    try {
+      if (!QuickEdit.canRemoveRelationship(owner, related)) return false;
+      const left = QuickEdit.#normalizeRef(owner);
+      const right = QuickEdit.#normalizeRef(related);
+      if (!left || !right) return false;
 
-    const directField = QuickEdit.#relationshipField(owner.kind, related.kind);
-    if (directField) {
-      return QuickEdit.#removeFromField(owner.kind, owner.id, directField, related.id);
+      const directField = QuickEdit.#relationshipField(left.kind, right.kind);
+      if (directField) {
+        const ok = await QuickEdit.#removeFromField(left.kind, left.id, directField, right.id);
+        if (ok) return true;
+      }
+      const reverseField = QuickEdit.#relationshipField(right.kind, left.kind);
+      if (reverseField) {
+        const ok = await QuickEdit.#removeFromField(right.kind, right.id, reverseField, left.id);
+        if (ok) return true;
+      }
+      return EntityLinkService.remove(left, right);
+    } catch (error) {
+      console.error("N&D Companion: removeRelationship failed", error);
+      return false;
     }
-    const reverseField = QuickEdit.#relationshipField(related.kind, owner.kind);
-    if (reverseField) {
-      return QuickEdit.#removeFromField(related.kind, related.id, reverseField, owner.id);
-    }
-    return false;
+  }
+
+  static #normalizeRef(ref) {
+    if (!ref?.kind || !ref?.id) return null;
+    const kind = ref.kind === "scene" ? "location" : ref.kind === "beat" ? "questEntry" : ref.kind;
+    return { kind, id: ref.id };
   }
 
   static #togglePanel(panel) {

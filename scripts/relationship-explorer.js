@@ -113,6 +113,14 @@ export class RelationshipExplorer {
 
     if (highlight) {
       requestAnimationFrame(() => {
+        const groupKey = RelationshipExplorer.#groupKeyForKind(highlight.kind);
+        const group = groupKey
+          ? container.querySelector(`[data-relationship-group="${groupKey}"]`)
+          : null;
+        if (group instanceof HTMLDetailsElement) {
+          group.open = true;
+          group.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
         const chip = [...container.querySelectorAll("[data-relationship-chip]")].find(
           (entry) =>
             entry instanceof HTMLElement &&
@@ -342,25 +350,30 @@ export class RelationshipExplorer {
   }
 
   static async #onPick(event, handlers) {
-    const explorer = event.target instanceof Element
-      ? event.target.closest("[data-relationship-explorer]")
-      : null;
-    if (!(explorer instanceof HTMLElement)) return;
-    const ownerKind = explorer.dataset.relationshipOwnerKind;
-    const ownerId = explorer.dataset.relationshipOwnerId;
-    const entry = event.detail;
-    if (!ownerKind || !ownerId || !entry?.kind || !entry?.id) return;
+    try {
+      const explorer = event.target instanceof Element
+        ? event.target.closest("[data-relationship-explorer]")
+        : null;
+      if (!(explorer instanceof HTMLElement)) return;
+      const ownerKind = explorer.dataset.relationshipOwnerKind;
+      const ownerId = explorer.dataset.relationshipOwnerId;
+      const entry = event.detail;
+      if (!ownerKind || !ownerId || !entry?.kind || !entry?.id) return;
 
-    const ok = await QuickEdit.addRelationship(
-      { kind: ownerKind, id: ownerId },
-      { kind: entry.kind, id: entry.id }
-    );
-    if (!ok) {
-      ui.notifications?.warn("Could not add that relationship.");
-      return;
+      const ok = await QuickEdit.addRelationship(
+        { kind: ownerKind, id: ownerId },
+        { kind: entry.kind, id: entry.id }
+      );
+      if (!ok) {
+        ui.notifications?.warn("Could not add that relationship.");
+        return;
+      }
+      RelationshipExplorer.highlightNext({ kind: entry.kind, id: entry.id });
+      handlers.onRefresh?.({ highlight: { kind: entry.kind, id: entry.id } });
+    } catch (error) {
+      console.error("N&D Companion: relationship pick failed", error);
+      ui.notifications?.error("Relationship could not be created.");
     }
-    RelationshipExplorer.highlightNext({ kind: entry.kind, id: entry.id });
-    handlers.onRefresh?.({ highlight: { kind: entry.kind, id: entry.id } });
   }
 
   static async #onRemove(button, handlers) {
@@ -410,22 +423,24 @@ export class RelationshipExplorer {
     summary.className = "nd-relationship-explorer__summary";
     const type = document.createElement("span");
     type.className = "nd-rel-type";
-    type.dataset.relType = group.key === "chronicle" ? "chronicle" : group.key.replace(/s$/, "");
     if (group.key === "storyThreads") type.dataset.relType = "storyThread";
-    if (group.key === "quests") type.dataset.relType = "quest";
-    if (group.key === "actors") type.dataset.relType = "actor";
-    if (group.key === "factions") type.dataset.relType = "faction";
-    if (group.key === "locations") type.dataset.relType = "location";
-    if (group.key === "items") type.dataset.relType = "item";
+    else if (group.key === "quests") type.dataset.relType = "quest";
+    else if (group.key === "actors") type.dataset.relType = "actor";
+    else if (group.key === "factions") type.dataset.relType = "faction";
+    else if (group.key === "locations") type.dataset.relType = "location";
+    else if (group.key === "items") type.dataset.relType = "item";
+    else if (group.key === "chronicle") type.dataset.relType = "chronicle";
+    else type.dataset.relType = group.key;
     type.textContent = RelationshipPicker.typeLabel(type.dataset.relType);
     const label = document.createElement("span");
-    label.textContent = `${group.label} (${group.nodes.length})`;
+    label.className = "nd-relationship-explorer__group-label";
+    label.textContent = `${group.label.toUpperCase()} (${group.nodes.length})`;
     summary.append(type, label);
 
     const list = document.createElement("div");
     list.className = "nd-relationship-explorer__links";
     for (const node of group.nodes) {
-      list.append(RelationshipExplorer.#chip(node, owner));
+      list.append(RelationshipExplorer.#chip(node, owner, type.dataset.relType));
     }
     details.append(summary, list);
 
@@ -436,7 +451,7 @@ export class RelationshipExplorer {
     return details;
   }
 
-  static #chip(node, owner) {
+  static #chip(node, owner, groupType) {
     const chip = document.createElement("div");
     chip.className = "nd-relationship-explorer__chip";
     chip.dataset.relationshipChip = "";
@@ -444,10 +459,10 @@ export class RelationshipExplorer {
     chip.dataset.contextId = node.id;
     chip.dataset.relationshipLabel = RelationshipExplorer.#nodeLabel(node);
 
-    const badge = document.createElement("span");
-    badge.className = "nd-rel-type";
-    badge.dataset.relType = RelationshipPicker.typeKey(node.kind);
-    badge.textContent = RelationshipPicker.typeLabel(node.kind);
+    const dot = document.createElement("span");
+    dot.className = "nd-rel-dot";
+    dot.dataset.relType = groupType || RelationshipPicker.typeKey(node.kind);
+    dot.setAttribute("aria-hidden", "true");
 
     const open = document.createElement("button");
     open.type = "button";
@@ -458,7 +473,7 @@ export class RelationshipExplorer {
     open.textContent = RelationshipExplorer.#nodeLabel(node);
     open.title = "Open";
 
-    chip.append(badge, open);
+    chip.append(dot, open);
 
     if (owner && QuickEdit.canRemoveRelationship(owner, node)) {
       const remove = document.createElement("button");

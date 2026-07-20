@@ -155,6 +155,11 @@ export class StoryThreadService {
         id,
         existing.title?.trim() || "Untitled Story Thread"
       );
+      const { GraphValidator } = await import("./graph-validator.js");
+      await GraphValidator.purgeEntity({ kind: "storyThread", id });
+      for (const questId of questIds) {
+        await GraphValidator.purgeEntity({ kind: "questEntry", id: questId });
+      }
     }
     return removed;
   }

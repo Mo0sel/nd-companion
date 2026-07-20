@@ -1,6 +1,5 @@
 import { CampaignMemoryService } from "./campaign-memory-service.js";
 import { CampaignActivityPanel } from "./campaign-activity-panel.js";
-import { CampaignActivityService } from "./campaign-activity-service.js";
 import { ContextEngine } from "./context-engine.js";
 import { ContextPanel } from "./context-panel.js";
 import { EntityMentions } from "./entity-mentions.js";
@@ -788,8 +787,6 @@ export class CampaignWorkspace {
       button.append(
         document.createTextNode(thread.title?.trim() || "Untitled Story Thread")
       );
-      const recentBadge = CampaignActivityService.recentBadge("storyThread", thread.id);
-      if (recentBadge) button.append(recentBadge);
 
       const status = QuickEdit.badge(thread.status, {
         kind: "storyThread",
@@ -858,8 +855,6 @@ export class CampaignWorkspace {
     open.dataset.explorerQuestId = entry.id;
     open.replaceChildren();
     open.append(document.createTextNode(entry.title?.trim() || "Untitled Quest"));
-    const recentBadge = CampaignActivityService.recentBadge("questEntry", entry.id);
-    if (recentBadge) open.append(recentBadge);
 
     const status = QuickEdit.badge(entry.status, {
       kind: "questEntry",
@@ -917,10 +912,6 @@ export class CampaignWorkspace {
     const description = view.querySelector("[data-story-thread-description]");
     const currentState = view.querySelector("[data-story-thread-current-state]");
     if (title instanceof HTMLInputElement) title.value = thread.title ?? "";
-    const headline = view.querySelector(".nd-campaign-panel__headline");
-    headline?.querySelector(".nd-recent-badge")?.remove();
-    const threadBadge = CampaignActivityService.recentBadge("storyThread", thread.id);
-    if (threadBadge && headline instanceof HTMLElement) headline.append(threadBadge);
     if (status instanceof HTMLSelectElement) status.value = thread.status ?? "ACTIVE";
     if (description instanceof HTMLElement) {
       description.innerHTML = RichText.sanitize(thread.description ?? "");
@@ -1066,10 +1057,6 @@ export class CampaignWorkspace {
     const resources = view.querySelector("[data-faction-resources]");
     const reputation = view.querySelector("[data-faction-reputation]");
     if (name instanceof HTMLInputElement) name.value = faction.name ?? "";
-    const headline = view.querySelector(".nd-campaign-panel__headline");
-    headline?.querySelector(".nd-recent-badge")?.remove();
-    const factionBadge = CampaignActivityService.recentBadge("faction", faction.id);
-    if (factionBadge && headline instanceof HTMLElement) headline.append(factionBadge);
     if (icon instanceof HTMLInputElement) icon.value = faction.icon ?? "";
     if (iconPreview instanceof HTMLImageElement) {
       iconPreview.hidden = !faction.icon;
@@ -1384,9 +1371,6 @@ export class CampaignWorkspace {
     if (title) {
       title.replaceChildren();
       title.append(document.createTextNode(entity.name));
-      const entityKind = entity.kind === "scene" ? "location" : entity.kind;
-      const badge = CampaignActivityService.recentBadge(entityKind, entity.uuid);
-      if (badge) title.append(badge);
     }
     ContextPanel.paint(
       view.querySelector("[data-context-panel=\"entity\"]"),
@@ -1428,8 +1412,6 @@ export class CampaignWorkspace {
       const source = document.createElement("small");
       source.textContent = record.source === "imported" ? "Imported" : "Live";
       button.append(title, source);
-      const memoryBadge = CampaignActivityService.recentBadge("session", record.id);
-      if (memoryBadge) button.append(memoryBadge);
       list.append(button);
     }
   }
@@ -1480,8 +1462,6 @@ export class CampaignWorkspace {
     const title = document.createElement("strong");
     title.textContent = entry.title?.trim() || "Untitled Quest";
     summary.append(status, title);
-    const entryBadge = CampaignActivityService.recentBadge("questEntry", entry.id);
-    if (entryBadge) summary.append(entryBadge);
 
     const body = document.createElement("div");
     body.className = "nd-quest-entry__body";

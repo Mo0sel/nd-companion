@@ -6,6 +6,7 @@ import { ContextEngine } from "./context-engine.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { FactionService } from "./faction-service.js";
 import { FocusManager } from "./focus-manager.js";
+import { GraphValidator } from "./graph-validator.js";
 import { Navigation } from "./navigation.js";
 import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
@@ -45,8 +46,11 @@ Hooks.once("ready", async () => {
   window.nd.CampaignMemoryService = CampaignMemoryService;
   window.nd.ContextEngine = ContextEngine;
   window.nd.SearchService = SearchService;
+  window.nd.GraphValidator = GraphValidator;
   CampaignAwareness.registerHooks();
   FocusManager.registerHooks();
+  GraphValidator.registerDeleteHooks();
+  await GraphValidator.report({ purge: true, notify: false });
 });
 
 Hooks.on("getSceneControlButtons", (controls) => {

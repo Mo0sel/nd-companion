@@ -23,6 +23,7 @@ export class RelationshipPicker {
    */
   static mount(container, options = {}) {
     if (!(container instanceof HTMLElement)) return;
+    EntityRegistry.rebuildAll();
     container.replaceChildren();
     container.className = "nd-relationship-picker";
     container.dataset.relationshipPicker = "";

@@ -2,6 +2,7 @@ const MODULE_ID = "nd-companion";
 const MEMORY_SETTING = "campaignMemory";
 const CAMPAIGN_SETTING = "campaign";
 const ACTIVITY_SETTING = "campaignActivity";
+const LINKS_SETTING = "campaignLinks";
 
 /**
  * World-setting persistence for Companion live notes and campaign memory.
@@ -107,6 +108,14 @@ export class CompanionStorage {
       config: false,
       type: Object,
       default: { events: [] }
+    });
+
+    game.settings.register(MODULE_ID, LINKS_SETTING, {
+      name: LINKS_SETTING,
+      scope: "world",
+      config: false,
+      type: Object,
+      default: { links: [], revision: 0 }
     });
   }
 
@@ -286,6 +295,38 @@ export class CompanionStorage {
   static async setActivityEvents(events) {
     return game.settings.set(MODULE_ID, ACTIVITY_SETTING, {
       events: foundry.utils.duplicate(Array.isArray(events) ? events : [])
+    });
+  }
+
+  /**
+   * @returns {{ aKind: string, aId: string, bKind: string, bId: string }[]}
+   */
+  static getEntityLinks() {
+    const doc = game.settings.get(MODULE_ID, LINKS_SETTING);
+    if (!Array.isArray(doc?.links)) return [];
+    return doc.links
+      .filter((link) => link?.aKind && link?.aId && link?.bKind && link?.bId)
+      .map((link) => ({
+        aKind: String(link.aKind),
+        aId: String(link.aId),
+        bKind: String(link.bKind),
+        bId: String(link.bId)
+      }));
+  }
+
+  /** @returns {number} */
+  static getEntityLinksRevision() {
+    return Number(game.settings.get(MODULE_ID, LINKS_SETTING)?.revision) || 0;
+  }
+
+  /**
+   * @param {{ aKind: string, aId: string, bKind: string, bId: string }[]} links
+   */
+  static async setEntityLinks(links) {
+    const revision = CompanionStorage.getEntityLinksRevision() + 1;
+    return game.settings.set(MODULE_ID, LINKS_SETTING, {
+      links: foundry.utils.duplicate(Array.isArray(links) ? links : []),
+      revision
     });
   }
 

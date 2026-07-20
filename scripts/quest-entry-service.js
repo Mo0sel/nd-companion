@@ -172,6 +172,8 @@ export class QuestEntryService {
     if (removed && existing) {
       const { CampaignActivityService } = await import("./campaign-activity-service.js");
       CampaignActivityService.deleted("questEntry", id, existing.title);
+      const { GraphValidator } = await import("./graph-validator.js");
+      await GraphValidator.purgeEntity({ kind: "questEntry", id });
     }
     return removed;
   }
