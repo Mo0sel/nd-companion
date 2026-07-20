@@ -354,6 +354,10 @@
 
 .nd-play-story-thread {
   display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  align-items: start;
+  position: relative;
   min-width: min(210px, 100%);
   max-width: 320px;
   margin: 0;
@@ -364,10 +368,22 @@
   border-radius: var(--nd-radius-md);
   box-shadow: none;
   text-align: left;
+}
+
+.nd-play-story-thread__open {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  text-align: left;
   cursor: pointer;
 }
 
-.nd-play-story-thread:hover {
+.nd-play-story-thread:hover,
+.nd-play-story-thread__open:hover {
   color: var(--nd-blue);
   border-color: var(--nd-blue-border);
 }
@@ -432,7 +448,9 @@
 .nd-play-faction {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 2px var(--nd-space-2);
+  gap: 6px;
+  align-items: start;
+  position: relative;
   margin: 0;
   padding: 7px 9px;
   color: var(--nd-text-2);
@@ -441,10 +459,22 @@
   border-radius: var(--nd-radius-md);
   box-shadow: none;
   text-align: left;
+}
+
+.nd-play-faction__open {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  text-align: left;
   cursor: pointer;
 }
 
-.nd-play-faction:hover {
+.nd-play-faction:hover,
+.nd-play-faction__open:hover {
   color: var(--nd-blue);
   border-color: var(--nd-blue-border);
 }
@@ -458,7 +488,7 @@
 }
 
 .nd-play-faction span {
-  grid-column: 1 / -1;
+  margin-top: 2px;
   color: var(--nd-text-3);
   font-size: var(--nd-text-caption);
 }

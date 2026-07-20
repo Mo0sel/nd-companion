@@ -6,6 +6,7 @@ import { Navigation } from "./navigation.js";
 import { PlaybookEntities } from "./playbook-entities.js";
 import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
+import { QuickEdit } from "./quick-edit.js";
 import { RichText } from "./rich-text.js";
 import { SessionService } from "./session-service.js";
 import { StoryThreadService } from "./story-thread-service.js";
@@ -238,16 +239,32 @@ export class Playbook {
     list.replaceChildren();
     if (count) count.textContent = String(threads.length);
     for (const thread of threads) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "nd-play-story-thread";
-      button.dataset.playStoryThreadId = thread.id;
+      const card = document.createElement("div");
+      card.className = "nd-play-story-thread nd-quick-edit-host";
+      card.dataset.playStoryThreadId = thread.id;
+
+      const open = document.createElement("button");
+      open.type = "button";
+      open.className = "nd-play-story-thread__open";
+      open.dataset.playStoryThreadId = thread.id;
       const title = document.createElement("strong");
       title.textContent = thread.title?.trim() || "Untitled Story Thread";
       const state = document.createElement("span");
       state.textContent = RichText.plainText(thread.currentState ?? "") || "No current state";
-      button.append(title, state);
-      list.append(button);
+      open.append(title, state);
+
+      const status = QuickEdit.badge(thread.status, {
+        kind: "storyThread",
+        id: thread.id,
+        field: "status"
+      });
+      card.append(open, status);
+      QuickEdit.mount(card, {
+        kind: "storyThread",
+        id: thread.id,
+        fields: ["status", "currentState"]
+      });
+      list.append(card);
     }
   }
 
@@ -298,18 +315,32 @@ export class Playbook {
     list.replaceChildren();
     if (count) count.textContent = String(factions.length);
     for (const faction of factions) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "nd-play-faction";
-      button.dataset.playFactionId = faction.id;
+      const card = document.createElement("div");
+      card.className = "nd-play-faction nd-quick-edit-host";
+      card.dataset.playFactionId = faction.id;
+
+      const open = document.createElement("button");
+      open.type = "button";
+      open.className = "nd-play-faction__open";
+      open.dataset.playFactionId = faction.id;
       const name = document.createElement("strong");
       name.textContent = faction.name?.trim() || "Untitled Faction";
       const status = document.createElement("span");
       status.textContent = RichText.plainText(faction.currentStatus ?? "") || "Unknown";
-      const reputation = document.createElement("small");
-      reputation.textContent = faction.playerReputation;
-      button.append(name, reputation, status);
-      list.append(button);
+      open.append(name, status);
+
+      const reputation = QuickEdit.badge(faction.playerReputation, {
+        kind: "faction",
+        id: faction.id,
+        field: "reputation"
+      });
+      card.append(open, reputation);
+      QuickEdit.mount(card, {
+        kind: "faction",
+        id: faction.id,
+        fields: ["reputation", "currentStatus"]
+      });
+      list.append(card);
     }
   }
 
@@ -634,14 +665,14 @@ export class Playbook {
           return;
         }
 
-        const storyThread = target.closest("[data-play-story-thread-id]");
+        const storyThread = target.closest(".nd-play-story-thread__open[data-play-story-thread-id]");
         if (storyThread) {
           const id = storyThread.getAttribute("data-play-story-thread-id");
           if (id) void Promise.resolve(options.onOpenStoryThread?.(id));
           return;
         }
 
-        const faction = target.closest("[data-play-faction-id]");
+        const faction = target.closest(".nd-play-faction__open[data-play-faction-id]");
         if (faction) {
           const id = faction.getAttribute("data-play-faction-id");
           if (id) void Promise.resolve(options.onOpenFaction?.(id));

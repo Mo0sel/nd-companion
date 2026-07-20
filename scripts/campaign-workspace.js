@@ -11,6 +11,7 @@ import { NavigationHistory } from "./navigation-history.js";
 import { Playbook } from "./playbook.js";
 import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
+import { QuickEdit } from "./quick-edit.js";
 import { RelationshipExplorer } from "./relationship-explorer.js";
 import { RichText } from "./rich-text.js";
 import { RichTextToolbar } from "./rich-text-toolbar.js";
@@ -790,10 +791,11 @@ export class CampaignWorkspace {
       const recentBadge = CampaignActivityService.recentBadge("storyThread", thread.id);
       if (recentBadge) button.append(recentBadge);
 
-      const status = document.createElement("span");
-      status.className = "nd-campaign-status";
-      status.dataset.status = thread.status;
-      status.textContent = thread.status;
+      const status = QuickEdit.badge(thread.status, {
+        kind: "storyThread",
+        id: thread.id,
+        field: "status"
+      });
 
       const menu = document.createElement("details");
       menu.className = "nd-explorer-menu";
@@ -810,6 +812,11 @@ export class CampaignWorkspace {
       menu.append(menuToggle, menuContent);
 
       header.append(toggle, button, status, menu);
+      QuickEdit.mount(header, {
+        kind: "storyThread",
+        id: thread.id,
+        fields: ["status", "currentState"]
+      });
 
       const children = document.createElement("div");
       children.className = "nd-explorer-thread__children";
@@ -854,6 +861,12 @@ export class CampaignWorkspace {
     const recentBadge = CampaignActivityService.recentBadge("questEntry", entry.id);
     if (recentBadge) open.append(recentBadge);
 
+    const status = QuickEdit.badge(entry.status, {
+      kind: "questEntry",
+      id: entry.id,
+      field: "status"
+    });
+
     const state = document.createElement("span");
     state.className = "nd-explorer-quest__state";
     state.classList.toggle("is-live", live);
@@ -883,7 +896,12 @@ export class CampaignWorkspace {
     remove.setAttribute("aria-label", "Delete Quest");
     remove.textContent = "×";
 
-    row.append(open, state, playAction, remove);
+    row.append(open, status, state, playAction, remove);
+    QuickEdit.mount(row, {
+      kind: "questEntry",
+      id: entry.id,
+      fields: ["status", "currentStatus"]
+    });
     return row;
   }
 
@@ -948,6 +966,11 @@ export class CampaignWorkspace {
       }
     );
 
+    QuickEdit.mount(view, {
+      kind: "storyThread",
+      id: thread.id,
+      fields: ["status", "currentState"]
+    });
   }
 
   static #storyQuestRow(entry) {
@@ -958,10 +981,11 @@ export class CampaignWorkspace {
     const title = document.createElement("strong");
     title.textContent = entry.title?.trim() || "Untitled Quest";
 
-    const status = document.createElement("span");
-    status.className = "nd-campaign-status";
-    status.dataset.status = entry.status;
-    status.textContent = entry.status;
+    const status = QuickEdit.badge(entry.status, {
+      kind: "questEntry",
+      id: entry.id,
+      field: "status"
+    });
 
     const open = document.createElement("button");
     open.type = "button";
@@ -975,6 +999,11 @@ export class CampaignWorkspace {
     remove.textContent = "Delete";
 
     row.append(title, status, open, remove);
+    QuickEdit.mount(row, {
+      kind: "questEntry",
+      id: entry.id,
+      fields: ["status", "currentStatus"]
+    });
     return row;
   }
 
@@ -993,23 +1022,32 @@ export class CampaignWorkspace {
       return;
     }
     for (const faction of factions) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "nd-quest-sidebar__quest";
-      button.dataset.factionNavId = faction.id;
-      button.classList.toggle(
+      const row = document.createElement("div");
+      row.className = "nd-quest-sidebar__quest nd-faction-nav-row";
+      row.classList.toggle(
         "is-active",
         CampaignWorkspace.#view === "faction" &&
           faction.id === CampaignWorkspace.#factionId
       );
-      const name = document.createElement("span");
-      name.textContent = faction.name?.trim() || "Untitled Faction";
-      const reputation = document.createElement("span");
-      reputation.className = "nd-campaign-status";
-      reputation.dataset.status = faction.playerReputation;
-      reputation.textContent = faction.playerReputation;
-      button.append(name, reputation);
-      list.append(button);
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "nd-faction-nav-row__name";
+      button.dataset.factionNavId = faction.id;
+      button.textContent = faction.name?.trim() || "Untitled Faction";
+
+      const reputation = QuickEdit.badge(faction.playerReputation, {
+        kind: "faction",
+        id: faction.id,
+        field: "reputation"
+      });
+      row.append(button, reputation);
+      QuickEdit.mount(row, {
+        kind: "faction",
+        id: faction.id,
+        fields: ["reputation", "currentStatus"]
+      });
+      list.append(row);
     }
   }
 
@@ -1091,6 +1129,12 @@ export class CampaignWorkspace {
         sanitize: RichText.sanitize
       });
     }
+
+    QuickEdit.mount(view, {
+      kind: "faction",
+      id: faction.id,
+      fields: ["reputation", "currentStatus"]
+    });
   }
 
   static #factionObjectiveElement(objective) {
@@ -1251,15 +1295,24 @@ export class CampaignWorkspace {
       return;
     }
     for (const entity of entities) {
+      const row = document.createElement("div");
+      row.className = "nd-quest-sidebar__quest nd-entity-nav-row";
+      row.classList.toggle("is-active", entity.uuid === CampaignWorkspace.#entityId);
+
       const button = document.createElement("button");
       button.type = "button";
-      button.className = "nd-quest-sidebar__quest";
+      button.className = "nd-entity-nav-row__name";
       button.dataset.campaignEntityId = entity.uuid;
-      button.classList.toggle("is-active", entity.uuid === CampaignWorkspace.#entityId);
-      const name = document.createElement("span");
-      name.textContent = entity.name;
-      button.append(name);
-      list.append(button);
+      button.textContent = entity.name;
+
+      const entityKind = entity.kind === "scene" ? "location" : entity.kind;
+      row.append(button);
+      QuickEdit.mount(row, {
+        kind: entityKind,
+        id: entity.uuid,
+        fields: ["currentStatus"]
+      });
+      list.append(row);
     }
   }
 
@@ -1293,6 +1346,12 @@ export class CampaignWorkspace {
       view.querySelector("[data-context-panel=\"entity\"]"),
       ContextEngine.getContext({ kind: entity.kind, id: entity.uuid })
     );
+    const entityKind = entity.kind === "scene" ? "location" : entity.kind;
+    QuickEdit.mount(view, {
+      kind: entityKind,
+      id: entity.uuid,
+      fields: ["currentStatus"]
+    });
   }
 
   static #paintMemoryList(panel) {
@@ -1367,10 +1426,11 @@ export class CampaignWorkspace {
     details.open = entry.id === CampaignWorkspace.#openEntryId;
 
     const summary = document.createElement("summary");
-    const status = document.createElement("span");
-    status.className = "nd-campaign-status";
-    status.dataset.status = entry.status;
-    status.textContent = entry.status;
+    const status = QuickEdit.badge(entry.status, {
+      kind: "questEntry",
+      id: entry.id,
+      field: "status"
+    });
     const title = document.createElement("strong");
     title.textContent = entry.title?.trim() || "Untitled Quest";
     summary.append(status, title);
@@ -1457,6 +1517,11 @@ export class CampaignWorkspace {
     );
 
     details.append(summary, body);
+    QuickEdit.mount(details, {
+      kind: "questEntry",
+      id: entry.id,
+      fields: ["status", "currentStatus"]
+    });
     return details;
   }
 

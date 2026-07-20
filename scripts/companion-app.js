@@ -1,4 +1,5 @@
 import { CampaignAwareness, CampaignContext } from "./campaign-context.js";
+import { CampaignActivityPanel } from "./campaign-activity-panel.js";
 import { CampaignDocument } from "./campaign-document.js";
 import { CampaignWorkspace } from "./campaign-workspace.js";
 import { ContextEngine } from "./context-engine.js";
@@ -13,6 +14,7 @@ import { NavigationHistory } from "./navigation-history.js";
 import { PanelResizer } from "./panel-resizer.js";
 import { Playbook } from "./playbook.js";
 import { PlaybookService } from "./playbook-service.js";
+import { QuickEdit } from "./quick-edit.js";
 import { RelationshipExplorer } from "./relationship-explorer.js";
 import { RichText } from "./rich-text.js";
 import { SessionService } from "./session-service.js";
@@ -503,6 +505,13 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       onJump: (index) => this.#historyJump(index)
     });
     RelationshipExplorer.paintChrome(this.element);
+    QuickEdit.attach(this.element, {
+      onRefresh: () => {
+        CampaignWorkspace.paint(this.element);
+        Playbook.paint(this.element, Playbook.get());
+        CampaignActivityPanel.refreshAll?.();
+      }
+    });
     this.element.querySelectorAll("[data-storage]:not([data-memory-editor])").forEach((el) => {
       const html = el.hasAttribute("data-storage-html");
       LiveNotes.attach(el, el.dataset.storage, {

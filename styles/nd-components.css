@@ -1017,6 +1017,165 @@ button.nd-relationship-nav__crumb:hover {
   padding: 0 0 8px 14px;
 }
 
+.nd-relationship-explorer__add {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--nd-border);
+}
+
+.nd-relationship-explorer__add select {
+  min-width: 0;
+  padding: 4px 8px;
+  color: var(--nd-text-2);
+  background: var(--nd-surface);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-sm);
+  font-size: var(--nd-text-caption);
+}
+
+.nd-relationship-explorer__add-btn {
+  padding: 4px 10px;
+  color: var(--nd-blue);
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--nd-blue) 8%, transparent);
+  border: 1px solid var(--nd-blue-border);
+  border-radius: var(--nd-radius-sm);
+  cursor: pointer;
+  font-size: var(--nd-text-caption);
+}
+
+.nd-relationship-explorer__add-btn:hover {
+  background: color-mix(in srgb, var(--nd-blue) 14%, transparent);
+}
+
+.nd-quick-edit-host {
+  position: relative;
+}
+
+.nd-quick-edit {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+
+.nd-quick-edit-host:hover > .nd-quick-edit,
+.nd-quick-edit-host:focus-within > .nd-quick-edit,
+.nd-quick-edit.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.nd-quick-edit__toggle {
+  padding: 2px 8px;
+  color: var(--nd-text-3);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--nd-surface);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-sm);
+  cursor: pointer;
+}
+
+.nd-quick-edit__toggle:hover,
+.nd-quick-edit.is-open .nd-quick-edit__toggle {
+  color: var(--nd-blue);
+  border-color: var(--nd-blue-border);
+}
+
+.nd-quick-edit__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: min(260px, 70vw);
+  padding: 8px 10px;
+  background: var(--nd-surface);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-md);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
+}
+
+.nd-quick-edit__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+}
+
+.nd-quick-edit__field > span {
+  color: var(--nd-text-3);
+  font-size: var(--nd-text-micro);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.nd-quick-edit__editor {
+  min-height: 48px;
+  max-height: 120px;
+  overflow: auto;
+  padding: 6px 8px;
+  background: var(--nd-surface-2);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-sm);
+  font-size: var(--nd-text-caption);
+}
+
+.nd-quick-cycle {
+  cursor: pointer;
+}
+
+.nd-quick-cycle:hover {
+  filter: brightness(1.08);
+  outline: 1px solid var(--nd-blue-border);
+}
+
+button.nd-campaign-status.nd-quick-cycle {
+  font: inherit;
+}
+
+.nd-faction-nav-row,
+.nd-entity-nav-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  padding: 6px 8px;
+  background: var(--nd-surface);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-md);
+}
+
+.nd-faction-nav-row.is-active,
+.nd-entity-nav-row.is-active {
+  border-color: var(--nd-blue-border);
+}
+
+.nd-faction-nav-row__name,
+.nd-entity-nav-row__name {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
 .nd-context-panel__memory {
   padding: 10px 12px;
   color: var(--nd-text-2);

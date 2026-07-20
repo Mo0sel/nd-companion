@@ -98,7 +98,12 @@ export class ContextEngine {
    */
   static currentStatusKey(entity) {
     const target = ContextEngine.#normalizeTarget(entity);
-    if (!target || !["actor", "quest", "location", "item"].includes(target.kind)) return "";
+    if (
+      !target ||
+      !["actor", "quest", "questEntry", "location", "item"].includes(target.kind)
+    ) {
+      return "";
+    }
     return `status:${ContextEngine.#storageKind(target.kind)}:${target.id}`;
   }
 
@@ -304,7 +309,9 @@ export class ContextEngine {
   }
 
   static #storageKind(kind) {
-    return kind === "location" ? "scene" : kind;
+    if (kind === "location") return "scene";
+    if (kind === "questEntry") return "quest";
+    return kind;
   }
 
   static #excerpt(sessionLog) {

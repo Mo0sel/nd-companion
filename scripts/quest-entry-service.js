@@ -132,7 +132,11 @@ export class QuestEntryService {
           twist: "Twist",
           possibleOutcomes: "Possible Outcomes",
           reward: "Reward",
-          notes: "Notes"
+          notes: "Notes",
+          relatedBeatIds: "Relationships",
+          relatedCharacterIds: "Relationships",
+          relatedLocationIds: "Relationships",
+          relatedItemIds: "Relationships"
         })
       );
     }

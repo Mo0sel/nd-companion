@@ -1,4 +1,5 @@
 import { NavigationHistory } from "./navigation-history.js";
+import { QuickEdit } from "./quick-edit.js";
 
 /**
  * Unified Connected Knowledge browser over ContextEngine results.
@@ -57,6 +58,10 @@ export class RelationshipExplorer {
     container.replaceChildren();
     container.className = "nd-relationship-explorer";
     container.dataset.relationshipExplorer = "";
+    if (context?.target?.kind && context?.target?.id) {
+      container.dataset.relationshipOwnerKind = context.target.kind;
+      container.dataset.relationshipOwnerId = context.target.id;
+    }
 
     const heading = document.createElement("h4");
     heading.className = "nd-relationship-explorer__heading";
@@ -68,16 +73,38 @@ export class RelationshipExplorer {
       const empty = document.createElement("p");
       empty.className = "nd-relationship-explorer__empty";
       empty.textContent = "No related campaign knowledge.";
-      const hint = document.createElement("p");
-      hint.className = "nd-relationship-explorer__hint";
-      hint.textContent = "Use @ mentions to connect this entity with others.";
-      container.append(empty, hint);
-      return;
+      container.append(empty);
+    } else {
+      for (const group of groups) {
+        container.append(RelationshipExplorer.#groupElement(group));
+      }
     }
 
-    for (const group of groups) {
-      container.append(RelationshipExplorer.#groupElement(group));
+    if (context?.target?.kind && context?.target?.id) {
+      container.append(RelationshipExplorer.#addRelationship());
     }
+  }
+
+  static #addRelationship() {
+    const row = document.createElement("div");
+    row.className = "nd-relationship-explorer__add";
+
+    const select = document.createElement("select");
+    select.dataset.quickRelationshipSelect = "";
+    select.setAttribute("aria-label", "Add relationship");
+    select.append(new Option("Add relationship…", "", true, true));
+    for (const option of QuickEdit.pickerOptions()) {
+      select.append(new Option(option.label, option.value));
+    }
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "nd-relationship-explorer__add-btn";
+    button.dataset.quickAddRelationship = "";
+    button.textContent = "+ Add Relationship";
+
+    row.append(select, button);
+    return row;
   }
 
   /**

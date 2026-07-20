@@ -224,7 +224,7 @@ export class CampaignActivityService {
     if (!patch || !labels) return null;
     const fields = [];
     for (const [key, label] of Object.entries(labels)) {
-      if (patch[key] !== undefined) fields.push(label);
+      if (patch[key] !== undefined && !fields.includes(label)) fields.push(label);
     }
     return fields.length ? fields.join(", ") : null;
   }

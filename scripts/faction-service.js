@@ -110,7 +110,15 @@ export class FactionService {
           currentStatus: "Current Status",
           resources: "Resources",
           playerReputation: "Player Reputation",
-          currentObjectives: "Current Objectives"
+          currentObjectives: "Current Objectives",
+          relatedActorIds: "Relationships",
+          relatedStoryThreadIds: "Relationships",
+          relatedItemIds: "Relationships",
+          relatedLocationIds: "Relationships",
+          relatedQuestIds: "Relationships",
+          relatedSessionIds: "Relationships",
+          relatedFactionIds: "Relationships",
+          leadershipActorIds: "Relationships"
         })
       );
     }

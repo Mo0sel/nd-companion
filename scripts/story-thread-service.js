@@ -95,7 +95,12 @@ export class StoryThreadService {
           description: "Description",
           status: "Status",
           currentState: "Current State",
-          openQuestions: "Open Questions"
+          openQuestions: "Open Questions",
+          relatedActorIds: "Relationships",
+          relatedLocationIds: "Relationships",
+          relatedItemIds: "Relationships",
+          relatedQuestIds: "Relationships",
+          relatedSessionIds: "Relationships"
         })
       );
     }
