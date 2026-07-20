@@ -393,6 +393,28 @@
   border-radius: var(--nd-radius-lg);
 }
 
+.nd-play-activity {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  background: var(--nd-surface-2);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-lg);
+}
+
+.nd-play-activity > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nd-space-2);
+  margin-bottom: 7px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.nd-play-activity > summary::-webkit-details-marker {
+  display: none;
+}
+
 .nd-play-factions > summary {
   display: flex;
   align-items: center;

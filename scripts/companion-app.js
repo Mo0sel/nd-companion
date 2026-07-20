@@ -437,6 +437,9 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
           this.setWorkspace("campaign");
         }
       },
+      onOpenActivity: (target) => {
+        void this.#openContextTarget(target);
+      },
       onEndSession: async () => {
         const active = SessionService.getActive();
         if (!active) {
@@ -488,6 +491,9 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
         if (!moved) return;
         this.setWorkspace("play");
         Playbook.paint(this.element, Playbook.get());
+      },
+      onOpenActivity: (target) => {
+        void this.#openContextTarget(target);
       }
     });
     ContextPanel.attach(this.element, (target) => this.#openContextTarget(target));
@@ -537,6 +543,10 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       openQuestEntry: (id) => {
         if (!CampaignWorkspace.selectQuestEntry(this.element, id)) return;
         this.setWorkspace("campaign");
+      },
+      openActivityEntity: ({ kind, id }) => {
+        void this.#openContextTarget({ kind, id });
+        return true;
       },
       openMemory: (id) => {
         if (!CampaignWorkspace.selectMemory(this.element, id)) return;

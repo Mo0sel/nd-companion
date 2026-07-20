@@ -1,4 +1,6 @@
 import { CampaignMemoryService } from "./campaign-memory-service.js";
+import { CampaignActivityPanel } from "./campaign-activity-panel.js";
+import { CampaignActivityService } from "./campaign-activity-service.js";
 import { ContextEngine } from "./context-engine.js";
 import { ContextPanel } from "./context-panel.js";
 import { EntityMentions } from "./entity-mentions.js";
@@ -29,11 +31,14 @@ const ENTRY_FIELDS = Object.freeze([
  * Quests are Story-Thread-owned playable content presented in one Explorer.
  */
 export class CampaignWorkspace {
-  /** @type {"storyThread"|"faction"|"memory"|"entity"} */
+  /** @type {"storyThread"|"faction"|"memory"|"entity"|"activity"} */
   static #view = "storyThread";
 
-  /** @type {"storyThreads"|"factions"|"actors"|"locations"|"items"|"chronicle"} */
+  /** @type {"storyThreads"|"factions"|"actors"|"locations"|"items"|"chronicle"|"activity"} */
   static #section = "storyThreads";
+
+  /** @type {"all"|"created"|"edited"|"deleted"} */
+  static #activityFilter = "all";
 
   /** @type {string|null} */
   static #memoryId = null;
@@ -316,6 +321,7 @@ export class CampaignWorkspace {
     CampaignWorkspace.#paintStoryThreadList(panel);
     CampaignWorkspace.#paintFactionList(panel);
     CampaignWorkspace.#paintMemoryList(panel);
+    CampaignWorkspace.#paintActivityList(panel);
     CampaignWorkspace.#paintCampaignNavigation(panel);
     CampaignWorkspace.#paintEntityList(panel);
 
@@ -367,7 +373,7 @@ export class CampaignWorkspace {
 
   /**
    * @param {HTMLElement} root
-   * @param {{ onOpenBeat?: (index: number) => Promise<void>|void }} [options]
+   * @param {{ onOpenBeat?: (index: number) => Promise<void>|void, onOpenActivity?: (target: { kind: string, id: string }) => Promise<void>|void }} [options]
    */
   static attach(root, options = {}) {
     if (!(root instanceof HTMLElement)) return;
@@ -401,6 +407,24 @@ export class CampaignWorkspace {
         if (sectionButton) {
           const section = sectionButton.getAttribute("data-campaign-section");
           CampaignWorkspace.#selectSection(root, section);
+          return;
+        }
+
+        const activityFilter = target.closest("[data-activity-filter]");
+        if (activityFilter instanceof HTMLButtonElement) {
+          const next = activityFilter.getAttribute("data-activity-filter");
+          if (next === "all" || next === "created" || next === "edited" || next === "deleted") {
+            CampaignWorkspace.#activityFilter = next;
+          }
+          CampaignWorkspace.paint(root);
+          return;
+        }
+
+        const activityOpen = target.closest("[data-activity-open]");
+        if (activityOpen && options.onOpenActivity) {
+          const kind = activityOpen.getAttribute("data-activity-entity-kind");
+          const id = activityOpen.getAttribute("data-activity-entity-id");
+          if (kind && id) void options.onOpenActivity({ kind, id });
           return;
         }
 
@@ -759,7 +783,12 @@ export class CampaignWorkspace {
         CampaignWorkspace.#view === "storyThread" &&
           thread.id === CampaignWorkspace.#storyThreadId
       );
-      button.textContent = thread.title?.trim() || "Untitled Story Thread";
+      button.replaceChildren();
+      button.append(
+        document.createTextNode(thread.title?.trim() || "Untitled Story Thread")
+      );
+      const recentBadge = CampaignActivityService.recentBadge("storyThread", thread.id);
+      if (recentBadge) button.append(recentBadge);
 
       const status = document.createElement("span");
       status.className = "nd-campaign-status";
@@ -820,7 +849,10 @@ export class CampaignWorkspace {
     open.className = "nd-explorer-quest__name";
     open.dataset.questIndexId = entry.id;
     open.dataset.explorerQuestId = entry.id;
-    open.textContent = entry.title?.trim() || "Untitled Quest";
+    open.replaceChildren();
+    open.append(document.createTextNode(entry.title?.trim() || "Untitled Quest"));
+    const recentBadge = CampaignActivityService.recentBadge("questEntry", entry.id);
+    if (recentBadge) open.append(recentBadge);
 
     const state = document.createElement("span");
     state.className = "nd-explorer-quest__state";
@@ -867,6 +899,10 @@ export class CampaignWorkspace {
     const description = view.querySelector("[data-story-thread-description]");
     const currentState = view.querySelector("[data-story-thread-current-state]");
     if (title instanceof HTMLInputElement) title.value = thread.title ?? "";
+    const headline = view.querySelector(".nd-campaign-panel__headline");
+    headline?.querySelector(".nd-recent-badge")?.remove();
+    const threadBadge = CampaignActivityService.recentBadge("storyThread", thread.id);
+    if (threadBadge && headline instanceof HTMLElement) headline.append(threadBadge);
     if (status instanceof HTMLSelectElement) status.value = thread.status ?? "ACTIVE";
     if (description instanceof HTMLElement) {
       description.innerHTML = RichText.sanitize(thread.description ?? "");
@@ -992,6 +1028,10 @@ export class CampaignWorkspace {
     const resources = view.querySelector("[data-faction-resources]");
     const reputation = view.querySelector("[data-faction-reputation]");
     if (name instanceof HTMLInputElement) name.value = faction.name ?? "";
+    const headline = view.querySelector(".nd-campaign-panel__headline");
+    headline?.querySelector(".nd-recent-badge")?.remove();
+    const factionBadge = CampaignActivityService.recentBadge("faction", faction.id);
+    if (factionBadge && headline instanceof HTMLElement) headline.append(factionBadge);
     if (icon instanceof HTMLInputElement) icon.value = faction.icon ?? "";
     if (iconPreview instanceof HTMLImageElement) {
       iconPreview.hidden = !faction.icon;
@@ -1104,6 +1144,7 @@ export class CampaignWorkspace {
   static #selectSection(root, section) {
     const allowed = new Set([
       "storyThreads",
+      "activity",
       "factions",
       "actors",
       "locations",
@@ -1120,6 +1161,8 @@ export class CampaignWorkspace {
       CampaignWorkspace.#storyThreadId =
         CampaignWorkspace.#lastSelections.get(section) ?? null;
       CampaignWorkspace.#openEntryId = null;
+    } else if (section === "activity") {
+      CampaignWorkspace.#view = "activity";
     } else if (section === "factions") {
       CampaignWorkspace.#view = "faction";
       CampaignWorkspace.#factionId = CampaignWorkspace.#lastSelections.get(section) ?? null;
@@ -1157,11 +1200,15 @@ export class CampaignWorkspace {
       button.setAttribute("aria-pressed", active ? "true" : "false");
     });
     const storyThreads = panel.querySelector("[data-campaign-nav-panel=\"storyThreads\"]");
+    const activity = panel.querySelector("[data-campaign-nav-panel=\"activity\"]");
     const factions = panel.querySelector("[data-campaign-nav-panel=\"factions\"]");
     const entities = panel.querySelector("[data-campaign-nav-panel=\"entities\"]");
     const chronicle = panel.querySelector("[data-campaign-nav-panel=\"chronicle\"]");
     if (storyThreads instanceof HTMLElement) {
       storyThreads.hidden = CampaignWorkspace.#section !== "storyThreads";
+    }
+    if (activity instanceof HTMLElement) {
+      activity.hidden = CampaignWorkspace.#section !== "activity";
     }
     if (factions instanceof HTMLElement) {
       factions.hidden = CampaignWorkspace.#section !== "factions";
@@ -1172,6 +1219,17 @@ export class CampaignWorkspace {
     if (chronicle instanceof HTMLElement) {
       chronicle.hidden = CampaignWorkspace.#section !== "chronicle";
     }
+  }
+
+  static #paintActivityList(panel) {
+    const container = panel.querySelector("[data-campaign-nav-panel=\"activity\"] [data-campaign-activity]");
+    if (!(container instanceof HTMLElement)) return;
+    container.dataset.activityFilter = CampaignWorkspace.#activityFilter;
+    CampaignActivityPanel.paint(container, {
+      filter: CampaignWorkspace.#activityFilter,
+      limit: Number(container.dataset.activityLimit) || 500,
+      showFilters: true
+    });
   }
 
   static #paintEntityList(panel) {
@@ -1224,7 +1282,13 @@ export class CampaignWorkspace {
       return;
     }
     const title = view.querySelector("[data-campaign-entity-title]");
-    if (title) title.textContent = entity.name;
+    if (title) {
+      title.replaceChildren();
+      title.append(document.createTextNode(entity.name));
+      const entityKind = entity.kind === "scene" ? "location" : entity.kind;
+      const badge = CampaignActivityService.recentBadge(entityKind, entity.uuid);
+      if (badge) title.append(badge);
+    }
     ContextPanel.paint(
       view.querySelector("[data-context-panel=\"entity\"]"),
       ContextEngine.getContext({ kind: entity.kind, id: entity.uuid })
@@ -1259,6 +1323,8 @@ export class CampaignWorkspace {
       const source = document.createElement("small");
       source.textContent = record.source === "imported" ? "Imported" : "Live";
       button.append(title, source);
+      const memoryBadge = CampaignActivityService.recentBadge("session", record.id);
+      if (memoryBadge) button.append(memoryBadge);
       list.append(button);
     }
   }
@@ -1308,6 +1374,8 @@ export class CampaignWorkspace {
     const title = document.createElement("strong");
     title.textContent = entry.title?.trim() || "Untitled Quest";
     summary.append(status, title);
+    const entryBadge = CampaignActivityService.recentBadge("questEntry", entry.id);
+    if (entryBadge) summary.append(entryBadge);
 
     const body = document.createElement("div");
     body.className = "nd-quest-entry__body";
@@ -1489,6 +1557,18 @@ export class CampaignWorkspace {
     const entityView = panel.querySelector("[data-campaign-entity-view]");
     const storyThreadView = panel.querySelector("[data-story-thread-view]");
     const factionView = panel.querySelector("[data-faction-view]");
+    if (CampaignWorkspace.#view === "activity") {
+      if (memoryView instanceof HTMLElement) memoryView.hidden = true;
+      if (entityView instanceof HTMLElement) entityView.hidden = true;
+      if (storyThreadView instanceof HTMLElement) storyThreadView.hidden = true;
+      if (factionView instanceof HTMLElement) factionView.hidden = true;
+      if (questEmpty instanceof HTMLElement) {
+        questEmpty.hidden = false;
+        questEmpty.textContent =
+          "Recent edits to campaign knowledge. Select an item to open it.";
+      }
+      return;
+    }
     if (memoryView instanceof HTMLElement) {
       memoryView.hidden = CampaignWorkspace.#view !== "memory" || !memory;
     }

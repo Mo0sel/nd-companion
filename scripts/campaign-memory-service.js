@@ -86,6 +86,13 @@ export class CampaignMemoryService {
       doc.sessions.push(session);
     });
 
+    const { CampaignActivityService } = await import("./campaign-activity-service.js");
+    CampaignActivityService.created(
+      "session",
+      session.id,
+      CampaignMemoryService.label(session)
+    );
+
     return { ok: true, session: foundry.utils.duplicate(session) };
   }
 
@@ -116,6 +123,15 @@ export class CampaignMemoryService {
       session.updated = Date.now();
       updated = foundry.utils.duplicate(session);
     });
+    if (updated) {
+      const { CampaignActivityService } = await import("./campaign-activity-service.js");
+      CampaignActivityService.edited(
+        "session",
+        id,
+        CampaignMemoryService.label(updated),
+        "Session Log"
+      );
+    }
     return updated;
   }
 

@@ -1,6 +1,7 @@
 const MODULE_ID = "nd-companion";
 const MEMORY_SETTING = "campaignMemory";
 const CAMPAIGN_SETTING = "campaign";
+const ACTIVITY_SETTING = "campaignActivity";
 
 /**
  * World-setting persistence for Companion live notes and campaign memory.
@@ -98,6 +99,14 @@ export class CompanionStorage {
         storyThreads: [],
         factions: []
       }
+    });
+
+    game.settings.register(MODULE_ID, ACTIVITY_SETTING, {
+      name: ACTIVITY_SETTING,
+      scope: "world",
+      config: false,
+      type: Object,
+      default: { events: [] }
     });
   }
 
@@ -240,7 +249,44 @@ export class CompanionStorage {
   static async setMemory(key, value) {
     const bag = foundry.utils.duplicate(game.settings.get(MODULE_ID, MEMORY_SETTING) ?? {});
     bag[key] = value ?? "";
-    return game.settings.set(MODULE_ID, MEMORY_SETTING, bag);
+    const result = await game.settings.set(MODULE_ID, MEMORY_SETTING, bag);
+    try {
+      const { CampaignActivityService } = await import("./campaign-activity-service.js");
+      CampaignActivityService.recordMemoryWrite(key, value ?? "");
+    } catch (error) {
+      console.error("N&D Companion: activity record failed", error);
+    }
+    return result;
+  }
+
+  /**
+   * @returns {import("./campaign-activity-service.js").CampaignActivityEvent[]}
+   */
+  static getActivityEvents() {
+    const doc = game.settings.get(MODULE_ID, ACTIVITY_SETTING);
+    if (!Array.isArray(doc?.events)) return [];
+    return doc.events
+      .filter((event) => event && typeof event.id === "string")
+      .map((event) => ({
+        id: event.id,
+        timestamp: Number(event.timestamp) || 0,
+        action: event.action === "created" || event.action === "deleted"
+          ? event.action
+          : "edited",
+        entityKind: String(event.entityKind ?? ""),
+        entityId: String(event.entityId ?? ""),
+        entityName: String(event.entityName ?? "Untitled"),
+        fieldName: typeof event.fieldName === "string" ? event.fieldName : null
+      }));
+  }
+
+  /**
+   * @param {import("./campaign-activity-service.js").CampaignActivityEvent[]} events
+   */
+  static async setActivityEvents(events) {
+    return game.settings.set(MODULE_ID, ACTIVITY_SETTING, {
+      events: foundry.utils.duplicate(Array.isArray(events) ? events : [])
+    });
   }
 
   /**

@@ -41,6 +41,12 @@ export class StoryThreadService {
     await CampaignDocument.update((doc) => {
       doc.storyThreads.push(thread);
     });
+    const { CampaignActivityService } = await import("./campaign-activity-service.js");
+    CampaignActivityService.created(
+      "storyThread",
+      thread.id,
+      thread.title?.trim() || "Untitled Story Thread"
+    );
     return foundry.utils.duplicate(thread);
   }
 
@@ -78,6 +84,21 @@ export class StoryThreadService {
       thread.updated = Date.now();
       updated = foundry.utils.duplicate(thread);
     });
+    if (updated) {
+      const { CampaignActivityService } = await import("./campaign-activity-service.js");
+      CampaignActivityService.edited(
+        "storyThread",
+        id,
+        updated.title,
+        CampaignActivityService.patchFieldLabel(patch, {
+          title: "Title",
+          description: "Description",
+          status: "Status",
+          currentState: "Current State",
+          openQuestions: "Open Questions"
+        })
+      );
+    }
     return updated;
   }
 
@@ -87,6 +108,7 @@ export class StoryThreadService {
    */
   static async delete(id) {
     if (!id) return false;
+    const existing = StoryThreadService.getById(id);
     let removed = false;
     let questIds = [];
     await CampaignDocument.update((doc) => {
@@ -120,6 +142,14 @@ export class StoryThreadService {
     });
     if (removed && questIds.length) {
       await PlaybookService.purgeSourceEntries(questIds);
+    }
+    if (removed && existing) {
+      const { CampaignActivityService } = await import("./campaign-activity-service.js");
+      CampaignActivityService.deleted(
+        "storyThread",
+        id,
+        existing.title?.trim() || "Untitled Story Thread"
+      );
     }
     return removed;
   }

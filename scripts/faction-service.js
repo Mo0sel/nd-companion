@@ -45,6 +45,12 @@ export class FactionService {
     await CampaignDocument.update((doc) => {
       doc.factions.push(faction);
     });
+    const { CampaignActivityService } = await import("./campaign-activity-service.js");
+    CampaignActivityService.created(
+      "faction",
+      faction.id,
+      faction.name?.trim() || "Untitled Faction"
+    );
     return foundry.utils.duplicate(faction);
   }
 
@@ -91,6 +97,23 @@ export class FactionService {
       faction.updated = Date.now();
       updated = foundry.utils.duplicate(faction);
     });
+    if (updated) {
+      const { CampaignActivityService } = await import("./campaign-activity-service.js");
+      CampaignActivityService.edited(
+        "faction",
+        id,
+        updated.name,
+        CampaignActivityService.patchFieldLabel(patch, {
+          name: "Name",
+          icon: "Icon",
+          description: "Description",
+          currentStatus: "Current Status",
+          resources: "Resources",
+          playerReputation: "Player Reputation",
+          currentObjectives: "Current Objectives"
+        })
+      );
+    }
     return updated;
   }
 }

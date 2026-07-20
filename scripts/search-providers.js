@@ -1,3 +1,4 @@
+import { CampaignActivityService } from "./campaign-activity-service.js";
 import { CampaignMemoryService } from "./campaign-memory-service.js";
 import { CampaignWorkspace } from "./campaign-workspace.js";
 import { EntityRegistry } from "./entity-registry.js";
@@ -15,6 +16,17 @@ const ENTITY_GROUPS = Object.freeze({
   journal: "JOURNAL",
   rollTable: "ROLL TABLE"
 });
+
+/**
+ * @param {string} entityKind
+ * @param {string} entityId
+ * @param {string} [fallback]
+ */
+function activitySubtitle(entityKind, entityId, fallback = "") {
+  const latest = CampaignActivityService.latestFor(entityKind, entityId);
+  if (!latest) return fallback;
+  return `${CampaignActivityService.actionLabel(latest.action)} ${CampaignActivityService.formatRelative(latest.timestamp)}`;
+}
 
 /**
  * Register current campaign domains with universal search.
@@ -82,8 +94,11 @@ export function registerSearchProviders() {
       QuestEntryService.list().map((entry) => ({
         id: entry.id,
         title: entry.title?.trim() || "Untitled Quest",
-        subtitle:
-          StoryThreadService.getById(entry.storyThreadId)?.title || "Quest",
+        subtitle: activitySubtitle(
+          "questEntry",
+          entry.id,
+          StoryThreadService.getById(entry.storyThreadId)?.title || "Quest"
+        ),
         group: "QUEST"
       })),
     getQuickAccess: () => {
@@ -110,7 +125,7 @@ export function registerSearchProviders() {
       StoryThreadService.list().map((thread) => ({
         id: thread.id,
         title: thread.title?.trim() || "Untitled Story Thread",
-        subtitle: thread.status,
+        subtitle: activitySubtitle("storyThread", thread.id, thread.status),
         group: "STORY THREAD"
       })),
     open: (id, context) => {
@@ -126,12 +141,33 @@ export function registerSearchProviders() {
       FactionService.list().map((faction) => ({
         id: faction.id,
         title: faction.name?.trim() || "Untitled Faction",
-        subtitle: faction.playerReputation,
+        subtitle: activitySubtitle("faction", faction.id, faction.playerReputation),
         group: "FACTION"
       })),
     open: (id, context) => {
       context.openFaction(id);
       return true;
+    }
+  });
+
+  SearchService.registerProvider({
+    id: "campaign-activity",
+    label: "Campaign Activity",
+    getItems: () =>
+      CampaignActivityService.list({ limit: 100 }).map((event) => ({
+        id: `${event.entityKind}:${event.entityId}:${event.id}`,
+        title: event.entityName,
+        subtitle: [
+          CampaignActivityService.entityTypeLabel(event.entityKind),
+          CampaignActivityService.actionLabel(event.action),
+          CampaignActivityService.formatRelative(event.timestamp)
+        ].join(" · "),
+        group: "ACTIVITY"
+      })),
+    open: (id, context) => {
+      const [kind, entityId] = String(id).split(":");
+      if (!kind || !entityId) return false;
+      return context.openActivityEntity?.({ kind, id: entityId }) ?? false;
     }
   });
 
@@ -143,7 +179,11 @@ export function registerSearchProviders() {
         EntityRegistry.all(kind).map((entity) => ({
           id: entity.uuid,
           title: entity.name,
-          subtitle: ENTITY_GROUPS[kind] ?? kind,
+          subtitle: activitySubtitle(
+            kind === "scene" ? "location" : kind,
+            entity.uuid,
+            ENTITY_GROUPS[kind] ?? kind
+          ),
           group: ENTITY_GROUPS[kind] ?? SearchProvidersLabel.fromKind(kind)
         }))
       ),

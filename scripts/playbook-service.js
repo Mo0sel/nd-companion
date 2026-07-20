@@ -612,6 +612,7 @@ export class PlaybookService {
    * @param {Record<string, unknown>} patch
    */
   static async #updateSourceEntry(id, patch) {
+    let updated = null;
     await CampaignDocument.update((doc) => {
       const entry = doc.storyEntries.find((item) => item.id === id);
       if (!entry) return;
@@ -637,7 +638,26 @@ export class PlaybookService {
         )];
       }
       entry.updated = Date.now();
+      updated = foundry.utils.duplicate(entry);
     });
+    if (updated) {
+      const { CampaignActivityService } = await import("./campaign-activity-service.js");
+      CampaignActivityService.edited(
+        "questEntry",
+        id,
+        updated.title,
+        CampaignActivityService.patchFieldLabel(patch, {
+          title: "Title",
+          objective: "Objective",
+          notes: "Notes",
+          reward: "Reward",
+          speechNotes: "Speech Notes",
+          setup: "Setup",
+          twist: "Twist",
+          possibleOutcomes: "Possible Outcomes"
+        })
+      );
+    }
   }
 
   /**

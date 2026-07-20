@@ -70,6 +70,8 @@ export class QuestEntryService {
       if (!doc.storyThreads.some((thread) => thread.id === storyThreadId)) return;
       doc.storyEntries.push(entry);
     });
+    const { CampaignActivityService } = await import("./campaign-activity-service.js");
+    CampaignActivityService.created("questEntry", entry.id, entry.title);
     return foundry.utils.duplicate(entry);
   }
 
@@ -114,6 +116,26 @@ export class QuestEntryService {
       entry.updated = Date.now();
       updated = foundry.utils.duplicate(entry);
     });
+    if (updated) {
+      const { CampaignActivityService } = await import("./campaign-activity-service.js");
+      CampaignActivityService.edited(
+        "questEntry",
+        id,
+        updated.title,
+        CampaignActivityService.patchFieldLabel(patch, {
+          title: "Title",
+          status: "Status",
+          category: "Category",
+          speechNotes: "Speech Notes",
+          objective: "Objective",
+          setup: "Setup",
+          twist: "Twist",
+          possibleOutcomes: "Possible Outcomes",
+          reward: "Reward",
+          notes: "Notes"
+        })
+      );
+    }
     return updated;
   }
 
@@ -124,6 +146,7 @@ export class QuestEntryService {
    */
   static async delete(id) {
     if (!id) return false;
+    const existing = QuestEntryService.getById(id);
     let removed = false;
     await CampaignDocument.update((doc) => {
       const index = doc.storyEntries.findIndex((entry) => entry.id === id);
@@ -142,6 +165,10 @@ export class QuestEntryService {
       removed = true;
     });
     if (removed) await PlaybookService.purgeSourceEntry(id);
+    if (removed && existing) {
+      const { CampaignActivityService } = await import("./campaign-activity-service.js");
+      CampaignActivityService.deleted("questEntry", id, existing.title);
+    }
     return removed;
   }
 }

@@ -1,3 +1,4 @@
+import { CampaignActivityPanel } from "./campaign-activity-panel.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { FactionService } from "./faction-service.js";
 import { LiveNotes } from "./live-notes.js";
@@ -213,6 +214,16 @@ export class Playbook {
     Playbook.#paintSessionNpcs(root, snapshot);
     Playbook.#paintStoryThreads(root);
     Playbook.#paintFactions(root);
+    Playbook.#paintActivity(root);
+  }
+
+  static #paintActivity(root) {
+    const container = root.querySelector("[data-play-activity] [data-campaign-activity]");
+    if (!(container instanceof HTMLElement)) return;
+    CampaignActivityPanel.paint(container, {
+      limit: Number(container.dataset.activityLimit) || 10,
+      compact: true
+    });
   }
 
   static #paintStoryThreads(root) {
@@ -634,6 +645,14 @@ export class Playbook {
         if (faction) {
           const id = faction.getAttribute("data-play-faction-id");
           if (id) void Promise.resolve(options.onOpenFaction?.(id));
+          return;
+        }
+
+        const activityOpen = target.closest("[data-activity-open]");
+        if (activityOpen) {
+          const kind = activityOpen.getAttribute("data-activity-entity-kind");
+          const id = activityOpen.getAttribute("data-activity-entity-id");
+          if (kind && id) void Promise.resolve(options.onOpenActivity?.({ kind, id }));
           return;
         }
 

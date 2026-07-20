@@ -140,6 +140,17 @@
           <div class="nd-play-factions__list" data-play-faction-list></div>
         </details>
 
+        <details class="nd-play-activity" data-play-activity open>
+          <summary>
+            <span class="nd-play-card__label">Recent Campaign Changes</span>
+          </summary>
+          <div
+            data-campaign-activity
+            data-activity-compact
+            data-activity-limit="10"
+          ></div>
+        </details>
+
         {{!-- Scene Flow group --}}
         <h3 class="nd-play-section-title nd-play-section-title--scene-flow">Scene Flow</h3>
         <div class="nd-play-entry-grid nd-play-entry-grid--scene-flow">
@@ -315,6 +326,7 @@
             <span class="nd-campaign-autosave" data-campaign-autosave-status hidden></span>
             <nav class="nd-campaign-nav" aria-label="Campaign sections">
               <button type="button" class="is-active" data-campaign-section="storyThreads">Story Threads</button>
+              <button type="button" data-campaign-section="activity">Activity</button>
               <button type="button" data-campaign-section="chronicle">Chronicle</button>
               <div class="nd-campaign-nav__divider" aria-hidden="true"></div>
               <button type="button" data-campaign-section="actors">Actors</button>
@@ -343,6 +355,21 @@
                 </div>
                 <div data-faction-list></div>
               </div>
+            </div>
+
+            <div
+              class="nd-quest-sidebar__section nd-quest-sidebar__section--activity"
+              data-campaign-nav-panel="activity"
+              hidden
+            >
+              <div class="nd-quest-sidebar__heading">
+                <span>Activity</span>
+              </div>
+              <div
+                data-campaign-activity
+                data-activity-show-filters
+                data-activity-limit="500"
+              ></div>
             </div>
 
             <div data-campaign-nav-panel="entities" hidden>
