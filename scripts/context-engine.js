@@ -1,13 +1,14 @@
 import { CampaignDocument } from "./campaign-document.js";
 import { CampaignMemoryService } from "./campaign-memory-service.js";
-import { EntityLinkService } from "./entity-link-service.js";
 import { EntityRegistry } from "./entity-registry.js";
+import { RelationshipService } from "./relationship-service.js";
 import { RichText } from "./rich-text.js";
 import { CompanionStorage } from "./storage.js";
 
 /**
  * Read-only contextual projection of the existing campaign relationship graph.
- * The graph is rebuilt once per CampaignDocument revision, never per click.
+ * Document revisions trigger a full rebuild. Relationship store changes update
+ * only the affected edge when the document index is already current.
  */
 export class ContextEngine {
   /** @type {number} */
@@ -33,6 +34,34 @@ export class ContextEngine {
 
   /** @type {Map<string, object>} */
   static #factions = new Map();
+
+  /**
+   * Incrementally add/remove one undirected edge without rebuilding the graph.
+   * Falls back to ensuring a fresh index when the document revision is stale.
+   * @param {{ kind: string, id: string }} left
+   * @param {{ kind: string, id: string }} right
+   * @param {boolean} connect
+   */
+  static applyEdge(left, right, connect) {
+    if (!left?.kind || !left?.id || !right?.kind || !right?.id) return;
+    if (left.kind === right.kind && left.id === right.id) return;
+
+    if (ContextEngine.#revision !== CampaignDocument.revision) {
+      ContextEngine.#ensureIndex();
+      return;
+    }
+
+    ContextEngine.#linksRevision = RelationshipService.revision();
+    if (connect) {
+      ContextEngine.#connectGroup([left, right]);
+      return;
+    }
+
+    const a = ContextEngine.#key(left.kind, left.id);
+    const b = ContextEngine.#key(right.kind, right.id);
+    ContextEngine.#adjacency.get(a)?.delete(b);
+    ContextEngine.#adjacency.get(b)?.delete(a);
+  }
 
   /**
    * @param {object} entity Actor, Quest, Location, Item, or Chronicle Session
@@ -112,11 +141,30 @@ export class ContextEngine {
   }
 
   static #ensureIndex() {
-    const linksRevision = CompanionStorage.getEntityLinksRevision();
+    const linksRevision = RelationshipService.revision();
     if (
       ContextEngine.#revision === CampaignDocument.revision &&
       ContextEngine.#linksRevision === linksRevision
     ) {
+      return;
+    }
+
+    const docRevisionChanged = ContextEngine.#revision !== CampaignDocument.revision;
+    const linksOnly =
+      !docRevisionChanged &&
+      ContextEngine.#revision >= 0 &&
+      ContextEngine.#linksRevision !== linksRevision;
+
+    if (linksOnly) {
+      // Document graph is current — only re-apply relationship edges.
+      ContextEngine.#stripRelationshipEdges();
+      for (const rel of RelationshipService.list()) {
+        ContextEngine.#connectGroup([
+          { kind: rel.sourceType, id: rel.sourceId },
+          { kind: rel.targetType, id: rel.targetId }
+        ]);
+      }
+      ContextEngine.#linksRevision = linksRevision;
       return;
     }
 
@@ -215,15 +263,95 @@ export class ContextEngine {
       ]);
     }
 
-    for (const link of EntityLinkService.list()) {
+    for (const rel of RelationshipService.list()) {
       ContextEngine.#connectGroup([
-        { kind: link.aKind, id: link.aId },
-        { kind: link.bKind, id: link.bId }
+        { kind: rel.sourceType, id: rel.sourceId },
+        { kind: rel.targetType, id: rel.targetId }
       ]);
     }
 
     ContextEngine.#revision = CampaignDocument.revision;
     ContextEngine.#linksRevision = linksRevision;
+  }
+
+  /**
+   * Remove edges that exist only in the relationship store before re-applying.
+   * Document-derived edges are preserved by rebuilding from documents on full index.
+   * For links-only refresh we rebuild adjacency from documents + relationships —
+   * cheaper than a full entity map rebuild, still O(edges).
+   */
+  static #stripRelationshipEdges() {
+    // Rebuild adjacency from document maps already in memory, then caller
+    // re-adds relationship edges.
+    ContextEngine.#adjacency = new Map();
+    for (const session of ContextEngine.#sessions.values()) {
+      const sessionEntryIds = session.relatedQuestEntries ?? [];
+      const owningStoryThreadIds = sessionEntryIds
+        .map((id) => ContextEngine.#entries.get(id)?.storyThreadId)
+        .filter(Boolean);
+      ContextEngine.#connectGroup([
+        { kind: "session", id: session.id },
+        ...(session.relatedActors ?? []).map((id) => ({ kind: "actor", id })),
+        ...(session.relatedLocations ?? []).map((id) => ({ kind: "location", id })),
+        ...(session.relatedItems ?? []).map((id) => ({ kind: "item", id })),
+        ...(session.relatedQuests ?? []).map((id) => ({ kind: "quest", id })),
+        ...owningStoryThreadIds.map((id) => ({ kind: "storyThread", id })),
+        ...sessionEntryIds.map((id) => ({ kind: "questEntry", id }))
+      ]);
+    }
+    for (const quest of ContextEngine.#quests.values()) {
+      ContextEngine.#connectGroup([
+        { kind: "quest", id: quest.id },
+        ...(quest.relatedBeatIds ?? [])
+          .filter((id) => ContextEngine.#entries.has(id))
+          .map((id) => ({ kind: "questEntry", id })),
+        ...(quest.relatedCharacterIds ?? []).map((id) => ({ kind: "actor", id })),
+        ...(quest.relatedLocationIds ?? []).map((id) => ({ kind: "location", id })),
+        ...(quest.relatedItemIds ?? []).map((id) => ({ kind: "item", id }))
+      ]);
+    }
+    for (const entry of ContextEngine.#entries.values()) {
+      ContextEngine.#connectGroup([
+        { kind: "questEntry", id: entry.id },
+        ...(entry.storyThreadId
+          ? [{ kind: "storyThread", id: entry.storyThreadId }]
+          : []),
+        ...(entry.relatedBeatIds ?? [])
+          .filter((id) => ContextEngine.#entries.has(id))
+          .map((id) => ({ kind: "questEntry", id })),
+        ...(entry.relatedCharacterIds ?? []).map((id) => ({ kind: "actor", id })),
+        ...(entry.relatedLocationIds ?? []).map((id) => ({ kind: "location", id })),
+        ...(entry.relatedItemIds ?? []).map((id) => ({ kind: "item", id }))
+      ]);
+    }
+    for (const thread of ContextEngine.#storyThreads.values()) {
+      ContextEngine.#connectGroup([
+        { kind: "storyThread", id: thread.id },
+        ...(thread.relatedSessionIds ?? []).map((id) => ({ kind: "session", id })),
+        ...(thread.relatedActorIds ?? []).map((id) => ({ kind: "actor", id })),
+        ...(thread.relatedLocationIds ?? []).map((id) => ({ kind: "location", id })),
+        ...(thread.relatedItemIds ?? []).map((id) => ({ kind: "item", id })),
+        ...(thread.relatedQuestIds ?? []).map((id) => ({ kind: "quest", id }))
+      ]);
+    }
+    for (const faction of ContextEngine.#factions.values()) {
+      const actors = [
+        ...(faction.leadershipActorIds ?? []),
+        ...(faction.relatedActorIds ?? [])
+      ];
+      ContextEngine.#connectGroup([
+        { kind: "faction", id: faction.id },
+        ...(faction.relatedFactionIds ?? []).map((id) => ({ kind: "faction", id })),
+        ...(faction.relatedStoryThreadIds ?? []).map(
+          (id) => ({ kind: "storyThread", id })
+        ),
+        ...(faction.relatedSessionIds ?? []).map((id) => ({ kind: "session", id })),
+        ...actors.map((id) => ({ kind: "actor", id })),
+        ...(faction.relatedLocationIds ?? []).map((id) => ({ kind: "location", id })),
+        ...(faction.relatedItemIds ?? []).map((id) => ({ kind: "item", id })),
+        ...(faction.relatedQuestIds ?? []).map((id) => ({ kind: "quest", id }))
+      ]);
+    }
   }
 
   /**

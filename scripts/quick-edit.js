@@ -6,6 +6,7 @@ import {
 import { CompanionStorage } from "./storage.js";
 import { ContextEngine } from "./context-engine.js";
 import { EntityLinkService } from "./entity-link-service.js";
+import { RelationshipService } from "./relationship-service.js";
 import { FactionService } from "./faction-service.js";
 import { LiveNotes } from "./live-notes.js";
 import { PlaybookService } from "./playbook-service.js";
@@ -140,8 +141,8 @@ export class QuickEdit {
   }
 
   /**
-   * Persist a relationship onto the owning entity (or the reverse side),
-   * falling back to the companion link store for Foundry↔Foundry pairs.
+   * Persist a relationship as a first-class graph edge (single store).
+   * Mirrors onto document related* fields when available for export/mentions.
    * Never throws — returns false on failure.
    * @param {{ kind: string, id: string }} owner
    * @param {{ kind: string, id: string }} related
@@ -155,17 +156,20 @@ export class QuickEdit {
       if (!left || !right) return false;
       if (left.kind === right.kind && left.id === right.id) return false;
 
+      const relationship = await RelationshipService.connect(left, right);
+      if (!relationship && !RelationshipService.has(left, right)) return false;
+
+      // Best-effort document mirror (does not create a second graph edge).
       const direct = QuickEdit.#relationshipPatch(left.kind, right);
       if (direct) {
-        const ok = await QuickEdit.#applyRelationshipPatch(left.kind, left.id, direct);
-        if (ok) return true;
+        await QuickEdit.#applyRelationshipPatch(left.kind, left.id, direct);
+      } else {
+        const reverse = QuickEdit.#relationshipPatch(right.kind, left);
+        if (reverse) {
+          await QuickEdit.#applyRelationshipPatch(right.kind, right.id, reverse);
+        }
       }
-      const reverse = QuickEdit.#relationshipPatch(right.kind, left);
-      if (reverse) {
-        const ok = await QuickEdit.#applyRelationshipPatch(right.kind, right.id, reverse);
-        if (ok) return true;
-      }
-      return EntityLinkService.add(left, right);
+      return true;
     } catch (error) {
       console.error("N&D Companion: addRelationship failed", error);
       return false;
@@ -181,6 +185,7 @@ export class QuickEdit {
       const left = QuickEdit.#normalizeRef(owner);
       const right = QuickEdit.#normalizeRef(related);
       if (!left || !right) return false;
+      if (RelationshipService.has(left, right)) return true;
       return Boolean(
         QuickEdit.#relationshipField(left.kind, right.kind) ||
         QuickEdit.#relationshipField(right.kind, left.kind) ||
@@ -204,17 +209,17 @@ export class QuickEdit {
       const right = QuickEdit.#normalizeRef(related);
       if (!left || !right) return false;
 
+      let removed = await RelationshipService.disconnect(left, right);
+
       const directField = QuickEdit.#relationshipField(left.kind, right.kind);
       if (directField) {
-        const ok = await QuickEdit.#removeFromField(left.kind, left.id, directField, right.id);
-        if (ok) return true;
+        removed = (await QuickEdit.#removeFromField(left.kind, left.id, directField, right.id)) || removed;
       }
       const reverseField = QuickEdit.#relationshipField(right.kind, left.kind);
       if (reverseField) {
-        const ok = await QuickEdit.#removeFromField(right.kind, right.id, reverseField, left.id);
-        if (ok) return true;
+        removed = (await QuickEdit.#removeFromField(right.kind, right.id, reverseField, left.id)) || removed;
       }
-      return EntityLinkService.remove(left, right);
+      return removed;
     } catch (error) {
       console.error("N&D Companion: removeRelationship failed", error);
       return false;

@@ -5,6 +5,13 @@
  * Do not delete this file until a dedicated cleanup pass after visual approval of all workspaces.
  */
 
+/* Window shell — never restore an unusable collapsed size (Sprint 40) */
+#nd-companion-app.application,
+.nd-companion.application {
+  min-width: 720px;
+  min-height: 520px;
+}
+
 /* Companion Memory */
 .nd-companion-memory__empty {
   margin: 0;

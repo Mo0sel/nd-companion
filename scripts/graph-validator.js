@@ -1,10 +1,10 @@
 import { CampaignDocument } from "./campaign-document.js";
 import { CampaignMemoryService } from "./campaign-memory-service.js";
 import { CompanionStorage } from "./storage.js";
-import { EntityLinkService } from "./entity-link-service.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { FactionService } from "./faction-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
+import { RelationshipService } from "./relationship-service.js";
 import { StoryThreadService } from "./story-thread-service.js";
 
 /**
@@ -33,20 +33,34 @@ export class GraphValidator {
   /**
    * @returns {Promise<{
    *   ok: boolean,
-   *   orphans: Array<{ ownerKind: string, ownerId: string, field?: string, kind: string, id: string, source: string }>,
-   *   removed: number
+   *   orphans: Array<object>,
+   *   removed: number,
+   *   duplicatesRemoved: number
    * }>}
    */
   static async validate({ purge = false } = {}) {
+    let duplicatesRemoved = 0;
+    try {
+      const sanitized = await RelationshipService.sanitize();
+      duplicatesRemoved = sanitized.removed;
+    } catch (error) {
+      console.error("N&D Companion: relationship sanitize failed", error);
+    }
+
     const orphans = GraphValidator.#collectOrphans();
     let removed = 0;
     if (purge && orphans.length) {
-      removed = await GraphValidator.#purge(orphans);
+      try {
+        removed = await GraphValidator.#purge(orphans);
+      } catch (error) {
+        console.error("N&D Companion: relationship purge failed", error);
+      }
     }
     return {
-      ok: orphans.length === 0,
+      ok: orphans.length === 0 && duplicatesRemoved === 0,
       orphans,
-      removed
+      removed,
+      duplicatesRemoved
     };
   }
 
@@ -102,7 +116,7 @@ export class GraphValidator {
       }
     });
 
-    await EntityLinkService.purgeEntity({ kind, id });
+    await RelationshipService.purgeEntity({ kind, id });
   }
 
   static #collectOrphans() {
@@ -209,23 +223,35 @@ export class GraphValidator {
       }
     }
 
-    for (const link of EntityLinkService.list()) {
-      if (!GraphValidator.#exists(link.aKind, link.aId)) {
+    for (const rel of RelationshipService.list()) {
+      if (!GraphValidator.#exists(rel.sourceType, rel.sourceId)) {
         orphans.push({
-          ownerKind: link.bKind,
-          ownerId: link.bId,
-          kind: link.aKind,
-          id: link.aId,
-          source: "link"
+          ownerKind: rel.targetType,
+          ownerId: rel.targetId,
+          kind: rel.sourceType,
+          id: rel.sourceId,
+          source: "relationship",
+          relationshipId: rel.id
         });
       }
-      if (!GraphValidator.#exists(link.bKind, link.bId)) {
+      if (!GraphValidator.#exists(rel.targetType, rel.targetId)) {
         orphans.push({
-          ownerKind: link.aKind,
-          ownerId: link.aId,
-          kind: link.bKind,
-          id: link.bId,
-          source: "link"
+          ownerKind: rel.sourceType,
+          ownerId: rel.sourceId,
+          kind: rel.targetType,
+          id: rel.targetId,
+          source: "relationship",
+          relationshipId: rel.id
+        });
+      }
+      if (rel.sourceType === rel.targetType && rel.sourceId === rel.targetId) {
+        orphans.push({
+          ownerKind: rel.sourceType,
+          ownerId: rel.sourceId,
+          kind: rel.targetType,
+          id: rel.targetId,
+          source: "relationship-self",
+          relationshipId: rel.id
         });
       }
     }
@@ -297,17 +323,28 @@ export class GraphValidator {
       }
     });
 
-    if (orphans.some((entry) => entry.source === "link")) {
-      const links = EntityLinkService.list();
-      const next = links.filter((link) => {
+    const relationshipOrphans = orphans.filter(
+      (entry) => entry.source === "relationship" || entry.source === "relationship-self"
+    );
+    if (relationshipOrphans.length) {
+      const dropIds = new Set(
+        relationshipOrphans.map((entry) => entry.relationshipId).filter(Boolean)
+      );
+      const relationships = RelationshipService.list();
+      const next = relationships.filter((rel) => {
+        if (dropIds.has(rel.id)) {
+          removed += 1;
+          return false;
+        }
         const keep =
-          GraphValidator.#exists(link.aKind, link.aId) &&
-          GraphValidator.#exists(link.bKind, link.bId);
+          GraphValidator.#exists(rel.sourceType, rel.sourceId) &&
+          GraphValidator.#exists(rel.targetType, rel.targetId) &&
+          !(rel.sourceType === rel.targetType && rel.sourceId === rel.targetId);
         if (!keep) removed += 1;
         return keep;
       });
-      if (next.length !== links.length) {
-        await CompanionStorage.setEntityLinks(next);
+      if (next.length !== relationships.length) {
+        await CompanionStorage.setRelationships(next);
       }
     }
 

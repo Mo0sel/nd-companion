@@ -115,7 +115,15 @@ export class CompanionStorage {
       scope: "world",
       config: false,
       type: Object,
-      default: { links: [], revision: 0 }
+      default: { relationships: [], links: [], revision: 0, schema: 1 }
+    });
+
+    game.settings.register(MODULE_ID, "companionWindowLayout", {
+      name: "Companion Window Layout",
+      scope: "client",
+      config: false,
+      type: Object,
+      default: {}
     });
   }
 
@@ -299,9 +307,47 @@ export class CompanionStorage {
   }
 
   /**
+   * @typedef {object} CampaignRelationship
+   * @property {string} id
+   * @property {string} sourceId
+   * @property {string} targetId
+   * @property {string} sourceType
+   * @property {string} targetType
+   * @property {string} relationshipType
+   * @property {number} createdAt
+   * @property {number} updatedAt
+   */
+
+  /**
+   * Raw relationship rows (may include legacy link shapes).
+   * @returns {object[]}
+   */
+  static getRelationshipsRaw() {
+    const doc = game.settings.get(MODULE_ID, LINKS_SETTING);
+    if (Array.isArray(doc?.relationships)) return doc.relationships;
+    if (Array.isArray(doc?.links)) return doc.links;
+    return [];
+  }
+
+  /**
+   * @returns {CampaignRelationship[]}
+   */
+  static getRelationships() {
+    return CompanionStorage.getRelationshipsRaw()
+      .map((row) => CompanionStorage.#normalizeRelationship(row))
+      .filter(Boolean);
+  }
+
+  /** @returns {number} */
+  static getRelationshipsRevision() {
+    return Number(game.settings.get(MODULE_ID, LINKS_SETTING)?.revision) || 0;
+  }
+
+  /**
+   * Legacy undirected link rows still present before migration.
    * @returns {{ aKind: string, aId: string, bKind: string, bId: string }[]}
    */
-  static getEntityLinks() {
+  static getLegacyEntityLinks() {
     const doc = game.settings.get(MODULE_ID, LINKS_SETTING);
     if (!Array.isArray(doc?.links)) return [];
     return doc.links
@@ -314,20 +360,115 @@ export class CompanionStorage {
       }));
   }
 
+  /**
+   * @returns {{ aKind: string, aId: string, bKind: string, bId: string }[]}
+   * @deprecated Prefer RelationshipService.list()
+   */
+  static getEntityLinks() {
+    return CompanionStorage.getRelationships().map((rel) => ({
+      aKind: rel.sourceType,
+      aId: rel.sourceId,
+      bKind: rel.targetType,
+      bId: rel.targetId
+    }));
+  }
+
   /** @returns {number} */
   static getEntityLinksRevision() {
-    return Number(game.settings.get(MODULE_ID, LINKS_SETTING)?.revision) || 0;
+    return CompanionStorage.getRelationshipsRevision();
+  }
+
+  /**
+   * @param {CampaignRelationship[]} relationships
+   */
+  static async setRelationships(relationships) {
+    const revision = CompanionStorage.getRelationshipsRevision() + 1;
+    return game.settings.set(MODULE_ID, LINKS_SETTING, {
+      relationships: foundry.utils.duplicate(
+        Array.isArray(relationships) ? relationships : []
+      ),
+      links: [],
+      revision,
+      schema: 1
+    });
   }
 
   /**
    * @param {{ aKind: string, aId: string, bKind: string, bId: string }[]} links
+   * @deprecated Prefer RelationshipService / setRelationships
    */
   static async setEntityLinks(links) {
-    const revision = CompanionStorage.getEntityLinksRevision() + 1;
-    return game.settings.set(MODULE_ID, LINKS_SETTING, {
-      links: foundry.utils.duplicate(Array.isArray(links) ? links : []),
-      revision
-    });
+    const now = Date.now();
+    const relationships = (Array.isArray(links) ? links : [])
+      .filter((link) => link?.aKind && link?.aId && link?.bKind && link?.bId)
+      .map((link) => ({
+        id: foundry.utils.randomID(),
+        sourceId: String(link.aId),
+        targetId: String(link.bId),
+        sourceType: String(link.aKind),
+        targetType: String(link.bKind),
+        relationshipType: "Related",
+        createdAt: now,
+        updatedAt: now
+      }));
+    return CompanionStorage.setRelationships(relationships);
+  }
+
+  /**
+   * @param {unknown} row
+   * @returns {CampaignRelationship|null}
+   */
+  static #normalizeRelationship(row) {
+    if (!row || typeof row !== "object") return null;
+    if (row.aKind && row.aId && row.bKind && row.bId && !row.sourceId) {
+      const now = Date.now();
+      return {
+        id: String(row.id || foundry.utils.randomID()),
+        sourceId: String(row.aId),
+        targetId: String(row.bId),
+        sourceType: String(row.aKind) === "scene" ? "location" : String(row.aKind),
+        targetType: String(row.bKind) === "scene" ? "location" : String(row.bKind),
+        relationshipType: "Related",
+        createdAt: Number(row.createdAt) || now,
+        updatedAt: Number(row.updatedAt) || now
+      };
+    }
+    const sourceId = String(row.sourceId ?? "").trim();
+    const targetId = String(row.targetId ?? "").trim();
+    const sourceType = String(row.sourceType ?? "").trim();
+    const targetType = String(row.targetType ?? "").trim();
+    if (!sourceId || !targetId || !sourceType || !targetType) return null;
+    const now = Date.now();
+    return {
+      id: String(row.id || foundry.utils.randomID()),
+      sourceId,
+      targetId,
+      sourceType: sourceType === "scene" ? "location" : sourceType,
+      targetType: targetType === "scene" ? "location" : targetType,
+      relationshipType: String(row.relationshipType || "Related"),
+      createdAt: Number(row.createdAt) || now,
+      updatedAt: Number(row.updatedAt) || now
+    };
+  }
+
+  /**
+   * Client-persisted Companion window size/position (only after user adjusts).
+   * @returns {{ width?: number, height?: number, left?: number, top?: number, adjusted?: boolean }}
+   */
+  static getWindowLayout() {
+    const value = game.settings.get(MODULE_ID, "companionWindowLayout");
+    return value && typeof value === "object" ? foundry.utils.duplicate(value) : {};
+  }
+
+  /**
+   * @param {{ width?: number, height?: number, left?: number, top?: number, adjusted?: boolean }|null} layout
+   */
+  static async setWindowLayout(layout) {
+    return game.settings.set(
+      MODULE_ID,
+      "companionWindowLayout",
+      layout && typeof layout === "object" ? foundry.utils.duplicate(layout) : {}
+    );
   }
 
   /**
@@ -371,7 +512,8 @@ export class CompanionStorage {
       playbook: CompanionStorage.getPlaybook(),
       campaignMemory: foundry.utils.duplicate(
         game.settings.get(MODULE_ID, MEMORY_SETTING) ?? {}
-      )
+      ),
+      relationships: CompanionStorage.getRelationships()
     };
   }
 

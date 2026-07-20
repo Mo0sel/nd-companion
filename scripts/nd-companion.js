@@ -10,6 +10,7 @@ import { GraphValidator } from "./graph-validator.js";
 import { Navigation } from "./navigation.js";
 import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
+import { RelationshipService } from "./relationship-service.js";
 import { SessionService } from "./session-service.js";
 import { StoryThreadService } from "./story-thread-service.js";
 import { registerSearchProviders } from "./search-providers.js";
@@ -32,6 +33,12 @@ Hooks.once("ready", async () => {
   await CampaignDocument.ready();
   await PlaybookService.alignStoryEntrySources();
   await SessionService.ready();
+  try {
+    await RelationshipService.migrateFromLegacy();
+    await RelationshipService.sanitize();
+  } catch (error) {
+    console.error("N&D Companion: relationship migration failed", error);
+  }
   registerSearchProviders();
   window.nd ??= {};
   window.nd.EntityRegistry = EntityRegistry;
@@ -47,6 +54,7 @@ Hooks.once("ready", async () => {
   window.nd.ContextEngine = ContextEngine;
   window.nd.SearchService = SearchService;
   window.nd.GraphValidator = GraphValidator;
+  window.nd.RelationshipService = RelationshipService;
   CampaignAwareness.registerHooks();
   FocusManager.registerHooks();
   GraphValidator.registerDeleteHooks();

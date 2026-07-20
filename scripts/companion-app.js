@@ -24,12 +24,20 @@ const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 const WORKSPACES = new Set(["play", "campaign", "notes"]);
 
+const WINDOW_DEFAULT_WIDTH = 1100;
+const WINDOW_DEFAULT_HEIGHT = 780;
+const WINDOW_MIN_WIDTH = 720;
+const WINDOW_MIN_HEIGHT = 520;
+
 /**
  * The N&D Companion window.
  */
 export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
   /** @type {"play"|"campaign"|"notes"} */
   workspace = "play";
+
+  /** @type {boolean} */
+  #persistLayout = false;
 
   static DEFAULT_OPTIONS = {
     id: "nd-companion-app",
@@ -41,15 +49,16 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       resizable: true
     },
     position: {
-      width: 960,
-      height: 720
+      width: WINDOW_DEFAULT_WIDTH,
+      height: WINDOW_DEFAULT_HEIGHT
     },
     actions: {
       setWorkspace: CompanionApp.#onSetWorkspace,
       exportCampaign: CompanionApp.#onExportCampaign,
       importCampaign: CompanionApp.#onImportCampaign,
       openActivityDrawer: CompanionApp.#onOpenActivityDrawer,
-      closeActivityDrawer: CompanionApp.#onCloseActivityDrawer
+      closeActivityDrawer: CompanionApp.#onCloseActivityDrawer,
+      resetWindowLayout: CompanionApp.#onResetWindowLayout
     }
   };
 
@@ -58,6 +67,111 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       template: "modules/nd-companion/templates/companion.hbs"
     }
   };
+
+  /**
+   * Apply a usable default or previously user-adjusted layout.
+   * @param {object} options
+   */
+  _initializeApplicationOptions(options) {
+    const configured = super._initializeApplicationOptions(options);
+    const layout = CompanionApp.#resolvedLayout();
+    configured.position = {
+      ...(configured.position ?? {}),
+      width: layout.width,
+      height: layout.height,
+      left: layout.left,
+      top: layout.top
+    };
+    return configured;
+  }
+
+  /**
+   * Enforce minimum dimensions so the shell never collapses.
+   * @param {import("foundry/applications/_types.mjs").ApplicationPosition} position
+   */
+  _updatePosition(position) {
+    const next = super._updatePosition(position);
+    const width = Number(next.width);
+    const height = Number(next.height);
+    next.width = Number.isFinite(width)
+      ? Math.max(WINDOW_MIN_WIDTH, width)
+      : WINDOW_DEFAULT_WIDTH;
+    next.height = Number.isFinite(height)
+      ? Math.max(WINDOW_MIN_HEIGHT, height)
+      : WINDOW_DEFAULT_HEIGHT;
+    return next;
+  }
+
+  /**
+   * Persist size/position only after the user manually moves or resizes.
+   * @param {import("foundry/applications/_types.mjs").ApplicationPosition} position
+   */
+  _onPosition(position) {
+    super._onPosition(position);
+    if (!this.#persistLayout) return;
+    if (!this.window?.pointerStartPosition) return;
+    const width = Number(position.width);
+    const height = Number(position.height);
+    if (
+      !Number.isFinite(width) ||
+      !Number.isFinite(height) ||
+      width < WINDOW_MIN_WIDTH ||
+      height < WINDOW_MIN_HEIGHT
+    ) {
+      return;
+    }
+    void CompanionStorage.setWindowLayout({
+      width,
+      height,
+      left: Number(position.left),
+      top: Number(position.top),
+      adjusted: true
+    });
+  }
+
+  /** @param {ApplicationRenderContext} context @param {ApplicationRenderOptions} options */
+  async _onFirstRender(context, options) {
+    await super._onFirstRender(context, options);
+    this.setPosition(CompanionApp.#resolvedLayout());
+    this.#persistLayout = true;
+  }
+
+  /**
+   * @returns {{ width: number, height: number, left?: number, top?: number }}
+   */
+  static #resolvedLayout() {
+    const saved = CompanionStorage.getWindowLayout();
+    const width = Number(saved.width);
+    const height = Number(saved.height);
+    const usable =
+      saved.adjusted === true &&
+      Number.isFinite(width) &&
+      Number.isFinite(height) &&
+      width >= WINDOW_MIN_WIDTH &&
+      height >= WINDOW_MIN_HEIGHT;
+
+    if (!usable) return CompanionApp.#centeredDefaults();
+
+    const layout = { width, height };
+    const left = Number(saved.left);
+    const top = Number(saved.top);
+    if (Number.isFinite(left)) layout.left = left;
+    if (Number.isFinite(top)) layout.top = top;
+    return layout;
+  }
+
+  static #centeredDefaults() {
+    const width = WINDOW_DEFAULT_WIDTH;
+    const height = WINDOW_DEFAULT_HEIGHT;
+    const viewW = window.innerWidth || width;
+    const viewH = window.innerHeight || height;
+    return {
+      width,
+      height,
+      left: Math.max(0, Math.round((viewW - width) / 2)),
+      top: Math.max(0, Math.round((viewH - height) / 2))
+    };
+  }
 
   /**
    * Switch the lower workspace region. Safe to call from actions or future hotkeys.
@@ -106,6 +220,22 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const root = this.element;
     if (!(root instanceof HTMLElement)) return;
     CompanionApp.#paintActivityDrawer(root, false);
+  }
+
+  /**
+   * Clear saved window dimensions and restore the centered default layout.
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} _target
+   */
+  static async #onResetWindowLayout(_event, _target) {
+    const settings = this.element?.querySelector?.(".nd-companion-settings");
+    if (settings instanceof HTMLDetailsElement) settings.open = false;
+    await CompanionStorage.setWindowLayout({});
+    this.#persistLayout = false;
+    const layout = CompanionApp.#centeredDefaults();
+    this.setPosition(layout);
+    this.#persistLayout = true;
+    ui.notifications?.info("Companion window layout reset.");
   }
 
   /**

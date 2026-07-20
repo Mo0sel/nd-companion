@@ -178,7 +178,7 @@
   top: calc(100% + 7px);
   right: 0;
   z-index: 30;
-  width: 210px;
+  width: 220px;
   padding: var(--nd-space-2);
   background: var(--nd-surface);
   border: 1px solid var(--nd-border);
