@@ -7,7 +7,7 @@
 
 .nd-campaign {
   --nd-quest-main: var(--nd-blue);
-  --nd-quest-side: #a78bfa;
+  --nd-quest-side: var(--nd-entity-story-thread-color);
   --nd-quest-companion: #22c55e;
   position: relative;
   padding: 0;
@@ -230,15 +230,17 @@
 
 .nd-explorer-thread {
   position: relative;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .nd-explorer-thread__header {
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr) auto 22px;
+  grid-template-columns: 18px 6px minmax(0, 1fr) auto 22px;
   align-items: center;
-  gap: 3px;
-  min-height: 30px;
+  gap: 4px;
+  min-height: 32px;
+  padding-left: 2px;
+  border-radius: var(--nd-radius-md);
 }
 
 .nd-explorer-thread__toggle,
@@ -266,7 +268,8 @@
 
 .nd-explorer-thread__name {
   overflow: hidden;
-  padding: 5px 3px;
+  padding: 5px 4px;
+  color: var(--nd-text-1);
   font-size: var(--nd-text-caption);
   font-weight: var(--nd-weight-semibold);
   text-align: left;
@@ -277,7 +280,7 @@
 .nd-explorer-thread__name:hover,
 .nd-explorer-thread__name.is-active {
   color: var(--nd-text-1);
-  background: rgba(91, 142, 255, 0.08);
+  background: var(--nd-entity-story-thread-bg);
 }
 
 .nd-explorer-thread__header > .nd-campaign-status {
@@ -348,42 +351,51 @@
 }
 
 .nd-explorer-thread__children {
-  margin-left: 8px;
-  padding-left: 9px;
-  border-left: 1px solid var(--nd-border);
+  margin: 2px 0 6px 14px;
+  padding-left: 14px;
+  border-left: 2px solid color-mix(in srgb, var(--nd-entity-quest-color) 40%, transparent);
 }
 
 .nd-explorer-thread__empty {
-  padding: 5px 7px;
+  padding: 6px 8px;
   color: var(--nd-text-3);
   font-size: var(--nd-text-micro);
 }
 
 .nd-explorer-quest {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 20px 20px;
+  grid-template-columns: 6px minmax(0, 1fr) auto auto 20px 20px;
   align-items: center;
   gap: 4px;
   min-height: 28px;
-  border-radius: var(--nd-radius-sm);
+  margin: 1px 0;
+  padding-right: 2px;
+  border-radius: var(--nd-radius-md);
 }
 
 .nd-explorer-quest:hover,
 .nd-explorer-quest.is-active {
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .nd-explorer-quest.is-active {
-  outline: 1px solid rgba(91, 142, 255, 0.2);
+  background: var(--nd-entity-quest-bg);
+  outline: 1px solid var(--nd-entity-quest-border);
 }
 
 .nd-explorer-quest__name {
   overflow: hidden;
   padding: 5px 4px;
+  color: var(--nd-text-2);
   font-size: var(--nd-text-caption);
+  font-weight: var(--nd-weight-medium);
   text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.nd-explorer-quest.is-active .nd-explorer-quest__name {
+  color: var(--nd-text-1);
 }
 
 .nd-explorer-quest__state {

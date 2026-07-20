@@ -82,6 +82,7 @@ export class CampaignActivityPanel {
 
     const type = document.createElement("span");
     type.className = "nd-activity-row__type";
+    type.dataset.entityKind = event.entityKind;
     type.textContent = CampaignActivityService.entityTypeLabel(event.entityKind);
 
     const name = document.createElement("strong");

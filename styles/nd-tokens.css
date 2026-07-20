@@ -77,21 +77,70 @@
   --nd-status-skipped-bg: rgba(245, 158, 11, 0.1);
   --nd-status-skipped-border: rgba(245, 158, 11, 0.25);
 
-  /* ── Color: entity chips ───────────────────────────────────────────────── */
-  --nd-actor-color: #5b8eff;
-  --nd-actor-bg: rgba(91, 142, 255, 0.08);
-  --nd-actor-border: rgba(91, 142, 255, 0.2);
-  --nd-scene-color: #f97316;
-  --nd-scene-bg: rgba(249, 115, 22, 0.08);
-  --nd-scene-border: rgba(249, 115, 22, 0.2);
-  --nd-journal-color: #a78bfa;
-  --nd-journal-bg: rgba(167, 139, 250, 0.08);
-  --nd-journal-border: rgba(167, 139, 250, 0.2);
-  --nd-rolltable-color: #22c55e;
-  --nd-rolltable-bg: rgba(34, 197, 94, 0.08);
-  --nd-rolltable-border: rgba(34, 197, 94, 0.2);
+  /* ── Color: entity semantics (single source for chips, explorer, search) ─ */
+  --nd-entity-story-thread-color: #7dd3fc;
+  --nd-entity-story-thread-bg: rgba(125, 211, 252, 0.12);
+  --nd-entity-story-thread-border: rgba(125, 211, 252, 0.3);
 
-  /* ── Spacing: 4 / 8 pt grid ────────────────────────────────────────────── */
+  --nd-entity-quest-color: #fbbf24;
+  --nd-entity-quest-bg: rgba(251, 191, 36, 0.12);
+  --nd-entity-quest-border: rgba(251, 191, 36, 0.3);
+
+  --nd-entity-actor-color: #5b8eff;
+  --nd-entity-actor-bg: rgba(91, 142, 255, 0.1);
+  --nd-entity-actor-border: rgba(91, 142, 255, 0.28);
+
+  --nd-entity-faction-color: #fb7185;
+  --nd-entity-faction-bg: rgba(251, 113, 133, 0.12);
+  --nd-entity-faction-border: rgba(251, 113, 133, 0.3);
+
+  --nd-entity-location-color: #34d399;
+  --nd-entity-location-bg: rgba(52, 211, 153, 0.1);
+  --nd-entity-location-border: rgba(52, 211, 153, 0.28);
+
+  --nd-entity-item-color: #60a5fa;
+  --nd-entity-item-bg: rgba(96, 165, 250, 0.1);
+  --nd-entity-item-border: rgba(96, 165, 250, 0.28);
+
+  --nd-entity-chronicle-color: #c4b5fd;
+  --nd-entity-chronicle-bg: rgba(196, 181, 253, 0.12);
+  --nd-entity-chronicle-border: rgba(196, 181, 253, 0.3);
+
+  --nd-entity-memory-color: #c4b5fd;
+  --nd-entity-memory-bg: rgba(196, 181, 253, 0.12);
+  --nd-entity-memory-border: rgba(196, 181, 253, 0.3);
+
+  --nd-entity-scene-color: #f97316;
+  --nd-entity-scene-bg: rgba(249, 115, 22, 0.1);
+  --nd-entity-scene-border: rgba(249, 115, 22, 0.28);
+
+  --nd-entity-journal-color: #a78bfa;
+  --nd-entity-journal-bg: rgba(167, 139, 250, 0.1);
+  --nd-entity-journal-border: rgba(167, 139, 250, 0.28);
+
+  --nd-entity-rolltable-color: #22c55e;
+  --nd-entity-rolltable-bg: rgba(34, 197, 94, 0.1);
+  --nd-entity-rolltable-border: rgba(34, 197, 94, 0.28);
+
+  --nd-entity-activity-color: #a0a0b0;
+  --nd-entity-activity-bg: rgba(160, 160, 176, 0.1);
+  --nd-entity-activity-border: rgba(160, 160, 176, 0.25);
+
+  /* Legacy chip aliases → entity tokens */
+  --nd-actor-color: var(--nd-entity-actor-color);
+  --nd-actor-bg: var(--nd-entity-actor-bg);
+  --nd-actor-border: var(--nd-entity-actor-border);
+  --nd-scene-color: var(--nd-entity-scene-color);
+  --nd-scene-bg: var(--nd-entity-scene-bg);
+  --nd-scene-border: var(--nd-entity-scene-border);
+  --nd-journal-color: var(--nd-entity-journal-color);
+  --nd-journal-bg: var(--nd-entity-journal-bg);
+  --nd-journal-border: var(--nd-entity-journal-border);
+  --nd-rolltable-color: var(--nd-entity-rolltable-color);
+  --nd-rolltable-bg: var(--nd-entity-rolltable-bg);
+  --nd-rolltable-border: var(--nd-entity-rolltable-border);
+
+  /* ── Spacing: 4px base grid ────────────────────────────────────────────── */
   --nd-space-1: 4px;
   --nd-space-2: 8px;
   --nd-space-3: 12px;
@@ -102,10 +151,10 @@
   --nd-space-7: 28px;
   --nd-space-8: 32px;
 
-  /* ── Border radius ─────────────────────────────────────────────────────── */
-  --nd-radius-sm: 6px;
-  --nd-radius-md: 7px;
-  --nd-radius-lg: 9px;
+  /* ── Border radius (shared component sizing) ───────────────────────────── */
+  --nd-radius-sm: 4px;
+  --nd-radius-md: 6px;
+  --nd-radius-lg: 8px;
   --nd-radius-xl: 10px;
   --nd-radius-2xl: 12px;
   --nd-radius-full: 9999px;

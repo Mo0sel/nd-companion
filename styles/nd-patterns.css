@@ -1,0 +1,390 @@
+/**
+ * N&D Companion — Reusable visual patterns (Sprint 39)
+ * Typography, entity markers, cards, lists, chips, timelines.
+ * Prefer these over one-off styles so new screens inherit the language.
+ */
+
+/* ── Typography scale ─────────────────────────────────────────────────────── */
+
+.nd-type-display {
+  margin: 0;
+  color: var(--nd-text-1);
+  font-size: var(--nd-text-display);
+  font-weight: var(--nd-weight-bold);
+  line-height: var(--nd-leading-tight);
+}
+
+.nd-type-h1 {
+  margin: 0;
+  color: var(--nd-text-1);
+  font-size: var(--nd-text-h1);
+  font-weight: var(--nd-weight-bold);
+  line-height: var(--nd-leading-tight);
+}
+
+.nd-type-h2 {
+  margin: 0;
+  color: var(--nd-text-1);
+  font-size: var(--nd-text-h2);
+  font-weight: var(--nd-weight-semibold);
+  line-height: var(--nd-leading-snug);
+}
+
+.nd-type-h3 {
+  margin: 0;
+  color: var(--nd-text-1);
+  font-size: var(--nd-text-h3);
+  font-weight: var(--nd-weight-semibold);
+  line-height: var(--nd-leading-snug);
+}
+
+.nd-type-section {
+  margin: 0;
+  color: var(--nd-text-3);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-bold);
+  letter-spacing: var(--nd-tracking-label);
+  text-transform: uppercase;
+}
+
+.nd-type-body {
+  margin: 0;
+  color: var(--nd-text-2);
+  font-size: var(--nd-text-body);
+  line-height: var(--nd-leading-normal);
+}
+
+.nd-type-body-sm {
+  margin: 0;
+  color: var(--nd-text-2);
+  font-size: var(--nd-text-body-sm);
+  line-height: var(--nd-leading-snug);
+}
+
+.nd-type-caption {
+  margin: 0;
+  color: var(--nd-text-3);
+  font-size: var(--nd-text-caption);
+  line-height: var(--nd-leading-snug);
+}
+
+.nd-type-meta {
+  margin: 0;
+  color: var(--nd-text-3);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  line-height: var(--nd-leading-tight);
+}
+
+/* ── Entity color helpers ─────────────────────────────────────────────────── */
+
+.nd-entity-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--nd-text-3);
+}
+
+.nd-entity-badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--nd-radius-full);
+  font-family: var(--nd-font-mono);
+  font-size: 9px;
+  font-weight: var(--nd-weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--nd-text-3);
+  background: var(--nd-surface-inset);
+  border-color: var(--nd-border);
+}
+
+.nd-entity-dot[data-entity-kind="storyThread"],
+.nd-entity-badge[data-entity-kind="storyThread"],
+.nd-rel-type[data-rel-type="storyThread"],
+.nd-activity-row__type[data-entity-kind="storyThread"],
+.nd-relationship-nav__kind[data-entity-kind="storyThread"],
+[data-entity-kind="storyThread"].nd-entity-tint {
+  --nd-entity-current: var(--nd-entity-story-thread-color);
+  --nd-entity-current-bg: var(--nd-entity-story-thread-bg);
+  --nd-entity-current-border: var(--nd-entity-story-thread-border);
+}
+
+.nd-entity-dot[data-entity-kind="quest"],
+.nd-entity-dot[data-entity-kind="questEntry"],
+.nd-entity-badge[data-entity-kind="quest"],
+.nd-entity-badge[data-entity-kind="questEntry"],
+.nd-rel-type[data-rel-type="quest"],
+.nd-activity-row__type[data-entity-kind="quest"],
+.nd-activity-row__type[data-entity-kind="questEntry"],
+.nd-relationship-nav__kind[data-entity-kind="quest"],
+.nd-relationship-nav__kind[data-entity-kind="questEntry"],
+[data-entity-kind="quest"].nd-entity-tint,
+[data-entity-kind="questEntry"].nd-entity-tint {
+  --nd-entity-current: var(--nd-entity-quest-color);
+  --nd-entity-current-bg: var(--nd-entity-quest-bg);
+  --nd-entity-current-border: var(--nd-entity-quest-border);
+}
+
+.nd-entity-dot[data-entity-kind="actor"],
+.nd-entity-badge[data-entity-kind="actor"],
+.nd-rel-type[data-rel-type="actor"],
+.nd-activity-row__type[data-entity-kind="actor"],
+.nd-relationship-nav__kind[data-entity-kind="actor"],
+[data-entity-kind="actor"].nd-entity-tint {
+  --nd-entity-current: var(--nd-entity-actor-color);
+  --nd-entity-current-bg: var(--nd-entity-actor-bg);
+  --nd-entity-current-border: var(--nd-entity-actor-border);
+}
+
+.nd-entity-dot[data-entity-kind="faction"],
+.nd-entity-badge[data-entity-kind="faction"],
+.nd-rel-type[data-rel-type="faction"],
+.nd-activity-row__type[data-entity-kind="faction"],
+.nd-relationship-nav__kind[data-entity-kind="faction"],
+[data-entity-kind="faction"].nd-entity-tint {
+  --nd-entity-current: var(--nd-entity-faction-color);
+  --nd-entity-current-bg: var(--nd-entity-faction-bg);
+  --nd-entity-current-border: var(--nd-entity-faction-border);
+}
+
+.nd-entity-dot[data-entity-kind="location"],
+.nd-entity-badge[data-entity-kind="location"],
+.nd-rel-type[data-rel-type="location"],
+.nd-activity-row__type[data-entity-kind="location"],
+.nd-relationship-nav__kind[data-entity-kind="location"],
+[data-entity-kind="location"].nd-entity-tint {
+  --nd-entity-current: var(--nd-entity-location-color);
+  --nd-entity-current-bg: var(--nd-entity-location-bg);
+  --nd-entity-current-border: var(--nd-entity-location-border);
+}
+
+.nd-entity-dot[data-entity-kind="item"],
+.nd-entity-badge[data-entity-kind="item"],
+.nd-rel-type[data-rel-type="item"],
+.nd-activity-row__type[data-entity-kind="item"],
+.nd-relationship-nav__kind[data-entity-kind="item"],
+[data-entity-kind="item"].nd-entity-tint {
+  --nd-entity-current: var(--nd-entity-item-color);
+  --nd-entity-current-bg: var(--nd-entity-item-bg);
+  --nd-entity-current-border: var(--nd-entity-item-border);
+}
+
+.nd-entity-dot[data-entity-kind="chronicle"],
+.nd-entity-dot[data-entity-kind="memory"],
+.nd-entity-badge[data-entity-kind="chronicle"],
+.nd-entity-badge[data-entity-kind="memory"],
+.nd-rel-type[data-rel-type="chronicle"],
+.nd-activity-row__type[data-entity-kind="chronicle"],
+.nd-activity-row__type[data-entity-kind="memory"],
+.nd-relationship-nav__kind[data-entity-kind="chronicle"],
+.nd-relationship-nav__kind[data-entity-kind="memory"],
+[data-entity-kind="chronicle"].nd-entity-tint,
+[data-entity-kind="memory"].nd-entity-tint {
+  --nd-entity-current: var(--nd-entity-chronicle-color);
+  --nd-entity-current-bg: var(--nd-entity-chronicle-bg);
+  --nd-entity-current-border: var(--nd-entity-chronicle-border);
+}
+
+.nd-entity-dot[data-entity-kind="journal"],
+.nd-entity-badge[data-entity-kind="journal"] {
+  --nd-entity-current: var(--nd-entity-journal-color);
+  --nd-entity-current-bg: var(--nd-entity-journal-bg);
+  --nd-entity-current-border: var(--nd-entity-journal-border);
+}
+
+.nd-entity-dot[data-entity-kind="rollTable"],
+.nd-entity-badge[data-entity-kind="rollTable"] {
+  --nd-entity-current: var(--nd-entity-rolltable-color);
+  --nd-entity-current-bg: var(--nd-entity-rolltable-bg);
+  --nd-entity-current-border: var(--nd-entity-rolltable-border);
+}
+
+.nd-entity-dot[data-entity-kind="activity"],
+.nd-entity-badge[data-entity-kind="activity"] {
+  --nd-entity-current: var(--nd-entity-activity-color);
+  --nd-entity-current-bg: var(--nd-entity-activity-bg);
+  --nd-entity-current-border: var(--nd-entity-activity-border);
+}
+
+.nd-entity-dot[data-entity-kind] {
+  background: var(--nd-entity-current, var(--nd-text-3));
+}
+
+.nd-entity-badge[data-entity-kind] {
+  color: var(--nd-entity-current, var(--nd-text-3));
+  background: var(--nd-entity-current-bg, var(--nd-surface-inset));
+  border-color: var(--nd-entity-current-border, var(--nd-border));
+}
+
+/* Scene Foundry docs keep orange when explicitly marked scene (not location) */
+.nd-entity-dot[data-entity-kind="scene"],
+.nd-entity-badge[data-entity-kind="scene"] {
+  --nd-entity-current: var(--nd-entity-scene-color);
+  --nd-entity-current-bg: var(--nd-entity-scene-bg);
+  --nd-entity-current-border: var(--nd-entity-scene-border);
+}
+
+/* ── Card / list / chip patterns ──────────────────────────────────────────── */
+
+.nd-card {
+  margin: 0;
+  padding: var(--nd-card-pad);
+  color: var(--nd-text-2);
+  background: var(--nd-surface);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-lg);
+}
+
+.nd-card--scan {
+  display: grid;
+  gap: var(--nd-space-2);
+  padding: var(--nd-space-3);
+}
+
+.nd-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nd-list-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--nd-space-2);
+  min-height: var(--nd-control-h);
+  padding: var(--nd-space-1) var(--nd-space-2);
+  border-radius: var(--nd-radius-md);
+}
+
+.nd-list-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.nd-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 1px 7px;
+  color: var(--nd-text-2);
+  background: var(--nd-surface-2);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-full);
+  font-size: var(--nd-text-micro);
+  line-height: 1.4;
+}
+
+.nd-chip[data-entity-kind] {
+  color: var(--nd-entity-current, var(--nd-text-2));
+  background: var(--nd-entity-current-bg, var(--nd-surface-2));
+  border-color: var(--nd-entity-current-border, var(--nd-border));
+}
+
+.nd-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nd-space-1);
+}
+
+.nd-editor-block {
+  display: grid;
+  gap: var(--nd-space-2);
+  padding: var(--nd-space-3);
+  background: var(--nd-surface-2);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-lg);
+}
+
+/* ── Activity drawer (Settings) ───────────────────────────────────────────── */
+
+.nd-activity-drawer {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.nd-activity-drawer[hidden] {
+  display: none !important;
+}
+
+.nd-activity-drawer__backdrop {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+
+.nd-activity-drawer__panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: min(380px, 92%);
+  height: 100%;
+  background: var(--nd-surface);
+  border-left: 1px solid var(--nd-border);
+  box-shadow: var(--nd-shadow-lg);
+}
+
+.nd-activity-drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nd-space-2);
+  flex-shrink: 0;
+  padding: var(--nd-space-3) var(--nd-space-4);
+  border-bottom: 1px solid var(--nd-border);
+}
+
+.nd-activity-drawer__head h2 {
+  margin: 0;
+  color: var(--nd-text-1);
+  font-size: var(--nd-text-h3);
+  font-weight: var(--nd-weight-semibold);
+}
+
+.nd-activity-drawer__close {
+  display: grid;
+  place-items: center;
+  width: var(--nd-control-h);
+  height: var(--nd-control-h);
+  margin: 0;
+  padding: 0;
+  color: var(--nd-text-3);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--nd-radius-md);
+  box-shadow: none;
+  font: inherit;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.nd-activity-drawer__close:hover {
+  color: var(--nd-text-1);
+  background: var(--nd-surface-2);
+  border-color: var(--nd-border);
+}
+
+.nd-activity-drawer__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--nd-space-3) var(--nd-space-4);
+}

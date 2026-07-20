@@ -1,5 +1,4 @@
 import { CampaignMemoryService } from "./campaign-memory-service.js";
-import { CampaignActivityPanel } from "./campaign-activity-panel.js";
 import { ContextEngine } from "./context-engine.js";
 import { ContextPanel } from "./context-panel.js";
 import { EntityMentions } from "./entity-mentions.js";
@@ -31,14 +30,11 @@ const ENTRY_FIELDS = Object.freeze([
  * Quests are Story-Thread-owned playable content presented in one Explorer.
  */
 export class CampaignWorkspace {
-  /** @type {"storyThread"|"faction"|"memory"|"entity"|"activity"} */
+  /** @type {"storyThread"|"faction"|"memory"|"entity"} */
   static #view = "storyThread";
 
-  /** @type {"storyThreads"|"factions"|"actors"|"locations"|"items"|"chronicle"|"activity"} */
+  /** @type {"storyThreads"|"factions"|"actors"|"locations"|"items"|"chronicle"} */
   static #section = "storyThreads";
-
-  /** @type {"all"|"created"|"edited"|"deleted"} */
-  static #activityFilter = "all";
 
   /** @type {string|null} */
   static #memoryId = null;
@@ -321,7 +317,6 @@ export class CampaignWorkspace {
     CampaignWorkspace.#paintStoryThreadList(panel);
     CampaignWorkspace.#paintFactionList(panel);
     CampaignWorkspace.#paintMemoryList(panel);
-    CampaignWorkspace.#paintActivityList(panel);
     CampaignWorkspace.#paintCampaignNavigation(panel);
     CampaignWorkspace.#paintEntityList(panel);
 
@@ -373,7 +368,7 @@ export class CampaignWorkspace {
 
   /**
    * @param {HTMLElement} root
-   * @param {{ onOpenBeat?: (index: number) => Promise<void>|void, onOpenActivity?: (target: { kind: string, id: string }) => Promise<void>|void }} [options]
+   * @param {{ onOpenBeat?: (index: number) => Promise<void>|void }} [options]
    */
   static attach(root, options = {}) {
     if (!(root instanceof HTMLElement)) return;
@@ -407,24 +402,6 @@ export class CampaignWorkspace {
         if (sectionButton) {
           const section = sectionButton.getAttribute("data-campaign-section");
           CampaignWorkspace.#selectSection(root, section);
-          return;
-        }
-
-        const activityFilter = target.closest("[data-activity-filter]");
-        if (activityFilter instanceof HTMLButtonElement) {
-          const next = activityFilter.getAttribute("data-activity-filter");
-          if (next === "all" || next === "created" || next === "edited" || next === "deleted") {
-            CampaignWorkspace.#activityFilter = next;
-          }
-          CampaignWorkspace.paint(root);
-          return;
-        }
-
-        const activityOpen = target.closest("[data-activity-open]");
-        if (activityOpen && options.onOpenActivity) {
-          const kind = activityOpen.getAttribute("data-activity-entity-kind");
-          const id = activityOpen.getAttribute("data-activity-entity-id");
-          if (kind && id) void options.onOpenActivity({ kind, id });
           return;
         }
 
@@ -774,10 +751,16 @@ export class CampaignWorkspace {
       toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
       toggle.textContent = expanded ? "▼" : "▶";
 
+      const threadDot = document.createElement("span");
+      threadDot.className = "nd-entity-dot";
+      threadDot.dataset.entityKind = "storyThread";
+      threadDot.setAttribute("aria-hidden", "true");
+
       const button = document.createElement("button");
       button.type = "button";
       button.className = "nd-explorer-thread__name";
       button.dataset.storyThreadNavId = thread.id;
+      button.dataset.entityKind = "storyThread";
       button.classList.toggle(
         "is-active",
         CampaignWorkspace.#view === "storyThread" &&
@@ -808,7 +791,7 @@ export class CampaignWorkspace {
       menuContent.append(removeThread);
       menu.append(menuToggle, menuContent);
 
-      header.append(toggle, button, status, menu);
+      header.append(toggle, threadDot, button, status, menu);
       QuickEdit.mount(header, {
         kind: "storyThread",
         id: thread.id,
@@ -845,8 +828,14 @@ export class CampaignWorkspace {
   static #explorerQuestRow(entry, { loaded, live }) {
     const row = document.createElement("div");
     row.className = "nd-explorer-quest";
+    row.dataset.entityKind = "quest";
     row.classList.toggle("is-active", entry.id === CampaignWorkspace.#openEntryId);
     row.classList.toggle("is-live", live);
+
+    const questDot = document.createElement("span");
+    questDot.className = "nd-entity-dot";
+    questDot.dataset.entityKind = "quest";
+    questDot.setAttribute("aria-hidden", "true");
 
     const open = document.createElement("button");
     open.type = "button";
@@ -891,7 +880,7 @@ export class CampaignWorkspace {
     remove.setAttribute("aria-label", "Delete Quest");
     remove.textContent = "×";
 
-    row.append(open, status, state, playAction, remove);
+    row.append(questDot, open, status, state, playAction, remove);
     QuickEdit.mount(row, {
       kind: "questEntry",
       id: entry.id,
@@ -1021,6 +1010,11 @@ export class CampaignWorkspace {
           faction.id === CampaignWorkspace.#factionId
       );
 
+      const dot = document.createElement("span");
+      dot.className = "nd-entity-dot";
+      dot.dataset.entityKind = "faction";
+      dot.setAttribute("aria-hidden", "true");
+
       const button = document.createElement("button");
       button.type = "button";
       button.className = "nd-faction-nav-row__name";
@@ -1032,7 +1026,7 @@ export class CampaignWorkspace {
         id: faction.id,
         field: "reputation"
       });
-      row.append(button, reputation);
+      row.append(dot, button, reputation);
       QuickEdit.mount(row, {
         kind: "faction",
         id: faction.id,
@@ -1175,7 +1169,6 @@ export class CampaignWorkspace {
   static #selectSection(root, section) {
     const allowed = new Set([
       "storyThreads",
-      "activity",
       "factions",
       "actors",
       "locations",
@@ -1192,8 +1185,6 @@ export class CampaignWorkspace {
       CampaignWorkspace.#storyThreadId =
         CampaignWorkspace.#lastSelections.get(section) ?? null;
       CampaignWorkspace.#openEntryId = null;
-    } else if (section === "activity") {
-      CampaignWorkspace.#view = "activity";
     } else if (section === "factions") {
       CampaignWorkspace.#view = "faction";
       CampaignWorkspace.#factionId = CampaignWorkspace.#lastSelections.get(section) ?? null;
@@ -1231,15 +1222,11 @@ export class CampaignWorkspace {
       button.setAttribute("aria-pressed", active ? "true" : "false");
     });
     const storyThreads = panel.querySelector("[data-campaign-nav-panel=\"storyThreads\"]");
-    const activity = panel.querySelector("[data-campaign-nav-panel=\"activity\"]");
     const factions = panel.querySelector("[data-campaign-nav-panel=\"factions\"]");
     const entities = panel.querySelector("[data-campaign-nav-panel=\"entities\"]");
     const chronicle = panel.querySelector("[data-campaign-nav-panel=\"chronicle\"]");
     if (storyThreads instanceof HTMLElement) {
       storyThreads.hidden = CampaignWorkspace.#section !== "storyThreads";
-    }
-    if (activity instanceof HTMLElement) {
-      activity.hidden = CampaignWorkspace.#section !== "activity";
     }
     if (factions instanceof HTMLElement) {
       factions.hidden = CampaignWorkspace.#section !== "factions";
@@ -1250,17 +1237,6 @@ export class CampaignWorkspace {
     if (chronicle instanceof HTMLElement) {
       chronicle.hidden = CampaignWorkspace.#section !== "chronicle";
     }
-  }
-
-  static #paintActivityList(panel) {
-    const container = panel.querySelector("[data-campaign-nav-panel=\"activity\"] [data-campaign-activity]");
-    if (!(container instanceof HTMLElement)) return;
-    container.dataset.activityFilter = CampaignWorkspace.#activityFilter;
-    CampaignActivityPanel.paint(container, {
-      filter: CampaignWorkspace.#activityFilter,
-      limit: Number(container.dataset.activityLimit) || 500,
-      showFilters: true
-    });
   }
 
   static #paintEntityList(panel) {
@@ -1286,14 +1262,19 @@ export class CampaignWorkspace {
         row.className = "nd-quest-sidebar__quest nd-entity-nav-row";
         row.classList.toggle("is-active", entity.uuid === CampaignWorkspace.#entityId);
 
+        const entityKind = entity.kind === "scene" ? "location" : entity.kind;
+        const dot = document.createElement("span");
+        dot.className = "nd-entity-dot";
+        dot.dataset.entityKind = entityKind;
+        dot.setAttribute("aria-hidden", "true");
+
         const button = document.createElement("button");
         button.type = "button";
         button.className = "nd-entity-nav-row__name";
         button.dataset.campaignEntityId = entity.uuid;
         button.textContent = entity.name;
 
-        const entityKind = entity.kind === "scene" ? "location" : entity.kind;
-        row.append(button);
+        row.append(dot, button);
         QuickEdit.mount(row, {
           kind: entityKind,
           id: entity.uuid,
@@ -1648,18 +1629,6 @@ export class CampaignWorkspace {
     const entityView = panel.querySelector("[data-campaign-entity-view]");
     const storyThreadView = panel.querySelector("[data-story-thread-view]");
     const factionView = panel.querySelector("[data-faction-view]");
-    if (CampaignWorkspace.#view === "activity") {
-      if (memoryView instanceof HTMLElement) memoryView.hidden = true;
-      if (entityView instanceof HTMLElement) entityView.hidden = true;
-      if (storyThreadView instanceof HTMLElement) storyThreadView.hidden = true;
-      if (factionView instanceof HTMLElement) factionView.hidden = true;
-      if (questEmpty instanceof HTMLElement) {
-        questEmpty.hidden = false;
-        questEmpty.textContent =
-          "Recent edits to campaign knowledge. Select an item to open it.";
-      }
-      return;
-    }
     if (memoryView instanceof HTMLElement) {
       memoryView.hidden = CampaignWorkspace.#view !== "memory" || !memory;
     }

@@ -38,6 +38,9 @@
       <summary aria-label="Companion Settings" title="Companion Settings">⚙</summary>
       <div class="nd-companion-settings__menu" role="menu" aria-label="Companion Settings">
         <div class="nd-companion-settings__heading">Companion Settings</div>
+        <button type="button" data-action="openActivityDrawer" role="menuitem">
+          Campaign Activity
+        </button>
         <button type="button" data-action="exportCampaign" role="menuitem">
           Export Campaign
         </button>
@@ -307,7 +310,6 @@
             <span class="nd-campaign-autosave" data-campaign-autosave-status hidden></span>
             <nav class="nd-campaign-nav" aria-label="Campaign sections">
               <button type="button" class="is-active" data-campaign-section="storyThreads">Story Threads</button>
-              <button type="button" data-campaign-section="activity">Activity</button>
               <button type="button" data-campaign-section="chronicle">Chronicle</button>
               <div class="nd-campaign-nav__divider" aria-hidden="true"></div>
               <button type="button" data-campaign-section="actors">Actors</button>
@@ -336,21 +338,6 @@
                 </div>
                 <div data-faction-list></div>
               </div>
-            </div>
-
-            <div
-              class="nd-quest-sidebar__section nd-quest-sidebar__section--activity"
-              data-campaign-nav-panel="activity"
-              hidden
-            >
-              <div class="nd-quest-sidebar__heading">
-                <span>Activity</span>
-              </div>
-              <div
-                data-campaign-activity
-                data-activity-show-filters
-                data-activity-limit="500"
-              ></div>
             </div>
 
             <div data-campaign-nav-panel="entities" hidden>
@@ -934,6 +921,33 @@
       </article>
     </template>
 
+  </div>
+
+  <div class="nd-activity-drawer" data-activity-drawer hidden>
+    <button
+      type="button"
+      class="nd-activity-drawer__backdrop"
+      data-action="closeActivityDrawer"
+      aria-label="Close Campaign Activity"
+    ></button>
+    <aside class="nd-activity-drawer__panel" aria-label="Campaign Activity">
+      <header class="nd-activity-drawer__head">
+        <h2 class="nd-type-h3">Campaign Activity</h2>
+        <button
+          type="button"
+          class="nd-activity-drawer__close"
+          data-action="closeActivityDrawer"
+          aria-label="Close"
+        >×</button>
+      </header>
+      <div class="nd-activity-drawer__body">
+        <div
+          data-campaign-activity
+          data-activity-show-filters
+          data-activity-limit="500"
+        ></div>
+      </div>
+    </aside>
   </div>
 
 </div>

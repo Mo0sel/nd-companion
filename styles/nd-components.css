@@ -935,7 +935,7 @@ button.nd-relationship-nav__crumb:hover {
 }
 
 .nd-relationship-nav__kind {
-  color: var(--nd-text-3);
+  color: var(--nd-entity-current, var(--nd-text-3));
   font-family: var(--nd-font-mono);
   font-size: 8px;
   font-weight: var(--nd-weight-bold);
@@ -1058,13 +1058,18 @@ button.nd-relationship-nav__crumb:hover {
   background: var(--nd-text-3);
 }
 
-.nd-rel-dot[data-rel-type="storyThread"] { background: #7dd3fc; }
-.nd-rel-dot[data-rel-type="quest"] { background: #fbbf24; }
-.nd-rel-dot[data-rel-type="actor"] { background: #a78bfa; }
-.nd-rel-dot[data-rel-type="faction"] { background: #fb7185; }
-.nd-rel-dot[data-rel-type="location"] { background: #34d399; }
-.nd-rel-dot[data-rel-type="item"] { background: #60a5fa; }
-.nd-rel-dot[data-rel-type="chronicle"] { background: #c4b5fd; }
+.nd-rel-dot[data-rel-type="storyThread"] { background: var(--nd-entity-story-thread-color); }
+.nd-rel-dot[data-rel-type="quest"] { background: var(--nd-entity-quest-color); }
+.nd-rel-dot[data-rel-type="questEntry"] { background: var(--nd-entity-quest-color); }
+.nd-rel-dot[data-rel-type="actor"] { background: var(--nd-entity-actor-color); }
+.nd-rel-dot[data-rel-type="faction"] { background: var(--nd-entity-faction-color); }
+.nd-rel-dot[data-rel-type="location"] { background: var(--nd-entity-location-color); }
+.nd-rel-dot[data-rel-type="scene"] { background: var(--nd-entity-scene-color); }
+.nd-rel-dot[data-rel-type="item"] { background: var(--nd-entity-item-color); }
+.nd-rel-dot[data-rel-type="chronicle"] { background: var(--nd-entity-chronicle-color); }
+.nd-rel-dot[data-rel-type="memory"] { background: var(--nd-entity-memory-color); }
+.nd-rel-dot[data-rel-type="journal"] { background: var(--nd-entity-journal-color); }
+.nd-rel-dot[data-rel-type="rollTable"] { background: var(--nd-entity-rolltable-color); }
 
 .nd-relationship-explorer__group-label {
   letter-spacing: 0.04em;
@@ -1220,55 +1225,15 @@ button.nd-relationship-nav__crumb:hover {
   flex-shrink: 0;
   align-items: center;
   padding: 1px 6px;
-  border: 1px solid transparent;
-  border-radius: 999px;
+  border: 1px solid var(--nd-entity-current-border, transparent);
+  border-radius: var(--nd-radius-full);
+  color: var(--nd-entity-current, var(--nd-text-3));
+  background: var(--nd-entity-current-bg, var(--nd-surface-inset));
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
-}
-
-.nd-rel-type[data-rel-type="storyThread"] {
-  color: #7dd3fc;
-  background: color-mix(in srgb, #7dd3fc 14%, transparent);
-  border-color: color-mix(in srgb, #7dd3fc 30%, transparent);
-}
-
-.nd-rel-type[data-rel-type="quest"] {
-  color: #fbbf24;
-  background: color-mix(in srgb, #fbbf24 14%, transparent);
-  border-color: color-mix(in srgb, #fbbf24 30%, transparent);
-}
-
-.nd-rel-type[data-rel-type="actor"] {
-  color: #a78bfa;
-  background: color-mix(in srgb, #a78bfa 14%, transparent);
-  border-color: color-mix(in srgb, #a78bfa 30%, transparent);
-}
-
-.nd-rel-type[data-rel-type="faction"] {
-  color: #fb7185;
-  background: color-mix(in srgb, #fb7185 14%, transparent);
-  border-color: color-mix(in srgb, #fb7185 30%, transparent);
-}
-
-.nd-rel-type[data-rel-type="location"] {
-  color: #34d399;
-  background: color-mix(in srgb, #34d399 14%, transparent);
-  border-color: color-mix(in srgb, #34d399 30%, transparent);
-}
-
-.nd-rel-type[data-rel-type="item"] {
-  color: #60a5fa;
-  background: color-mix(in srgb, #60a5fa 14%, transparent);
-  border-color: color-mix(in srgb, #60a5fa 30%, transparent);
-}
-
-.nd-rel-type[data-rel-type="chronicle"] {
-  color: #c4b5fd;
-  background: color-mix(in srgb, #c4b5fd 14%, transparent);
-  border-color: color-mix(in srgb, #c4b5fd 30%, transparent);
 }
 
 .nd-quest-sidebar__hint {
@@ -1527,8 +1492,9 @@ button.nd-campaign-status.nd-quick-cycle {
 }
 
 .nd-activity-row__type {
-  color: var(--nd-text-3);
+  color: var(--nd-entity-current, var(--nd-text-3));
   font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-bold);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }

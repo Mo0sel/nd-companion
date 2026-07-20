@@ -47,7 +47,9 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     actions: {
       setWorkspace: CompanionApp.#onSetWorkspace,
       exportCampaign: CompanionApp.#onExportCampaign,
-      importCampaign: CompanionApp.#onImportCampaign
+      importCampaign: CompanionApp.#onImportCampaign,
+      openActivityDrawer: CompanionApp.#onOpenActivityDrawer,
+      closeActivityDrawer: CompanionApp.#onCloseActivityDrawer
     }
   };
 
@@ -81,6 +83,91 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   static #onSetWorkspace(_event, target) {
     this.setWorkspace(target.dataset.workspace);
+  }
+
+  /**
+   * Open Campaign Activity from Settings (kept out of main Campaign nav).
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} _target
+   */
+  static #onOpenActivityDrawer(_event, _target) {
+    const root = this.element;
+    if (!(root instanceof HTMLElement)) return;
+    const settings = root.querySelector(".nd-companion-settings");
+    if (settings instanceof HTMLDetailsElement) settings.open = false;
+    CompanionApp.#paintActivityDrawer(root, true);
+  }
+
+  /**
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} _target
+   */
+  static #onCloseActivityDrawer(_event, _target) {
+    const root = this.element;
+    if (!(root instanceof HTMLElement)) return;
+    CompanionApp.#paintActivityDrawer(root, false);
+  }
+
+  /**
+   * @param {HTMLElement} root
+   * @param {boolean} [open]
+   */
+  static #paintActivityDrawer(root, open) {
+    const drawer = root.querySelector("[data-activity-drawer]");
+    if (!(drawer instanceof HTMLElement)) return;
+    if (open === false) {
+      drawer.hidden = true;
+      return;
+    }
+    if (open === true) drawer.hidden = false;
+    if (drawer.hidden) return;
+    const container = drawer.querySelector("[data-campaign-activity]");
+    if (!(container instanceof HTMLElement)) return;
+    const filter = container.dataset.activityFilter ?? "all";
+    CampaignActivityPanel.paint(container, {
+      filter: ["all", "created", "edited", "deleted"].includes(filter) ? filter : "all",
+      limit: Number(container.dataset.activityLimit) || 500,
+      showFilters: true
+    });
+  }
+
+  /**
+   * @param {HTMLElement} root
+   * @param {(target: { kind: string, id: string }) => Promise<void>|void} onOpen
+   */
+  static #attachActivityDrawer(root, onOpen) {
+    const drawer = root.querySelector("[data-activity-drawer]");
+    if (!(drawer instanceof HTMLElement)) return;
+    if (drawer.dataset.activityBound === "1") return;
+    drawer.dataset.activityBound = "1";
+    drawer.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      const filter = target.closest("[data-activity-filter]");
+      if (filter instanceof HTMLButtonElement) {
+        const next = filter.getAttribute("data-activity-filter");
+        const container = drawer.querySelector("[data-campaign-activity]");
+        if (
+          container instanceof HTMLElement &&
+          (next === "all" || next === "created" || next === "edited" || next === "deleted")
+        ) {
+          container.dataset.activityFilter = next;
+          CompanionApp.#paintActivityDrawer(root);
+        }
+        return;
+      }
+
+      const openRow = target.closest("[data-activity-open]");
+      if (openRow) {
+        const kind = openRow.getAttribute("data-activity-entity-kind");
+        const id = openRow.getAttribute("data-activity-entity-id");
+        if (kind && id) {
+          CompanionApp.#paintActivityDrawer(root, false);
+          void onOpen({ kind, id });
+        }
+      }
+    });
   }
 
   /**
@@ -485,11 +572,9 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
         if (!moved) return;
         this.setWorkspace("play");
         Playbook.paint(this.element, Playbook.get());
-      },
-      onOpenActivity: (target) => {
-        void this.#openContextTarget(target);
       }
     });
+    CompanionApp.#attachActivityDrawer(this.element, (target) => this.#openContextTarget(target));
     ContextPanel.attach(this.element, (target) => this.#openContextTarget(target));
     RelationshipExplorer.attach(this.element, {
       onBack: () => this.#historyBack(),

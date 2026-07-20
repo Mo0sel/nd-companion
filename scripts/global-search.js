@@ -189,26 +189,100 @@ export class GlobalSearch {
    * @param {import("./search-service.js").SearchResult} result
    */
   static #resultButton(result) {
-    const button = GlobalSearch.#button(result.title, result.subtitle);
+    const kind = GlobalSearch.#entityKindForResult(result);
+    const button = GlobalSearch.#button(result.title, result.subtitle, kind);
     button.dataset.searchResultKey = result.key;
     return button;
   }
 
-  static #button(title, subtitle) {
+  /**
+   * @param {import("./search-service.js").SearchResult} result
+   */
+  static #entityKindForResult(result) {
+    switch (result.providerId) {
+      case "story-threads":
+        return "storyThread";
+      case "quests":
+        return "quest";
+      case "factions":
+        return "faction";
+      case "sessions":
+      case "beats":
+        return "chronicle";
+      case "campaign-activity": {
+        const parts = String(result.key).split(":");
+        return parts[1] || "activity";
+      }
+      case "entities": {
+        const group = String(result.group || "").toUpperCase();
+        if (group.includes("ACTOR")) return "actor";
+        if (group.includes("LOCATION") || group.includes("SCENE")) return "location";
+        if (group.includes("ITEM")) return "item";
+        if (group.includes("JOURNAL")) return "journal";
+        if (group.includes("ROLL")) return "rollTable";
+        return "item";
+      }
+      default:
+        return "";
+    }
+  }
+
+  static #button(title, subtitle, entityKind = "") {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "nd-global-search__result";
     button.setAttribute("role", "option");
     button.setAttribute("aria-selected", "false");
 
+    if (entityKind) {
+      const badge = document.createElement("span");
+      badge.className = "nd-entity-badge";
+      badge.dataset.entityKind = entityKind;
+      badge.textContent = GlobalSearch.#kindLabel(entityKind);
+      button.append(badge);
+    }
+
+    const text = document.createElement("span");
+    text.className = "nd-global-search__result-text";
     const titleElement = document.createElement("span");
     titleElement.className = "nd-global-search__result-title";
     titleElement.textContent = title;
     const subtitleElement = document.createElement("span");
     subtitleElement.className = "nd-global-search__result-subtitle";
     subtitleElement.textContent = subtitle;
-    button.append(titleElement, subtitleElement);
+    text.append(titleElement, subtitleElement);
+    button.append(text);
     return button;
+  }
+
+  static #kindLabel(kind) {
+    switch (kind) {
+      case "storyThread":
+        return "Thread";
+      case "quest":
+      case "questEntry":
+        return "Quest";
+      case "actor":
+        return "Actor";
+      case "faction":
+        return "Faction";
+      case "location":
+      case "scene":
+        return "Location";
+      case "item":
+        return "Item";
+      case "chronicle":
+      case "memory":
+        return "Chronicle";
+      case "journal":
+        return "Journal";
+      case "rollTable":
+        return "Table";
+      case "activity":
+        return "Activity";
+      default:
+        return kind || "Item";
+    }
   }
 
   static #appendHeading(container, label) {

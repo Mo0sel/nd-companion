@@ -246,7 +246,7 @@ export class RelationshipExplorer {
         const current = document.createElement("span");
         current.className = "nd-relationship-nav__crumb is-current";
         current.innerHTML =
-          `<span class="nd-relationship-nav__kind">${RelationshipExplorer.kindLabel(entry.kind)}</span>` +
+          `<span class="nd-relationship-nav__kind" data-entity-kind="${foundry.utils.escapeHTML(entry.kind)}">${RelationshipExplorer.kindLabel(entry.kind)}</span>` +
           `<strong>${foundry.utils.escapeHTML(entry.label)}</strong>`;
         crumbs.append(current);
         return;
@@ -256,7 +256,7 @@ export class RelationshipExplorer {
       button.className = "nd-relationship-nav__crumb";
       button.dataset.relationshipCrumb = String(index);
       button.innerHTML =
-        `<span class="nd-relationship-nav__kind">${RelationshipExplorer.kindLabel(entry.kind)}</span>` +
+        `<span class="nd-relationship-nav__kind" data-entity-kind="${foundry.utils.escapeHTML(entry.kind)}">${RelationshipExplorer.kindLabel(entry.kind)}</span>` +
         `<strong>${foundry.utils.escapeHTML(entry.label)}</strong>`;
       crumbs.append(button);
     });
