@@ -434,7 +434,7 @@ export class RelationshipExplorer {
     type.textContent = RelationshipPicker.typeLabel(type.dataset.relType);
     const label = document.createElement("span");
     label.className = "nd-relationship-explorer__group-label";
-    label.textContent = `${group.label.toUpperCase()} (${group.nodes.length})`;
+    label.textContent = `(${group.nodes.length})`;
     summary.append(type, label);
 
     const list = document.createElement("div");
@@ -461,7 +461,7 @@ export class RelationshipExplorer {
 
     const dot = document.createElement("span");
     dot.className = "nd-rel-dot";
-    dot.dataset.relType = groupType || RelationshipPicker.typeKey(node.kind);
+    dot.dataset.relType = RelationshipPicker.typeKey(node.kind);
     dot.setAttribute("aria-hidden", "true");
 
     const open = document.createElement("button");

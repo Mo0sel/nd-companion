@@ -47,23 +47,51 @@ export class QuickEdit {
   }
 
   /**
-   * Compact hover-revealed Quick Edit panel on an entity card.
+   * Compact Quick Edit panel on an entity card.
    * @param {HTMLElement} host
    * @param {{
    *   kind: string,
    *   id: string,
-   *   fields: Array<"currentState"|"currentStatus"|"status"|"reputation">
+   *   fields: Array<"currentState"|"currentStatus"|"status"|"reputation">,
+   *   placement?: "overlay"|"menu"
    * }} config
    */
   static mount(host, config) {
     if (!(host instanceof HTMLElement) || !config?.kind || !config?.id) return;
     host.classList.add("nd-quick-edit-host");
-    const previous = host.querySelector(":scope > .nd-quick-edit");
+    const previous = host.querySelector(":scope > .nd-quick-edit, :scope > .nd-quick-edit-menu");
     if (previous instanceof HTMLElement) {
       previous.querySelectorAll(".nd-quick-edit__editor").forEach((editor) => {
         if (editor instanceof HTMLElement) LiveNotes.detach(editor);
       });
       previous.remove();
+    }
+
+    const body = document.createElement("div");
+    body.className = "nd-quick-edit__body";
+    body.dataset.quickEditBody = "";
+    for (const field of config.fields ?? []) {
+      body.append(QuickEdit.#fieldControl(config.kind, config.id, field));
+    }
+
+    if (config.placement === "menu") {
+      const menu = document.createElement("details");
+      menu.className = "nd-quick-edit-menu";
+      menu.dataset.quickEdit = "";
+      menu.dataset.quickKind = config.kind;
+      menu.dataset.quickId = config.id;
+
+      const summary = document.createElement("summary");
+      summary.className = "nd-quick-edit-menu__toggle";
+      summary.setAttribute("aria-label", "Quick Edit");
+      summary.title = "Quick Edit";
+      summary.textContent = "⋮";
+
+      body.hidden = false;
+      body.classList.add("nd-quick-edit__body--menu");
+      menu.append(summary, body);
+      host.append(menu);
+      return;
     }
 
     const panel = document.createElement("div");
@@ -80,14 +108,7 @@ export class QuickEdit {
     toggle.setAttribute("aria-expanded", "false");
     panel.append(toggle);
 
-    const body = document.createElement("div");
-    body.className = "nd-quick-edit__body";
     body.hidden = true;
-    body.dataset.quickEditBody = "";
-
-    for (const field of config.fields ?? []) {
-      body.append(QuickEdit.#fieldControl(config.kind, config.id, field));
-    }
     panel.append(body);
     host.append(panel);
   }
@@ -114,6 +135,10 @@ export class QuickEdit {
           event.stopPropagation();
           QuickEdit.#togglePanel(toggle.closest("[data-quick-edit]"));
           return;
+        }
+
+        if (target.closest(".nd-quick-edit-menu")) {
+          event.stopPropagation();
         }
 
         const cycle = target.closest("[data-quick-cycle]");

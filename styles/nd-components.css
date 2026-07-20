@@ -1072,7 +1072,11 @@ button.nd-relationship-nav__crumb:hover {
 .nd-rel-dot[data-rel-type="rollTable"] { background: var(--nd-entity-rolltable-color); }
 
 .nd-relationship-explorer__group-label {
-  letter-spacing: 0.04em;
+  color: var(--nd-text-3);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-semibold);
+  letter-spacing: 0.02em;
 }
 
 .nd-relationship-explorer__chip-open {
@@ -1245,6 +1249,43 @@ button.nd-relationship-nav__crumb:hover {
 
 .nd-quick-edit-host {
   position: relative;
+}
+
+.nd-quick-edit-menu {
+  position: relative;
+}
+
+.nd-quick-edit-menu > summary {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  color: var(--nd-text-3);
+  background: var(--nd-surface);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-md);
+  cursor: pointer;
+  list-style: none;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.nd-quick-edit-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.nd-quick-edit-menu > summary:hover,
+.nd-quick-edit-menu[open] > summary {
+  color: var(--nd-text-1);
+  border-color: var(--nd-blue-border);
+}
+
+.nd-quick-edit-menu .nd-quick-edit__body--menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 5;
+  min-width: min(240px, 70vw);
 }
 
 .nd-quick-edit {

@@ -5,6 +5,7 @@ import { PlaybookEntities } from "./playbook-entities.js";
 import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
 import { QuickEdit } from "./quick-edit.js";
+import { RelationshipService } from "./relationship-service.js";
 import { RichText } from "./rich-text.js";
 import { SessionService } from "./session-service.js";
 import { StoryThreadService } from "./story-thread-service.js";
@@ -227,13 +228,14 @@ export class Playbook {
     if (count) count.textContent = String(threads.length);
     for (const thread of threads) {
       const quests = QuestEntryService.listForStoryThread(thread.id);
-      const actors = (thread.relatedActorIds ?? [])
+      const actorIds = Playbook.#storyThreadActorIds(thread);
+      const actors = actorIds
         .map((id) => EntityRegistry.findByUUID(id))
         .filter(Boolean)
         .slice(0, 3);
 
       const threadCard = document.createElement("article");
-      threadCard.className = "nd-play-story-thread nd-quick-edit-host";
+      threadCard.className = "nd-play-story-thread";
       threadCard.dataset.playStoryThreadId = thread.id;
 
       const open = document.createElement("button");
@@ -258,47 +260,71 @@ export class Playbook {
       const meta = document.createElement("div");
       meta.className = "nd-play-story-thread__meta";
 
+      const actorRow = document.createElement("div");
+      actorRow.className = "nd-play-story-thread__actors";
       if (actors.length) {
-        const actorRow = document.createElement("div");
-        actorRow.className = "nd-play-story-thread__actors";
         for (const actor of actors) {
           const chip = document.createElement("span");
           chip.className = "nd-play-story-thread__actor";
-          chip.textContent = actor.name;
+          chip.textContent = Playbook.#shortActorName(actor.name);
           actorRow.append(chip);
         }
-        const extra = (thread.relatedActorIds ?? []).length - actors.length;
+        const extra = actorIds.length - actors.length;
         if (extra > 0) {
           const more = document.createElement("span");
           more.className = "nd-play-story-thread__actor-more";
           more.textContent = `+${extra}`;
           actorRow.append(more);
         }
-        meta.append(actorRow);
+      } else {
+        const empty = document.createElement("span");
+        empty.className = "nd-play-story-thread__actors-empty";
+        empty.textContent = "No linked actors";
+        actorRow.append(empty);
       }
+      meta.append(actorRow);
 
       const questCount = document.createElement("span");
       questCount.className = "nd-play-story-thread__quests";
       questCount.textContent = quests.length === 1
-        ? "1 linked Quest"
-        : `${quests.length} linked Quests`;
+        ? "1 Quest"
+        : `${quests.length} Quests`;
       meta.append(questCount);
 
       open.append(head, state, meta);
-
-      const status = QuickEdit.badge(thread.status, {
-        kind: "storyThread",
-        id: thread.id,
-        field: "status"
-      });
-      threadCard.append(open, status);
+      threadCard.append(open);
       QuickEdit.mount(threadCard, {
         kind: "storyThread",
         id: thread.id,
-        fields: ["status", "currentState"]
+        fields: ["status", "currentState"],
+        placement: "menu"
       });
       list.append(threadCard);
     }
+  }
+
+  /**
+   * @param {object} thread
+   * @returns {string[]}
+   */
+  static #storyThreadActorIds(thread) {
+    const ids = new Set(
+      (thread.relatedActorIds ?? []).filter(Boolean)
+    );
+    for (const neighbor of RelationshipService.neighbors({
+      kind: "storyThread",
+      id: thread.id
+    })) {
+      if (neighbor.kind === "actor" && neighbor.id) ids.add(neighbor.id);
+    }
+    return [...ids];
+  }
+
+  /** @param {string} [name] */
+  static #shortActorName(name) {
+    const text = String(name ?? "").trim();
+    if (!text) return "Actor";
+    return text.split(/\s+/)[0];
   }
 
   static #paintRunControls(root) {
@@ -645,6 +671,7 @@ export class Playbook {
       (event) => {
         const target = event.target;
         if (!(target instanceof Element)) return;
+        if (target.closest(".nd-quick-edit-menu")) return;
 
         const nav = target.closest("[data-playbook-nav]");
         if (nav) {

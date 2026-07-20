@@ -77,7 +77,7 @@
   --nd-status-skipped-bg: rgba(245, 158, 11, 0.1);
   --nd-status-skipped-border: rgba(245, 158, 11, 0.25);
 
-  /* ── Color: entity semantics (single source for chips, explorer, search) ─ */
+  /* ── Color: entity semantics (Connected Knowledge + Explorer) ─────────── */
   --nd-entity-story-thread-color: #7dd3fc;
   --nd-entity-story-thread-bg: rgba(125, 211, 252, 0.12);
   --nd-entity-story-thread-border: rgba(125, 211, 252, 0.3);
@@ -86,13 +86,13 @@
   --nd-entity-quest-bg: rgba(251, 191, 36, 0.12);
   --nd-entity-quest-border: rgba(251, 191, 36, 0.3);
 
-  --nd-entity-actor-color: #5b8eff;
-  --nd-entity-actor-bg: rgba(91, 142, 255, 0.1);
-  --nd-entity-actor-border: rgba(91, 142, 255, 0.28);
+  --nd-entity-actor-color: #a78bfa;
+  --nd-entity-actor-bg: rgba(167, 139, 250, 0.12);
+  --nd-entity-actor-border: rgba(167, 139, 250, 0.3);
 
-  --nd-entity-faction-color: #fb7185;
-  --nd-entity-faction-bg: rgba(251, 113, 133, 0.12);
-  --nd-entity-faction-border: rgba(251, 113, 133, 0.3);
+  --nd-entity-faction-color: #ef4444;
+  --nd-entity-faction-bg: rgba(239, 68, 68, 0.12);
+  --nd-entity-faction-border: rgba(239, 68, 68, 0.3);
 
   --nd-entity-location-color: #34d399;
   --nd-entity-location-bg: rgba(52, 211, 153, 0.1);
@@ -102,13 +102,13 @@
   --nd-entity-item-bg: rgba(96, 165, 250, 0.1);
   --nd-entity-item-border: rgba(96, 165, 250, 0.28);
 
-  --nd-entity-chronicle-color: #c4b5fd;
-  --nd-entity-chronicle-bg: rgba(196, 181, 253, 0.12);
-  --nd-entity-chronicle-border: rgba(196, 181, 253, 0.3);
+  --nd-entity-chronicle-color: #f9a8d4;
+  --nd-entity-chronicle-bg: rgba(249, 168, 212, 0.12);
+  --nd-entity-chronicle-border: rgba(249, 168, 212, 0.3);
 
-  --nd-entity-memory-color: #c4b5fd;
-  --nd-entity-memory-bg: rgba(196, 181, 253, 0.12);
-  --nd-entity-memory-border: rgba(196, 181, 253, 0.3);
+  --nd-entity-memory-color: #f9a8d4;
+  --nd-entity-memory-bg: rgba(249, 168, 212, 0.12);
+  --nd-entity-memory-border: rgba(249, 168, 212, 0.3);
 
   --nd-entity-scene-color: #f97316;
   --nd-entity-scene-bg: rgba(249, 115, 22, 0.1);

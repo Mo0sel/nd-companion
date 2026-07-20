@@ -343,18 +343,18 @@
 
 .nd-play-story-threads__list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
   gap: 8px;
 }
 
 .nd-play-story-thread {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-  align-items: start;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 148px;
   margin: 0;
   padding: 10px 12px 10px 14px;
+  overflow: hidden;
   color: var(--nd-text-2);
   background: var(--nd-surface);
   border: 1px solid var(--nd-border);
@@ -376,10 +376,15 @@
 
 .nd-play-story-thread__open {
   display: grid;
-  gap: 8px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 6px;
+  flex: 1;
   min-width: 0;
+  min-height: 0;
   margin: 0;
   padding: 0;
+  padding-right: 28px;
+  overflow: hidden;
   color: inherit;
   background: transparent;
   border: 0;
@@ -396,15 +401,19 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
+  min-width: 0;
 }
 
 .nd-play-story-thread__title {
   display: block;
   min-width: 0;
+  overflow: hidden;
   color: var(--nd-text-1);
   font-size: var(--nd-text-body-sm);
   font-weight: var(--nd-weight-bold);
   line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nd-play-story-thread__active {
@@ -413,7 +422,7 @@
   color: var(--nd-status-active-color);
   background: var(--nd-status-active-bg);
   border: 1px solid var(--nd-status-active-border);
-  border-radius: 999px;
+  border-radius: var(--nd-radius-full);
   font-family: var(--nd-font-mono);
   font-size: 9px;
   font-weight: var(--nd-weight-semibold);
@@ -423,35 +432,54 @@
 
 .nd-play-story-thread__state {
   margin: 0;
+  min-height: 0;
+  max-height: calc(1.35em * 2);
+  overflow: hidden;
   color: var(--nd-text-2);
   font-size: var(--nd-text-caption);
-  line-height: 1.4;
+  line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
-  overflow: hidden;
+  word-break: break-word;
 }
 
 .nd-play-story-thread__meta {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  min-width: 0;
 }
 
 .nd-play-story-thread__actors {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: 4px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .nd-play-story-thread__actor,
 .nd-play-story-thread__actor-more {
+  flex-shrink: 0;
+  max-width: 7.5em;
   padding: 1px 6px;
+  overflow: hidden;
   color: var(--nd-entity-actor-color);
   background: var(--nd-entity-actor-bg);
   border: 1px solid var(--nd-entity-actor-border);
   border-radius: var(--nd-radius-full);
   font-size: var(--nd-text-micro);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nd-play-story-thread__actors-empty {
+  color: var(--nd-text-3);
+  font-size: var(--nd-text-micro);
+  white-space: nowrap;
 }
 
 .nd-play-story-thread__quests {
@@ -459,6 +487,14 @@
   font-size: var(--nd-text-micro);
   font-family: var(--nd-font-mono);
   font-weight: var(--nd-weight-semibold);
+  white-space: nowrap;
+}
+
+.nd-play-story-thread > .nd-quick-edit-menu {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
 }
 
 /* Section group headers: colored tick + label + hairline divider. */
