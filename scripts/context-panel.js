@@ -1,5 +1,6 @@
 import { ContextEngine } from "./context-engine.js";
 import { LiveNotes } from "./live-notes.js";
+import { RelationshipExplorer } from "./relationship-explorer.js";
 import { RichText } from "./rich-text.js";
 
 /**
@@ -32,18 +33,9 @@ export class ContextPanel {
     const hasStatus = options.showCurrentStatus !== false && Boolean(statusKey);
     const hasMemory =
       options.showCampaignMemory !== false && RichText.hasContent(context.campaignMemory);
-    const hasKnowledge = Boolean(
-      context.lastSeen ||
-      context.sessions.length ||
-      context.quests.length ||
-      context.questEntries.length ||
-      context.actors.length ||
-      context.locations.length ||
-      context.items.length ||
-      context.storyThreads.length ||
-      context.factions.length
-    );
-    const hasContent = hasStatus || hasKnowledge || hasMemory;
+    const relatedGroups = RelationshipExplorer.groupsFrom(context);
+    const hasHistory = Boolean(context.sessions.length);
+    const hasContent = hasStatus || hasHistory || relatedGroups.length || hasMemory || Boolean(context?.target);
     container.hidden = !hasContent;
     if (!hasContent) return;
 
@@ -77,21 +69,20 @@ export class ContextPanel {
       });
     }
 
-    if (hasKnowledge) {
+    if (hasHistory) {
       const knowledge = document.createElement("div");
       knowledge.className = "nd-context-panel__knowledge";
       knowledge.textContent = "Campaign History";
       container.append(knowledge);
 
-      if (context.sessions.length) {
-        const history = ContextPanel.#section("History");
-        history.append(ContextPanel.#timeline(context.sessions, context.lastSeen));
-        container.append(history);
-      }
-
-      ContextPanel.#appendLinks(container, "Appears In", context.sessions);
-      ContextPanel.#appendRelationships(container, context);
+      const history = ContextPanel.#section("History");
+      history.append(ContextPanel.#timeline(context.sessions, context.lastSeen));
+      container.append(history);
     }
+
+    const explorer = document.createElement("div");
+    RelationshipExplorer.paint(explorer, context);
+    container.append(explorer);
 
     if (hasMemory) {
       const section = ContextPanel.#section("Campaign Notes");
@@ -138,6 +129,7 @@ export class ContextPanel {
 
         const link = target.closest("[data-context-kind][data-context-id]");
         if (!link) return;
+        if (link.closest("[data-relationship-nav]")) return;
         const kind = link.getAttribute("data-context-kind");
         const id = link.getAttribute("data-context-id");
         if (kind && id) void Promise.resolve(onNavigate({ kind, id }));
@@ -155,45 +147,6 @@ export class ContextPanel {
       },
       { signal: controller.signal }
     );
-  }
-
-  static #appendLinks(container, heading, nodes) {
-    if (!nodes.length) return;
-    const section = ContextPanel.#section(heading);
-    const list = document.createElement("div");
-    list.className = "nd-context-panel__links";
-    for (const node of nodes) list.append(ContextPanel.#link(node));
-    section.append(list);
-    container.append(section);
-  }
-
-  static #appendRelationships(container, context) {
-    const groups = [
-      ["Story Threads", context.storyThreads],
-      ["Factions", context.factions],
-      ["Actors", context.actors],
-      ["Locations", context.locations],
-      ["Items", context.items],
-      ["Quests", context.quests],
-      ["Quests", context.questEntries]
-    ].filter(([, nodes]) => nodes.length);
-    if (!groups.length) return;
-
-    const section = ContextPanel.#section("Relationships");
-    const body = document.createElement("div");
-    body.className = "nd-context-panel__relationships";
-    for (const [label, nodes] of groups) {
-      const group = document.createElement("div");
-      const heading = document.createElement("h5");
-      heading.textContent = label;
-      const links = document.createElement("div");
-      links.className = "nd-context-panel__links";
-      for (const node of nodes) links.append(ContextPanel.#link(node));
-      group.append(heading, links);
-      body.append(group);
-    }
-    section.append(body);
-    container.append(section);
   }
 
   static #section(heading) {

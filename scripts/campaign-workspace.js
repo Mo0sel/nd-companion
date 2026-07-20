@@ -5,9 +5,11 @@ import { EntityMentions } from "./entity-mentions.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { FactionService } from "./faction-service.js";
 import { LiveNotes } from "./live-notes.js";
+import { NavigationHistory } from "./navigation-history.js";
 import { Playbook } from "./playbook.js";
 import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
+import { RelationshipExplorer } from "./relationship-explorer.js";
 import { RichText } from "./rich-text.js";
 import { RichTextToolbar } from "./rich-text-toolbar.js";
 import { StoryThreadService } from "./story-thread-service.js";
@@ -94,6 +96,73 @@ export class CampaignWorkspace {
   /** @returns {string|null} */
   static getSelectedQuestEntryId() {
     return CampaignWorkspace.#openEntryId;
+  }
+
+  /**
+   * Current Campaign focus for Relationship Explorer breadcrumbs.
+   * @returns {{ kind: string, id: string, label: string }|null}
+   */
+  static getFocusTarget() {
+    if (CampaignWorkspace.#view === "storyThread" && CampaignWorkspace.#openEntryId) {
+      const entry = QuestEntryService.getById(CampaignWorkspace.#openEntryId);
+      if (entry) {
+        return {
+          kind: "questEntry",
+          id: entry.id,
+          label: entry.title?.trim() || "Untitled Quest"
+        };
+      }
+    }
+    if (CampaignWorkspace.#view === "storyThread" && CampaignWorkspace.#storyThreadId) {
+      const thread = StoryThreadService.getById(CampaignWorkspace.#storyThreadId);
+      if (thread) {
+        return {
+          kind: "storyThread",
+          id: thread.id,
+          label: thread.title?.trim() || "Untitled Story Thread"
+        };
+      }
+    }
+    if (CampaignWorkspace.#view === "faction" && CampaignWorkspace.#factionId) {
+      const faction = FactionService.getById(CampaignWorkspace.#factionId);
+      if (faction) {
+        return {
+          kind: "faction",
+          id: faction.id,
+          label: faction.name?.trim() || "Untitled Faction"
+        };
+      }
+    }
+    if (CampaignWorkspace.#view === "memory" && CampaignWorkspace.#memoryId) {
+      const memory = CampaignMemoryService.getById(CampaignWorkspace.#memoryId);
+      if (memory) {
+        const title = memory.title?.trim();
+        return {
+          kind: "session",
+          id: memory.id,
+          label: title
+            ? `Session ${memory.sessionNumber} · ${title}`
+            : `Session ${memory.sessionNumber}`
+        };
+      }
+    }
+    if (
+      CampaignWorkspace.#view === "entity" &&
+      CampaignWorkspace.#entityKind &&
+      CampaignWorkspace.#entityId
+    ) {
+      const entity = EntityRegistry.findByUUID(CampaignWorkspace.#entityId);
+      if (entity) {
+        const kind =
+          entity.kind === "scene" ? "location" : entity.kind;
+        return {
+          kind,
+          id: entity.uuid,
+          label: entity.name?.trim() || "Untitled"
+        };
+      }
+    }
+    return null;
   }
 
   /**
@@ -292,6 +361,8 @@ export class CampaignWorkspace {
     CampaignWorkspace.#applyView(panel, memory, storyThread, faction);
     CampaignWorkspace.#attachRichEditors(panel);
     CampaignWorkspace.#restoreScroll(panel);
+    NavigationHistory.syncCurrent(CampaignWorkspace.getFocusTarget());
+    RelationshipExplorer.paintChrome(root);
   }
 
   /**
@@ -1304,32 +1375,18 @@ export class CampaignWorkspace {
     playActions.append(load, remove);
     body.append(playActions);
 
-    const entryContext = ContextEngine.getContext({ kind: "questEntry", id: entry.id });
-    const historySection = document.createElement("section");
-    historySection.className = "nd-object-history nd-object-history--entry";
-    const heading = document.createElement("h3");
-    heading.className = "nd-hierarchy-group";
-    heading.textContent = "History";
-    const historySummary = document.createElement("p");
-    historySummary.className = "nd-object-history__summary";
-    historySummary.textContent = entryContext.sessions.length > 0
-      ? `First seen ${entryContext.sessions[0]?.label}; ` +
-        `last seen ${entryContext.lastSeen?.label}.`
-      : "No Chronicle appearances yet.";
-    const appearances = document.createElement("div");
-    appearances.className = "nd-object-history__list";
-    if (entryContext.sessions.length > 0) {
-      for (const appearance of entryContext.sessions) {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "nd-object-history__item";
-        button.dataset.openMemoryId = appearance.id;
-        button.textContent = appearance.label;
-        appearances.append(button);
+    const entryContext = document.createElement("section");
+    entryContext.dataset.contextPanel = "questEntry";
+    body.append(entryContext);
+    ContextPanel.paint(
+      entryContext,
+      ContextEngine.getContext({ kind: "questEntry", id: entry.id }),
+      {
+        showCampaignMemory: false,
+        showCurrentStatus: false,
+        showHeader: false
       }
-    }
-    historySection.append(heading, historySummary, appearances);
-    body.append(historySection);
+    );
 
     details.append(summary, body);
     return details;

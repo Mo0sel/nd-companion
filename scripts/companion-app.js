@@ -1,6 +1,7 @@
 import { CampaignAwareness, CampaignContext } from "./campaign-context.js";
 import { CampaignDocument } from "./campaign-document.js";
 import { CampaignWorkspace } from "./campaign-workspace.js";
+import { ContextEngine } from "./context-engine.js";
 import { ContextPanel } from "./context-panel.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { FocusManager } from "./focus-manager.js";
@@ -8,9 +9,11 @@ import { FocusPanel } from "./focus-panel.js";
 import { GlobalSearch } from "./global-search.js";
 import { LiveNotes } from "./live-notes.js";
 import { Navigation } from "./navigation.js";
+import { NavigationHistory } from "./navigation-history.js";
 import { PanelResizer } from "./panel-resizer.js";
 import { Playbook } from "./playbook.js";
 import { PlaybookService } from "./playbook-service.js";
+import { RelationshipExplorer } from "./relationship-explorer.js";
 import { RichText } from "./rich-text.js";
 import { SessionService } from "./session-service.js";
 import { CompanionStorage } from "./storage.js";
@@ -264,78 +267,108 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /**
    * Navigate directly between Context Panel entities without using Search.
-   * @param {{ kind: string, id: string }} target
+   * @param {{ kind: string, id: string, label?: string }} target
+   * @param {{ trackHistory?: boolean }} [options]
    */
-  async #openContextTarget(target) {
+  async #openContextTarget(target, options = {}) {
     if (!target?.kind || !target?.id) return;
+    const trackHistory = options.trackHistory !== false;
+    const from = trackHistory ? CampaignWorkspace.getFocusTarget() : null;
+    const destination = CompanionApp.#labelTarget(target);
+
+    if (trackHistory) {
+      NavigationHistory.navigate(from, destination);
+    }
 
     if (target.kind === "session") {
       if (CampaignWorkspace.selectMemory(this.element, target.id)) {
         this.setWorkspace("campaign");
       }
-      return;
-    }
-    if (target.kind === "quest") {
+    } else if (target.kind === "quest") {
       if (CampaignWorkspace.selectQuest(this.element, target.id)) {
         this.setWorkspace("campaign");
       }
-      return;
-    }
-    if (target.kind === "storyThread") {
+    } else if (target.kind === "storyThread") {
       if (CampaignWorkspace.selectStoryThread(this.element, target.id)) {
         this.setWorkspace("campaign");
       }
-      return;
-    }
-    if (target.kind === "faction") {
+    } else if (target.kind === "faction") {
       if (CampaignWorkspace.selectFaction(this.element, target.id)) {
         this.setWorkspace("campaign");
       }
-      return;
-    }
-    if (target.kind === "questEntry") {
+    } else if (target.kind === "questEntry") {
       if (CampaignWorkspace.selectQuestEntry(this.element, target.id)) {
         this.setWorkspace("campaign");
       }
-      return;
-    }
-    if (target.kind === "beat") {
+    } else if (target.kind === "beat") {
       if (CampaignWorkspace.selectQuestEntry(this.element, target.id)) {
         this.setWorkspace("campaign");
-        return;
+      } else {
+        const index = PlaybookService.getDocument().beats.findIndex(
+          (beat) => beat.id === target.id
+        );
+        if (index >= 0 && await PlaybookService.setCurrentIndex(index)) {
+          this.setWorkspace("play");
+          Playbook.paint(this.element, Playbook.get());
+        }
       }
-      const index = PlaybookService.getDocument().beats.findIndex(
-        (beat) => beat.id === target.id
-      );
-      if (index >= 0 && await PlaybookService.setCurrentIndex(index)) {
-        this.setWorkspace("play");
-        Playbook.paint(this.element, Playbook.get());
-      }
-      return;
-    }
-    if (target.kind === "actor") {
+    } else if (target.kind === "actor") {
       const actor = EntityRegistry.findByUUID(target.id)
         ?? EntityRegistry.all("actor").find((entity) => entity.id === target.id);
       if (actor && CampaignWorkspace.selectEntity(this.element, "actor", actor.uuid)) {
         this.setWorkspace("campaign");
       }
-      return;
-    }
-    if (target.kind === "location" || target.kind === "item") {
+    } else if (target.kind === "location" || target.kind === "item") {
       const kind = target.kind === "location" ? "scene" : "item";
       const entity = EntityRegistry.findByUUID(target.id)
         ?? EntityRegistry.all(kind).find((entry) => entry.id === target.id);
       if (entity && CampaignWorkspace.selectEntity(this.element, kind, entity.uuid)) {
         this.setWorkspace("campaign");
       }
-      return;
+    } else {
+      const entity = EntityRegistry.findByUUID(target.id)
+        ?? EntityRegistry.all(target.kind).find((entry) => entry.id === target.id);
+      if (entity && Navigation.canNavigate(entity)) {
+        await Navigation.navigate(entity);
+      }
     }
 
-    const entity = EntityRegistry.findByUUID(target.id)
-      ?? EntityRegistry.all(target.kind).find((entry) => entry.id === target.id);
-    if (entity && Navigation.canNavigate(entity)) {
-      await Navigation.navigate(entity);
-    }
+    const landed = CampaignWorkspace.getFocusTarget();
+    if (landed) NavigationHistory.syncCurrent(landed);
+    RelationshipExplorer.paintChrome(this.element);
+  }
+
+  /**
+   * @param {{ kind: string, id: string, label?: string }} target
+   * @returns {{ kind: string, id: string, label: string }}
+   */
+  static #labelTarget(target) {
+    const context = ContextEngine.getContext(target);
+    return {
+      kind: target.kind,
+      id: target.id,
+      label: context.target?.label?.trim()
+        || target.label?.trim()
+        || "Untitled"
+    };
+  }
+
+  async #historyBack() {
+    const entry = NavigationHistory.back();
+    if (!entry) return;
+    await this.#openContextTarget(entry, { trackHistory: false });
+  }
+
+  async #historyForward() {
+    const entry = NavigationHistory.forward();
+    if (!entry) return;
+    await this.#openContextTarget(entry, { trackHistory: false });
+  }
+
+  async #historyJump(index) {
+    const entry = NavigationHistory.jumpTo(index);
+    if (!entry) return;
+    await this.#openContextTarget(entry, { trackHistory: false });
   }
 
   /**
@@ -458,6 +491,12 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       }
     });
     ContextPanel.attach(this.element, (target) => this.#openContextTarget(target));
+    RelationshipExplorer.attach(this.element, {
+      onBack: () => this.#historyBack(),
+      onForward: () => this.#historyForward(),
+      onJump: (index) => this.#historyJump(index)
+    });
+    RelationshipExplorer.paintChrome(this.element);
     this.element.querySelectorAll("[data-storage]:not([data-memory-editor])").forEach((el) => {
       const html = el.hasAttribute("data-storage-html");
       LiveNotes.attach(el, el.dataset.storage, {

@@ -853,6 +853,170 @@ select.nd-playbook-prepare__select:focus-visible {
   font-weight: var(--nd-weight-semibold);
 }
 
+/* ── Relationship Explorer ───────────────────────────────────────────── */
+.nd-relationship-nav {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 var(--nd-space-4);
+  padding: 10px 12px;
+  background: var(--nd-surface-2);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-md);
+}
+
+.nd-relationship-nav[hidden] {
+  display: none !important;
+}
+
+.nd-relationship-nav__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.nd-relationship-nav__controls button {
+  margin: 0;
+  padding: 4px 9px;
+  color: var(--nd-text-2);
+  background: var(--nd-surface);
+  border: 1px solid var(--nd-border);
+  border-radius: var(--nd-radius-sm);
+  box-shadow: none;
+  font: inherit;
+  font-size: var(--nd-text-caption);
+  cursor: pointer;
+}
+
+.nd-relationship-nav__controls button:hover:not(:disabled) {
+  color: var(--nd-blue);
+  border-color: var(--nd-blue-border);
+}
+
+.nd-relationship-nav__controls button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.nd-relationship-nav__crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.nd-relationship-nav__sep {
+  color: var(--nd-text-3);
+  font-size: var(--nd-text-caption);
+}
+
+.nd-relationship-nav__crumb {
+  display: inline-grid;
+  gap: 1px;
+  margin: 0;
+  padding: 2px 4px;
+  color: var(--nd-text-2);
+  background: transparent;
+  border: 0;
+  border-radius: var(--nd-radius-sm);
+  box-shadow: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.nd-relationship-nav__crumb:hover {
+  color: var(--nd-blue);
+  background: var(--nd-blue-dim);
+}
+
+.nd-relationship-nav__crumb.is-current {
+  cursor: default;
+}
+
+.nd-relationship-nav__kind {
+  color: var(--nd-text-3);
+  font-family: var(--nd-font-mono);
+  font-size: 8px;
+  font-weight: var(--nd-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nd-relationship-nav__crumb strong {
+  color: inherit;
+  font-size: var(--nd-text-caption);
+  font-weight: var(--nd-weight-semibold);
+}
+
+.nd-relationship-explorer {
+  min-width: 0;
+  margin-top: var(--nd-space-5);
+  padding-top: var(--nd-space-4);
+  border-top: 1px solid var(--nd-border);
+}
+
+.nd-relationship-explorer__heading {
+  margin: 0 0 var(--nd-space-3);
+  color: var(--nd-group-accent);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-label);
+  font-weight: var(--nd-weight-bold);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.nd-relationship-explorer__empty {
+  margin: 0 0 4px;
+  color: var(--nd-text-2);
+  font-size: var(--nd-text-body-sm);
+}
+
+.nd-relationship-explorer__hint {
+  margin: 0;
+  color: var(--nd-text-3);
+  font-size: var(--nd-text-caption);
+  line-height: 1.45;
+}
+
+.nd-relationship-explorer__group {
+  margin: 0 0 4px;
+  border: 0;
+}
+
+.nd-relationship-explorer__summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 2px;
+  color: var(--nd-text-2);
+  font-size: var(--nd-text-caption);
+  font-weight: var(--nd-weight-semibold);
+  cursor: pointer;
+  list-style: none;
+}
+
+.nd-relationship-explorer__summary::-webkit-details-marker {
+  display: none;
+}
+
+.nd-relationship-explorer__summary::before {
+  color: var(--nd-text-3);
+  font-size: 9px;
+  content: "▶";
+}
+
+.nd-relationship-explorer__group[open] > .nd-relationship-explorer__summary::before {
+  content: "▼";
+}
+
+.nd-relationship-explorer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 0 8px 14px;
+}
+
 .nd-context-panel__memory {
   padding: 10px 12px;
   color: var(--nd-text-2);
