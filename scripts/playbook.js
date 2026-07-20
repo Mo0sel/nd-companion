@@ -4,7 +4,6 @@ import { Navigation } from "./navigation.js";
 import { PlaybookEntities } from "./playbook-entities.js";
 import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
-import { QuickEdit } from "./quick-edit.js";
 import { RelationshipService } from "./relationship-service.js";
 import { RichText } from "./rich-text.js";
 import { SessionService } from "./session-service.js";
@@ -293,12 +292,6 @@ export class Playbook {
 
       open.append(head, state, meta);
       threadCard.append(open);
-      QuickEdit.mount(threadCard, {
-        kind: "storyThread",
-        id: thread.id,
-        fields: ["status", "currentState"],
-        placement: "menu"
-      });
       list.append(threadCard);
     }
   }
@@ -671,7 +664,6 @@ export class Playbook {
       (event) => {
         const target = event.target;
         if (!(target instanceof Element)) return;
-        if (target.closest(".nd-quick-edit-menu")) return;
 
         const nav = target.closest("[data-playbook-nav]");
         if (nav) {

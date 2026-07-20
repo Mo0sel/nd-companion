@@ -383,7 +383,6 @@
   min-height: 0;
   margin: 0;
   padding: 0;
-  padding-right: 28px;
   overflow: hidden;
   color: inherit;
   background: transparent;
@@ -488,13 +487,6 @@
   font-family: var(--nd-font-mono);
   font-weight: var(--nd-weight-semibold);
   white-space: nowrap;
-}
-
-.nd-play-story-thread > .nd-quick-edit-menu {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 3;
 }
 
 /* Section group headers: colored tick + label + hairline divider. */

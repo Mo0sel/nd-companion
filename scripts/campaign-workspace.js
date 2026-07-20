@@ -771,7 +771,7 @@ export class CampaignWorkspace {
         document.createTextNode(thread.title?.trim() || "Untitled Story Thread")
       );
 
-      const status = QuickEdit.badge(thread.status, {
+      const status = QuickEdit.statusDot(thread.status, {
         kind: "storyThread",
         id: thread.id,
         field: "status"
@@ -792,11 +792,6 @@ export class CampaignWorkspace {
       menu.append(menuToggle, menuContent);
 
       header.append(toggle, threadDot, button, status, menu);
-      QuickEdit.mount(header, {
-        kind: "storyThread",
-        id: thread.id,
-        fields: ["status", "currentState"]
-      });
 
       const children = document.createElement("div");
       children.className = "nd-explorer-thread__children";
@@ -845,47 +840,37 @@ export class CampaignWorkspace {
     open.replaceChildren();
     open.append(document.createTextNode(entry.title?.trim() || "Untitled Quest"));
 
-    const status = QuickEdit.badge(entry.status, {
+    const status = QuickEdit.statusDot(entry.status, {
       kind: "questEntry",
       id: entry.id,
       field: "status"
     });
 
-    const state = document.createElement("span");
-    state.className = "nd-explorer-quest__state";
-    state.classList.toggle("is-live", live);
-    state.textContent = live ? "● LIVE" : "";
+    const menu = document.createElement("details");
+    menu.className = "nd-explorer-menu";
+    const menuToggle = document.createElement("summary");
+    menuToggle.setAttribute("aria-label", "Quest actions");
+    menuToggle.textContent = "⋯";
+    const menuContent = document.createElement("div");
+    menuContent.className = "nd-explorer-menu__content";
 
     const playAction = document.createElement("button");
     playAction.type = "button";
-    playAction.className = "nd-explorer-quest__action";
     if (loaded) {
       playAction.dataset.unloadStoryEntry = entry.id;
-      playAction.title = "Remove from Play";
-      playAction.setAttribute("aria-label", "Remove from Play");
-      playAction.textContent = "✕";
-      playAction.classList.add("nd-explorer-quest__unload");
+      playAction.textContent = "Remove from Play";
     } else {
       playAction.dataset.explorerLoadEntry = entry.id;
-      playAction.title = "Load into Play";
-      playAction.setAttribute("aria-label", "Load into Play");
-      playAction.textContent = "▶";
+      playAction.textContent = "Load into Play";
     }
-
     const remove = document.createElement("button");
     remove.type = "button";
-    remove.className = "nd-explorer-quest__action nd-explorer-quest__delete";
     remove.dataset.deleteStoryEntry = entry.id;
-    remove.title = "Delete Quest";
-    remove.setAttribute("aria-label", "Delete Quest");
-    remove.textContent = "×";
+    remove.textContent = "Delete Quest";
+    menuContent.append(playAction, remove);
+    menu.append(menuToggle, menuContent);
 
-    row.append(questDot, open, status, state, playAction, remove);
-    QuickEdit.mount(row, {
-      kind: "questEntry",
-      id: entry.id,
-      fields: ["status", "currentStatus"]
-    });
+    row.append(questDot, open, status, menu);
     return row;
   }
 
@@ -945,12 +930,6 @@ export class CampaignWorkspace {
         showHeader: false
       }
     );
-
-    QuickEdit.mount(view, {
-      kind: "storyThread",
-      id: thread.id,
-      fields: ["status", "currentState"]
-    });
   }
 
   static #storyQuestRow(entry) {
@@ -961,7 +940,7 @@ export class CampaignWorkspace {
     const title = document.createElement("strong");
     title.textContent = entry.title?.trim() || "Untitled Quest";
 
-    const status = QuickEdit.badge(entry.status, {
+    const status = QuickEdit.statusDot(entry.status, {
       kind: "questEntry",
       id: entry.id,
       field: "status"
@@ -979,11 +958,6 @@ export class CampaignWorkspace {
     remove.textContent = "Delete";
 
     row.append(title, status, open, remove);
-    QuickEdit.mount(row, {
-      kind: "questEntry",
-      id: entry.id,
-      fields: ["status", "currentStatus"]
-    });
     return row;
   }
 
@@ -1027,11 +1001,6 @@ export class CampaignWorkspace {
         field: "reputation"
       });
       row.append(dot, button, reputation);
-      QuickEdit.mount(row, {
-        kind: "faction",
-        id: faction.id,
-        fields: ["reputation", "currentStatus"]
-      });
       list.append(row);
     }
   }
@@ -1110,12 +1079,6 @@ export class CampaignWorkspace {
         sanitize: RichText.sanitize
       });
     }
-
-    QuickEdit.mount(view, {
-      kind: "faction",
-      id: faction.id,
-      fields: ["reputation", "currentStatus"]
-    });
   }
 
   static #factionObjectiveElement(objective) {
@@ -1275,11 +1238,6 @@ export class CampaignWorkspace {
         button.textContent = entity.name;
 
         row.append(dot, button);
-        QuickEdit.mount(row, {
-          kind: entityKind,
-          id: entity.uuid,
-          fields: ["currentStatus"]
-        });
         list.append(row);
       }
     }
@@ -1357,12 +1315,6 @@ export class CampaignWorkspace {
       view.querySelector("[data-context-panel=\"entity\"]"),
       ContextEngine.getContext({ kind: entity.kind, id: entity.uuid })
     );
-    const entityKind = entity.kind === "scene" ? "location" : entity.kind;
-    QuickEdit.mount(view, {
-      kind: entityKind,
-      id: entity.uuid,
-      fields: ["currentStatus"]
-    });
   }
 
   static #paintMemoryList(panel) {
@@ -1435,7 +1387,7 @@ export class CampaignWorkspace {
     details.open = entry.id === CampaignWorkspace.#openEntryId;
 
     const summary = document.createElement("summary");
-    const status = QuickEdit.badge(entry.status, {
+    const status = QuickEdit.statusDot(entry.status, {
       kind: "questEntry",
       id: entry.id,
       field: "status"
@@ -1524,11 +1476,6 @@ export class CampaignWorkspace {
     );
 
     details.append(summary, body);
-    QuickEdit.mount(details, {
-      kind: "questEntry",
-      id: entry.id,
-      fields: ["status", "currentStatus"]
-    });
     return details;
   }
 

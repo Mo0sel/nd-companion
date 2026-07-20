@@ -24,6 +24,7 @@ export class QuickEdit {
 
   /**
    * Clickable status / reputation badge that cycles on click.
+   * Prefer {@link QuickEdit.statusDot} in dense lists.
    * @param {string} value
    * @param {{
    *   kind: string,
@@ -47,70 +48,41 @@ export class QuickEdit {
   }
 
   /**
-   * Compact Quick Edit panel on an entity card.
-   * @param {HTMLElement} host
+   * Compact circular status indicator (Explorer / dense lists).
+   * @param {string} value
    * @param {{
    *   kind: string,
    *   id: string,
-   *   fields: Array<"currentState"|"currentStatus"|"status"|"reputation">,
-   *   placement?: "overlay"|"menu"
-   * }} config
+   *   field?: "status",
+   *   className?: string
+   * }} options
    */
-  static mount(host, config) {
-    if (!(host instanceof HTMLElement) || !config?.kind || !config?.id) return;
-    host.classList.add("nd-quick-edit-host");
-    const previous = host.querySelector(":scope > .nd-quick-edit, :scope > .nd-quick-edit-menu");
-    if (previous instanceof HTMLElement) {
-      previous.querySelectorAll(".nd-quick-edit__editor").forEach((editor) => {
-        if (editor instanceof HTMLElement) LiveNotes.detach(editor);
-      });
-      previous.remove();
-    }
+  static statusDot(value, options) {
+    const status = String(value || "").trim() || (
+      options.kind === "questEntry" ? "PLANNED" : "ACTIVE"
+    );
+    const meta = QuickEdit.#statusDotMeta(options.kind, status);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = options.className ?? "nd-status-dot nd-quick-cycle";
+    button.dataset.quickCycle = options.field ?? "status";
+    button.dataset.quickKind = options.kind;
+    button.dataset.quickId = options.id;
+    button.dataset.status = status;
+    button.textContent = meta.letter;
+    button.title = meta.label;
+    button.setAttribute("aria-label", `${meta.label}. Click to cycle status.`);
+    return button;
+  }
 
-    const body = document.createElement("div");
-    body.className = "nd-quick-edit__body";
-    body.dataset.quickEditBody = "";
-    for (const field of config.fields ?? []) {
-      body.append(QuickEdit.#fieldControl(config.kind, config.id, field));
-    }
-
-    if (config.placement === "menu") {
-      const menu = document.createElement("details");
-      menu.className = "nd-quick-edit-menu";
-      menu.dataset.quickEdit = "";
-      menu.dataset.quickKind = config.kind;
-      menu.dataset.quickId = config.id;
-
-      const summary = document.createElement("summary");
-      summary.className = "nd-quick-edit-menu__toggle";
-      summary.setAttribute("aria-label", "Quick Edit");
-      summary.title = "Quick Edit";
-      summary.textContent = "⋮";
-
-      body.hidden = false;
-      body.classList.add("nd-quick-edit__body--menu");
-      menu.append(summary, body);
-      host.append(menu);
-      return;
-    }
-
-    const panel = document.createElement("div");
-    panel.className = "nd-quick-edit";
-    panel.dataset.quickEdit = "";
-    panel.dataset.quickKind = config.kind;
-    panel.dataset.quickId = config.id;
-
-    const toggle = document.createElement("button");
-    toggle.type = "button";
-    toggle.className = "nd-quick-edit__toggle";
-    toggle.dataset.quickEditToggle = "";
-    toggle.textContent = "Quick Edit";
-    toggle.setAttribute("aria-expanded", "false");
-    panel.append(toggle);
-
-    body.hidden = true;
-    panel.append(body);
-    host.append(panel);
+  /**
+   * Removed in Sprint 40.2 — floating Quick Edit blocked list navigation.
+   * Editing happens by opening the entity.
+   * @param {HTMLElement} _host
+   * @param {object} [_config]
+   */
+  static mount(_host, _config) {
+    // Intentionally empty.
   }
 
   /**
@@ -282,8 +254,35 @@ export class QuickEdit {
     const ok = await QuickEdit.#applyCycle(kind, id, field, next);
     if (!ok) return;
     badge.dataset.status = next;
-    badge.textContent = next;
+    if (badge.classList.contains("nd-status-dot")) {
+      const meta = QuickEdit.#statusDotMeta(kind, next);
+      badge.textContent = meta.letter;
+      badge.title = meta.label;
+      badge.setAttribute("aria-label", `${meta.label}. Click to cycle status.`);
+    } else {
+      badge.textContent = next;
+    }
     options.onRefresh?.();
+  }
+
+  /**
+   * @param {string} kind
+   * @param {string} status
+   * @returns {{ letter: string, label: string }}
+   */
+  static #statusDotMeta(kind, status) {
+    if (kind === "questEntry") {
+      if (status === "ACTIVE") return { letter: "A", label: "Active" };
+      if (status === "COMPLETED") return { letter: "C", label: "Completed" };
+      return { letter: "P", label: "Planned" };
+    }
+    if (kind === "storyThread") {
+      if (status === "DORMANT") return { letter: "D", label: "Dormant" };
+      if (status === "RESOLVED") return { letter: "C", label: "Resolved" };
+      if (status === "HIDDEN") return { letter: "H", label: "Hidden" };
+      return { letter: "A", label: "Active" };
+    }
+    return { letter: String(status || "?").slice(0, 1).toUpperCase(), label: String(status || "Status") };
   }
 
   static async #onFieldSave(field, options) {
