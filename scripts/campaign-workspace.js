@@ -1279,6 +1279,7 @@ export class CampaignWorkspace {
   static #paintEntityList(panel) {
     const list = panel.querySelector("[data-campaign-entity-list]");
     const heading = panel.querySelector("[data-campaign-entity-heading]");
+    const factionBlock = panel.querySelector("[data-campaign-actor-factions]");
     if (!list || !CampaignWorkspace.#entityKind) return;
 
     const labels = { actor: "Actors", scene: "Locations", item: "Items" };
@@ -1292,26 +1293,71 @@ export class CampaignWorkspace {
       empty.className = "nd-quest-sidebar__empty";
       empty.textContent = "None";
       list.append(empty);
+    } else {
+      for (const entity of entities) {
+        const row = document.createElement("div");
+        row.className = "nd-quest-sidebar__quest nd-entity-nav-row";
+        row.classList.toggle("is-active", entity.uuid === CampaignWorkspace.#entityId);
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "nd-entity-nav-row__name";
+        button.dataset.campaignEntityId = entity.uuid;
+        button.textContent = entity.name;
+
+        const entityKind = entity.kind === "scene" ? "location" : entity.kind;
+        row.append(button);
+        QuickEdit.mount(row, {
+          kind: entityKind,
+          id: entity.uuid,
+          fields: ["currentStatus"]
+        });
+        list.append(row);
+      }
+    }
+
+    if (factionBlock instanceof HTMLElement) {
+      const showFactions = CampaignWorkspace.#section === "actors";
+      factionBlock.hidden = !showFactions;
+      if (showFactions) CampaignWorkspace.#paintActorFactionList(panel);
+    }
+  }
+
+  static #paintActorFactionList(panel) {
+    const list = panel.querySelector("[data-campaign-actor-faction-list]");
+    if (!(list instanceof HTMLElement)) return;
+    list.replaceChildren();
+    const factions = FactionService.list()
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name));
+    if (!factions.length) {
+      const empty = document.createElement("div");
+      empty.className = "nd-quest-sidebar__empty";
+      empty.textContent = "No Factions";
+      list.append(empty);
       return;
     }
-    for (const entity of entities) {
+    for (const faction of factions) {
       const row = document.createElement("div");
-      row.className = "nd-quest-sidebar__quest nd-entity-nav-row";
-      row.classList.toggle("is-active", entity.uuid === CampaignWorkspace.#entityId);
+      row.className = "nd-quest-sidebar__quest nd-faction-nav-row";
 
       const button = document.createElement("button");
       button.type = "button";
-      button.className = "nd-entity-nav-row__name";
-      button.dataset.campaignEntityId = entity.uuid;
-      button.textContent = entity.name;
+      button.className = "nd-faction-nav-row__name";
+      button.dataset.factionNavId = faction.id;
+      button.textContent = faction.name?.trim() || "Untitled Faction";
 
-      const entityKind = entity.kind === "scene" ? "location" : entity.kind;
-      row.append(button);
-      QuickEdit.mount(row, {
-        kind: entityKind,
-        id: entity.uuid,
-        fields: ["currentStatus"]
+      const type = document.createElement("span");
+      type.className = "nd-rel-type";
+      type.dataset.relType = "faction";
+      type.textContent = "Faction";
+
+      const reputation = QuickEdit.badge(faction.playerReputation, {
+        kind: "faction",
+        id: faction.id,
+        field: "reputation"
       });
+      row.append(type, button, reputation);
       list.append(row);
     }
   }

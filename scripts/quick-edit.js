@@ -7,7 +7,6 @@ import { CompanionStorage } from "./storage.js";
 import { ContextEngine } from "./context-engine.js";
 import { FactionService } from "./faction-service.js";
 import { LiveNotes } from "./live-notes.js";
-import { MentionProvider } from "./mention-provider.js";
 import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
 import { RichText } from "./rich-text.js";
@@ -120,14 +119,6 @@ export class QuickEdit {
           event.preventDefault();
           event.stopPropagation();
           void QuickEdit.#onCycle(cycle, options);
-          return;
-        }
-
-        const addRel = target.closest("[data-quick-add-relationship]");
-        if (addRel) {
-          event.preventDefault();
-          event.stopPropagation();
-          void QuickEdit.#onAddRelationship(addRel.closest("[data-relationship-explorer]"), options);
         }
       },
       { signal: controller.signal }
@@ -169,30 +160,34 @@ export class QuickEdit {
   }
 
   /**
-   * Options for the Relationship Explorer entity picker.
-   * @returns {{ value: string, label: string, kind: string, id: string }[]}
+   * @param {{ kind: string, id: string }} owner
+   * @param {{ kind: string, id: string }} related
    */
-  static pickerOptions() {
-    const options = [];
-    for (const group of MentionProvider.search("", 40)) {
-      for (const entry of group.entries) {
-        const kind = entry.kind === "scene"
-          ? "location"
-          : entry.kind === "beat"
-            ? "questEntry"
-            : entry.kind;
-        if (kind === "session" || kind === "quest") continue;
-        const id = entry.uuid || entry.id;
-        if (!id) continue;
-        options.push({
-          value: `${kind}:${id}`,
-          label: `${group.label}: ${entry.name}`,
-          kind,
-          id
-        });
-      }
+  static canRemoveRelationship(owner, related) {
+    if (!owner?.kind || !owner?.id || !related?.kind || !related?.id) return false;
+    return Boolean(
+      QuickEdit.#relationshipField(owner.kind, related.kind) ||
+      QuickEdit.#relationshipField(related.kind, owner.kind)
+    );
+  }
+
+  /**
+   * @param {{ kind: string, id: string }} owner
+   * @param {{ kind: string, id: string }} related
+   * @returns {Promise<boolean>}
+   */
+  static async removeRelationship(owner, related) {
+    if (!QuickEdit.canRemoveRelationship(owner, related)) return false;
+
+    const directField = QuickEdit.#relationshipField(owner.kind, related.kind);
+    if (directField) {
+      return QuickEdit.#removeFromField(owner.kind, owner.id, directField, related.id);
     }
-    return options.sort((a, b) => a.label.localeCompare(b.label));
+    const reverseField = QuickEdit.#relationshipField(related.kind, owner.kind);
+    if (reverseField) {
+      return QuickEdit.#removeFromField(related.kind, related.id, reverseField, owner.id);
+    }
+    return false;
   }
 
   static #togglePanel(panel) {
@@ -234,28 +229,6 @@ export class QuickEdit {
       : String(field.value ?? "");
     const ok = await QuickEdit.#applyField(kind, id, name, value);
     if (ok) options.onRefresh?.();
-  }
-
-  static async #onAddRelationship(explorer, options) {
-    if (!(explorer instanceof HTMLElement)) return;
-    const select = explorer.querySelector("[data-quick-relationship-select]");
-    if (!(select instanceof HTMLSelectElement) || !select.value) return;
-    const ownerKind = explorer.dataset.relationshipOwnerKind;
-    const ownerId = explorer.dataset.relationshipOwnerId;
-    if (!ownerKind || !ownerId) return;
-    const [kind, ...rest] = select.value.split(":");
-    const id = rest.join(":");
-    if (!kind || !id) return;
-    const ok = await QuickEdit.addRelationship(
-      { kind: ownerKind, id: ownerId },
-      { kind, id }
-    );
-    if (!ok) {
-      ui.notifications?.warn("Could not add that relationship.");
-      return;
-    }
-    select.value = "";
-    options.onRefresh?.();
   }
 
   static #nextValue(kind, field, current) {
@@ -380,33 +353,74 @@ export class QuickEdit {
    * @returns {Record<string, string[]>|null}
    */
   static #relationshipPatch(ownerKind, related) {
-    const relatedKind = related.kind === "scene" ? "location" : related.kind;
-    const id = related.id;
+    const field = QuickEdit.#relationshipField(ownerKind, related.kind);
+    if (!field) return null;
+    return { [field]: [related.id] };
+  }
+
+  /**
+   * @param {string} ownerKind
+   * @param {string} relatedKind
+   * @returns {string|null}
+   */
+  static #relationshipField(ownerKind, relatedKind) {
+    const kind = relatedKind === "scene" ? "location" : relatedKind;
     if (ownerKind === "storyThread") {
-      if (relatedKind === "actor") return { relatedActorIds: [id] };
-      if (relatedKind === "location") return { relatedLocationIds: [id] };
-      if (relatedKind === "item") return { relatedItemIds: [id] };
-      if (relatedKind === "quest" || relatedKind === "questEntry") {
-        return relatedKind === "quest" ? { relatedQuestIds: [id] } : null;
-      }
-      if (relatedKind === "session") return { relatedSessionIds: [id] };
+      if (kind === "actor") return "relatedActorIds";
+      if (kind === "location") return "relatedLocationIds";
+      if (kind === "item") return "relatedItemIds";
+      if (kind === "quest") return "relatedQuestIds";
+      if (kind === "session") return "relatedSessionIds";
+      return null;
     }
     if (ownerKind === "questEntry") {
-      if (relatedKind === "actor") return { relatedCharacterIds: [id] };
-      if (relatedKind === "location") return { relatedLocationIds: [id] };
-      if (relatedKind === "item") return { relatedItemIds: [id] };
-      if (relatedKind === "questEntry") return { relatedBeatIds: [id] };
+      if (kind === "actor") return "relatedCharacterIds";
+      if (kind === "location") return "relatedLocationIds";
+      if (kind === "item") return "relatedItemIds";
+      if (kind === "questEntry") return "relatedBeatIds";
+      return null;
     }
     if (ownerKind === "faction") {
-      if (relatedKind === "actor") return { relatedActorIds: [id] };
-      if (relatedKind === "storyThread") return { relatedStoryThreadIds: [id] };
-      if (relatedKind === "location") return { relatedLocationIds: [id] };
-      if (relatedKind === "item") return { relatedItemIds: [id] };
-      if (relatedKind === "quest") return { relatedQuestIds: [id] };
-      if (relatedKind === "faction") return { relatedFactionIds: [id] };
-      if (relatedKind === "session") return { relatedSessionIds: [id] };
+      if (kind === "actor") return "relatedActorIds";
+      if (kind === "storyThread") return "relatedStoryThreadIds";
+      if (kind === "location") return "relatedLocationIds";
+      if (kind === "item") return "relatedItemIds";
+      if (kind === "quest") return "relatedQuestIds";
+      if (kind === "faction") return "relatedFactionIds";
+      if (kind === "session") return "relatedSessionIds";
+      return null;
     }
     return null;
+  }
+
+  static async #removeFromField(kind, id, field, relatedId) {
+    if (kind === "storyThread") {
+      const thread = StoryThreadService.getById(id);
+      if (!thread || !Array.isArray(thread[field])) return false;
+      if (!thread[field].includes(relatedId)) return false;
+      return Boolean(await StoryThreadService.update(id, {
+        [field]: thread[field].filter((value) => value !== relatedId)
+      }));
+    }
+    if (kind === "questEntry") {
+      const entry = QuestEntryService.getById(id);
+      if (!entry || !Array.isArray(entry[field])) return false;
+      if (!entry[field].includes(relatedId)) return false;
+      const updated = await QuestEntryService.update(id, {
+        [field]: entry[field].filter((value) => value !== relatedId)
+      });
+      if (updated) await QuickEdit.#refreshPlayIfLoaded(id);
+      return Boolean(updated);
+    }
+    if (kind === "faction") {
+      const faction = FactionService.getById(id);
+      if (!faction || !Array.isArray(faction[field])) return false;
+      if (!faction[field].includes(relatedId)) return false;
+      return Boolean(await FactionService.update(id, {
+        [field]: faction[field].filter((value) => value !== relatedId)
+      }));
+    }
+    return false;
   }
 
   static async #applyRelationshipPatch(kind, id, patch) {

@@ -1,6 +1,4 @@
-import { CampaignActivityPanel } from "./campaign-activity-panel.js";
 import { EntityRegistry } from "./entity-registry.js";
-import { FactionService } from "./faction-service.js";
 import { LiveNotes } from "./live-notes.js";
 import { Navigation } from "./navigation.js";
 import { PlaybookEntities } from "./playbook-entities.js";
@@ -214,17 +212,6 @@ export class Playbook {
     Playbook.#attachInlineEditors(root, snapshot);
     Playbook.#paintSessionNpcs(root, snapshot);
     Playbook.#paintStoryThreads(root);
-    Playbook.#paintFactions(root);
-    Playbook.#paintActivity(root);
-  }
-
-  static #paintActivity(root) {
-    const container = root.querySelector("[data-play-activity] [data-campaign-activity]");
-    if (!(container instanceof HTMLElement)) return;
-    CampaignActivityPanel.paint(container, {
-      limit: Number(container.dataset.activityLimit) || 10,
-      compact: true
-    });
   }
 
   static #paintStoryThreads(root) {
@@ -239,32 +226,69 @@ export class Playbook {
     list.replaceChildren();
     if (count) count.textContent = String(threads.length);
     for (const thread of threads) {
-      const card = document.createElement("div");
-      card.className = "nd-play-story-thread nd-quick-edit-host";
-      card.dataset.playStoryThreadId = thread.id;
+      const quests = QuestEntryService.listForStoryThread(thread.id);
+      const completed = quests.filter((entry) => entry.status === "COMPLETED").length;
+      const total = quests.length;
+      const progress = total ? Math.round((completed / total) * 100) : 0;
+
+      const threadCard = document.createElement("article");
+      threadCard.className = "nd-play-story-thread nd-quick-edit-host";
+      threadCard.dataset.playStoryThreadId = thread.id;
 
       const open = document.createElement("button");
       open.type = "button";
       open.className = "nd-play-story-thread__open";
       open.dataset.playStoryThreadId = thread.id;
+
+      const head = document.createElement("div");
+      head.className = "nd-play-story-thread__head";
       const title = document.createElement("strong");
+      title.className = "nd-play-story-thread__title";
       title.textContent = thread.title?.trim() || "Untitled Story Thread";
-      const state = document.createElement("span");
-      state.textContent = RichText.plainText(thread.currentState ?? "") || "No current state";
-      open.append(title, state);
+      const active = document.createElement("span");
+      active.className = "nd-play-story-thread__active";
+      active.textContent = "Active";
+      head.append(title, active);
+
+      const state = document.createElement("p");
+      state.className = "nd-play-story-thread__state";
+      state.textContent = RichText.plainText(thread.currentState ?? "") || "No current state set.";
+
+      const meta = document.createElement("div");
+      meta.className = "nd-play-story-thread__meta";
+      const questCount = document.createElement("span");
+      questCount.className = "nd-play-story-thread__quests";
+      questCount.textContent = total === 1 ? "1 linked Quest" : `${total} linked Quests`;
+      meta.append(questCount);
+
+      if (total > 0) {
+        const progressWrap = document.createElement("div");
+        progressWrap.className = "nd-play-story-thread__progress";
+        progressWrap.title = `${completed} of ${total} Quests completed`;
+        const bar = document.createElement("span");
+        bar.className = "nd-play-story-thread__progress-bar";
+        bar.style.width = `${progress}%`;
+        const progressLabel = document.createElement("span");
+        progressLabel.className = "nd-play-story-thread__progress-label";
+        progressLabel.textContent = `${completed}/${total}`;
+        progressWrap.append(bar);
+        meta.append(progressWrap, progressLabel);
+      }
+
+      open.append(head, state, meta);
 
       const status = QuickEdit.badge(thread.status, {
         kind: "storyThread",
         id: thread.id,
         field: "status"
       });
-      card.append(open, status);
-      QuickEdit.mount(card, {
+      threadCard.append(open, status);
+      QuickEdit.mount(threadCard, {
         kind: "storyThread",
         id: thread.id,
         fields: ["status", "currentState"]
       });
-      list.append(card);
+      list.append(threadCard);
     }
   }
 
@@ -302,45 +326,6 @@ export class Playbook {
         ));
       }
       beat.disabled = beats.length === 0;
-    }
-  }
-
-  static #paintFactions(root) {
-    const card = root.querySelector("[data-play-factions]");
-    const list = root.querySelector("[data-play-faction-list]");
-    const count = root.querySelector("[data-play-faction-count]");
-    if (!(card instanceof HTMLElement) || !(list instanceof HTMLElement)) return;
-    const factions = FactionService.list().sort((a, b) => a.name.localeCompare(b.name));
-    card.hidden = factions.length === 0;
-    list.replaceChildren();
-    if (count) count.textContent = String(factions.length);
-    for (const faction of factions) {
-      const card = document.createElement("div");
-      card.className = "nd-play-faction nd-quick-edit-host";
-      card.dataset.playFactionId = faction.id;
-
-      const open = document.createElement("button");
-      open.type = "button";
-      open.className = "nd-play-faction__open";
-      open.dataset.playFactionId = faction.id;
-      const name = document.createElement("strong");
-      name.textContent = faction.name?.trim() || "Untitled Faction";
-      const status = document.createElement("span");
-      status.textContent = RichText.plainText(faction.currentStatus ?? "") || "Unknown";
-      open.append(name, status);
-
-      const reputation = QuickEdit.badge(faction.playerReputation, {
-        kind: "faction",
-        id: faction.id,
-        field: "reputation"
-      });
-      card.append(open, reputation);
-      QuickEdit.mount(card, {
-        kind: "faction",
-        id: faction.id,
-        fields: ["reputation", "currentStatus"]
-      });
-      list.append(card);
     }
   }
 
@@ -669,21 +654,6 @@ export class Playbook {
         if (storyThread) {
           const id = storyThread.getAttribute("data-play-story-thread-id");
           if (id) void Promise.resolve(options.onOpenStoryThread?.(id));
-          return;
-        }
-
-        const faction = target.closest(".nd-play-faction__open[data-play-faction-id]");
-        if (faction) {
-          const id = faction.getAttribute("data-play-faction-id");
-          if (id) void Promise.resolve(options.onOpenFaction?.(id));
-          return;
-        }
-
-        const activityOpen = target.closest("[data-activity-open]");
-        if (activityOpen) {
-          const kind = activityOpen.getAttribute("data-activity-entity-kind");
-          const id = activityOpen.getAttribute("data-activity-entity-id");
-          if (kind && id) void Promise.resolve(options.onOpenActivity?.({ kind, id }));
           return;
         }
 

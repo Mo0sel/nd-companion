@@ -434,14 +434,6 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
           this.setWorkspace("campaign");
         }
       },
-      onOpenFaction: (id) => {
-        if (CampaignWorkspace.selectFaction(this.element, id)) {
-          this.setWorkspace("campaign");
-        }
-      },
-      onOpenActivity: (target) => {
-        void this.#openContextTarget(target);
-      },
       onEndSession: async () => {
         const active = SessionService.getActive();
         if (!active) {
@@ -502,7 +494,11 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     RelationshipExplorer.attach(this.element, {
       onBack: () => this.#historyBack(),
       onForward: () => this.#historyForward(),
-      onJump: (index) => this.#historyJump(index)
+      onJump: (index) => this.#historyJump(index),
+      onRefresh: () => {
+        CampaignWorkspace.paint(this.element);
+        CampaignActivityPanel.refreshAll?.();
+      }
     });
     RelationshipExplorer.paintChrome(this.element);
     QuickEdit.attach(this.element, {

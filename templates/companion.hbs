@@ -132,25 +132,6 @@
           <div class="nd-play-story-threads__list" data-play-story-thread-list></div>
         </details>
 
-        <details class="nd-play-factions" data-play-factions hidden open>
-          <summary>
-            <span class="nd-play-card__label">Faction Status</span>
-            <span class="nd-play-story-threads__count" data-play-faction-count></span>
-          </summary>
-          <div class="nd-play-factions__list" data-play-faction-list></div>
-        </details>
-
-        <details class="nd-play-activity" data-play-activity open>
-          <summary>
-            <span class="nd-play-card__label">Recent Campaign Changes</span>
-          </summary>
-          <div
-            data-campaign-activity
-            data-activity-compact
-            data-activity-limit="10"
-          ></div>
-        </details>
-
         {{!-- Scene Flow group --}}
         <h3 class="nd-play-section-title nd-play-section-title--scene-flow">Scene Flow</h3>
         <div class="nd-play-entry-grid nd-play-entry-grid--scene-flow">
@@ -378,6 +359,15 @@
                   <span data-campaign-entity-heading>Actors</span>
                 </div>
                 <div data-campaign-entity-list></div>
+              </div>
+              <div class="nd-quest-sidebar__section" data-campaign-actor-factions hidden>
+                <div class="nd-quest-sidebar__heading">
+                  <span>Factions</span>
+                </div>
+                <p class="nd-quest-sidebar__hint">
+                  Organizations linked to campaign knowledge — open an Actor to manage relationships.
+                </p>
+                <div data-campaign-actor-faction-list></div>
               </div>
             </div>
 
