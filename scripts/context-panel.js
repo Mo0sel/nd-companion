@@ -5,6 +5,8 @@ import { RichText } from "./rich-text.js";
 
 /**
  * Generic renderer for ContextEngine results. It owns no campaign logic.
+ * Section order: Current Status (optional) → Connected Knowledge → History.
+ * Editable DM Notes are rendered separately via DmNotes.
  */
 export class ContextPanel {
   /** @type {WeakMap<HTMLElement, AbortController>} */
@@ -14,7 +16,6 @@ export class ContextPanel {
    * @param {HTMLElement|null} container
    * @param {import("./context-engine.js").ContextResult} context
    * @param {{
-   *   showCampaignMemory?: boolean,
    *   showCurrentStatus?: boolean,
    *   showHeader?: boolean
    * }} [options]
@@ -31,11 +32,10 @@ export class ContextPanel {
 
     const statusKey = ContextEngine.currentStatusKey(context.target);
     const hasStatus = options.showCurrentStatus !== false && Boolean(statusKey);
-    const hasMemory =
-      options.showCampaignMemory !== false && RichText.hasContent(context.campaignMemory);
     const relatedGroups = RelationshipExplorer.groupsFrom(context);
     const hasHistory = Boolean(context.sessions.length);
-    const hasContent = hasStatus || hasHistory || relatedGroups.length || hasMemory || Boolean(context?.target);
+    const hasContent =
+      hasStatus || hasHistory || relatedGroups.length || Boolean(context?.target);
     container.hidden = !hasContent;
     if (!hasContent) return;
 
@@ -46,7 +46,7 @@ export class ContextPanel {
       eyebrow.textContent = "Campaign";
       const title = document.createElement("h3");
       title.className = "nd-hierarchy-group";
-      title.textContent = "DM Notes";
+      title.textContent = "Context";
       header.append(eyebrow, title);
       container.append(header);
     }
@@ -69,6 +69,10 @@ export class ContextPanel {
       });
     }
 
+    const explorer = document.createElement("div");
+    RelationshipExplorer.paint(explorer, context);
+    container.append(explorer);
+
     if (hasHistory) {
       const knowledge = document.createElement("div");
       knowledge.className = "nd-context-panel__knowledge";
@@ -78,19 +82,6 @@ export class ContextPanel {
       const history = ContextPanel.#section("History");
       history.append(ContextPanel.#timeline(context.sessions, context.lastSeen));
       container.append(history);
-    }
-
-    const explorer = document.createElement("div");
-    RelationshipExplorer.paint(explorer, context);
-    container.append(explorer);
-
-    if (hasMemory) {
-      const section = ContextPanel.#section("Campaign Notes");
-      const memory = document.createElement("div");
-      memory.className = "nd-context-panel__memory nd-richtext";
-      memory.innerHTML = RichText.sanitize(context.campaignMemory);
-      section.append(memory);
-      container.append(section);
     }
   }
 

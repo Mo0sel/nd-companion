@@ -386,7 +386,7 @@
 /* Tab bar — design/current App.tsx: full-width tabs, blue-tinted active state */
 .nd-workspace-switcher {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 4px;
   padding: 6px 8px;
   margin: 0;

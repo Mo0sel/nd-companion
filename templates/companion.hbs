@@ -69,13 +69,6 @@
       data-workspace="campaign"
       aria-pressed="false"
     ><span class="nd-workspace-switcher__icon" aria-hidden="true">⬡</span>Campaign</button>
-    <button
-      type="button"
-      class="nd-workspace-switcher__button"
-      data-action="setWorkspace"
-      data-workspace="notes"
-      aria-pressed="false"
-    ><span class="nd-workspace-switcher__icon" aria-hidden="true">◎</span>Actors</button>
   </nav>
 
   <div class="nd-workspace-region">
@@ -454,6 +447,7 @@
               <div data-story-quest-editor></div>
             </section>
 
+            <div data-dm-notes hidden></div>
             <section data-context-panel="storyThread" hidden></section>
           </section>
 
@@ -555,34 +549,29 @@
               </div>
             </section>
 
+            <div data-dm-notes hidden></div>
             <section data-context-panel="faction" hidden></section>
-
-            <section class="nd-faction-section" data-live-notes-root>
-              <header>
-                <div>
-                  <div class="nd-campaign-panel__eyebrow nd-hierarchy-context">Private</div>
-                  <h3 class="nd-hierarchy-group">DM Notes</h3>
-                </div>
-                <span class="nd-live-notes__status" data-live-notes-status hidden></span>
-              </header>
-              <div
-                class="nd-richtext nd-richtext--editor nd-faction-editor"
-                data-faction-notes
-                data-richtext-editor
-                data-placeholder="Private notes about this Faction..."
-                role="textbox"
-                aria-label="Faction DM Notes"
-              ></div>
-            </section>
           </section>
 
-          <section data-campaign-entity-view hidden aria-label="Campaign object history">
+          <section data-campaign-entity-view hidden aria-label="Campaign entity">
             <header class="nd-campaign-panel__header">
               <div class="nd-campaign-panel__headline">
-                <div class="nd-campaign-panel__eyebrow">DM Notes</div>
+                <div class="nd-campaign-panel__eyebrow" data-campaign-entity-kind>Entity</div>
                 <h2 class="nd-hierarchy-primary" data-campaign-entity-title>Object</h2>
               </div>
             </header>
+            <div class="nd-campaign-field nd-campaign-field--notes" data-campaign-entity-overview>
+              <span>Current Status</span>
+              <div
+                class="nd-richtext nd-richtext--editor"
+                data-campaign-entity-current-status
+                data-richtext-editor
+                data-placeholder="Describe the current state..."
+                role="textbox"
+                aria-label="Current Status"
+              ></div>
+            </div>
+            <div data-dm-notes hidden></div>
             <section data-context-panel="entity" hidden></section>
           </section>
 
@@ -675,59 +664,6 @@
         </footer>
       </section>
 
-    </section>
-
-    <section class="nd-workspace" data-workspace-panel="notes" aria-label="Actors workspace" hidden>
-      <div class="nd-actors-grid">
-        <section class="nd-companion-memory-card nd-card" data-companion-memory data-live-notes-root aria-label="DM Notes">
-          <header class="nd-card__header">
-            <span class="nd-card__accent" aria-hidden="true"></span>
-            <h2 class="nd-card__label">DM Notes</h2>
-            <span class="nd-companion-memory-card__actor">
-              <span class="nd-hierarchy-context">Focused Actor</span>
-              <strong class="nd-companion-memory-card__focus nd-hierarchy-primary" data-focus="name">Party</strong>
-            </span>
-            <span class="nd-live-notes__status" data-live-notes-status hidden></span>
-          </header>
-          <div class="nd-companion-memory-card__body">
-            <p class="nd-companion-memory__empty" data-memory-empty>
-              Select an Actor to view DM Notes.
-            </p>
-            <div class="nd-richtext-toolbar" data-richtext-toolbar data-memory-toolbar role="toolbar" aria-label="DM Notes formatting" hidden>
-              <button type="button" data-richtext-command="bold" aria-label="Bold"><strong>B</strong></button>
-              <button type="button" data-richtext-command="italic" aria-label="Italic"><em>I</em></button>
-              <button type="button" data-richtext-command="underline" aria-label="Underline"><u>U</u></button>
-              <span class="nd-richtext-toolbar__divider" aria-hidden="true"></span>
-              <button type="button" data-richtext-command="heading" data-richtext-value="h2">H2</button>
-              <button type="button" data-richtext-command="heading" data-richtext-value="h3">H3</button>
-              <button type="button" data-richtext-command="list" data-richtext-value="ul">• List</button>
-              <button type="button" data-richtext-command="list" data-richtext-value="ol">1. List</button>
-              <button type="button" data-richtext-command="clear">Clear</button>
-            </div>
-            <div
-              class="nd-card__text nd-live-notes nd-companion-memory-card__editor nd-richtext nd-richtext--editor"
-              data-memory-editor
-              data-richtext-editor
-              data-placeholder="Record everything the Companion permanently knows..."
-              role="textbox"
-              aria-label="DM Notes"
-              hidden
-            ></div>
-            <section data-context-panel="actor" data-context-memory-external hidden></section>
-          </div>
-        </section>
-
-        <section class="nd-reputation-card nd-card" aria-label="Reputation">
-          <header class="nd-card__header">
-            <span class="nd-card__accent" aria-hidden="true"></span>
-            <h2 class="nd-card__label">Reputation</h2>
-          </header>
-          <div class="nd-reputation-card__empty">
-            <strong>No reputation network yet.</strong>
-            <span>Relationships and social connections will appear here in a future update.</span>
-          </div>
-        </section>
-      </div>
     </section>
 
     <template data-removed-prepare-workspace>

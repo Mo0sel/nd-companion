@@ -1,6 +1,8 @@
 import { CampaignMemoryService } from "./campaign-memory-service.js";
+import { CompanionStorage } from "./storage.js";
 import { ContextEngine } from "./context-engine.js";
 import { ContextPanel } from "./context-panel.js";
+import { DmNotes } from "./dm-notes.js";
 import { EntityMentions } from "./entity-mentions.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { FactionService } from "./faction-service.js";
@@ -758,7 +760,7 @@ export class CampaignWorkspace {
 
       const button = document.createElement("button");
       button.type = "button";
-      button.className = "nd-explorer-thread__name";
+      button.className = "nd-explorer-thread__name nd-campaign-list-row__title";
       button.dataset.storyThreadNavId = thread.id;
       button.dataset.entityKind = "storyThread";
       button.classList.toggle(
@@ -834,7 +836,7 @@ export class CampaignWorkspace {
 
     const open = document.createElement("button");
     open.type = "button";
-    open.className = "nd-explorer-quest__name";
+    open.className = "nd-explorer-quest__name nd-campaign-list-row__title";
     open.dataset.questIndexId = entry.id;
     open.dataset.explorerQuestId = entry.id;
     open.replaceChildren();
@@ -878,7 +880,10 @@ export class CampaignWorkspace {
     const view = panel.querySelector("[data-story-thread-view]");
     if (!(view instanceof HTMLElement)) return;
     view.hidden = !thread;
-    if (!thread) return;
+    if (!thread) {
+      DmNotes.paint(view.querySelector("[data-dm-notes]"), { storageKey: null });
+      return;
+    }
 
     view.dataset.storyThreadId = thread.id;
     const title = view.querySelector("[data-story-thread-title]");
@@ -921,11 +926,13 @@ export class CampaignWorkspace {
       if (selected) questEditor.append(CampaignWorkspace.#entryElement(selected));
     }
 
+    DmNotes.paint(view.querySelector("[data-dm-notes]"), {
+      storageKey: `storyThread:${thread.id}`
+    });
     ContextPanel.paint(
       view.querySelector("[data-context-panel=\"storyThread\"]"),
       ContextEngine.getContext({ kind: "storyThread", id: thread.id }),
       {
-        showCampaignMemory: false,
         showCurrentStatus: false,
         showHeader: false
       }
@@ -977,7 +984,7 @@ export class CampaignWorkspace {
     }
     for (const faction of factions) {
       const row = document.createElement("div");
-      row.className = "nd-quest-sidebar__quest nd-faction-nav-row";
+      row.className = "nd-campaign-list-row nd-faction-nav-row";
       row.classList.toggle(
         "is-active",
         CampaignWorkspace.#view === "faction" &&
@@ -985,13 +992,13 @@ export class CampaignWorkspace {
       );
 
       const dot = document.createElement("span");
-      dot.className = "nd-entity-dot";
+      dot.className = "nd-entity-dot nd-campaign-list-row__dot";
       dot.dataset.entityKind = "faction";
       dot.setAttribute("aria-hidden", "true");
 
       const button = document.createElement("button");
       button.type = "button";
-      button.className = "nd-faction-nav-row__name";
+      button.className = "nd-campaign-list-row__title nd-faction-nav-row__name";
       button.dataset.factionNavId = faction.id;
       button.textContent = faction.name?.trim() || "Untitled Faction";
 
@@ -1000,6 +1007,7 @@ export class CampaignWorkspace {
         id: faction.id,
         field: "reputation"
       });
+      reputation.classList.add("nd-campaign-list-row__meta");
       row.append(dot, button, reputation);
       list.append(row);
     }
@@ -1009,7 +1017,10 @@ export class CampaignWorkspace {
     const view = panel.querySelector("[data-faction-view]");
     if (!(view instanceof HTMLElement)) return;
     view.hidden = !faction;
-    if (!faction) return;
+    if (!faction) {
+      DmNotes.paint(view.querySelector("[data-dm-notes]"), { storageKey: null });
+      return;
+    }
 
     view.dataset.factionId = faction.id;
     const name = view.querySelector("[data-faction-name]");
@@ -1061,24 +1072,17 @@ export class CampaignWorkspace {
       }
     }
 
+    DmNotes.paint(view.querySelector("[data-dm-notes]"), {
+      storageKey: `faction:${faction.id}`
+    });
     ContextPanel.paint(
       view.querySelector("[data-context-panel=\"faction\"]"),
       ContextEngine.getContext({ kind: "faction", id: faction.id }),
       {
-        showCampaignMemory: false,
         showCurrentStatus: false,
         showHeader: false
       }
     );
-
-    const notes = view.querySelector("[data-faction-notes]");
-    if (notes instanceof HTMLElement) {
-      LiveNotes.attach(notes, `faction:${faction.id}`, {
-        memory: true,
-        html: true,
-        sanitize: RichText.sanitize
-      });
-    }
   }
 
   static #factionObjectiveElement(objective) {
@@ -1222,18 +1226,18 @@ export class CampaignWorkspace {
     } else {
       for (const entity of entities) {
         const row = document.createElement("div");
-        row.className = "nd-quest-sidebar__quest nd-entity-nav-row";
+        row.className = "nd-campaign-list-row nd-entity-nav-row";
         row.classList.toggle("is-active", entity.uuid === CampaignWorkspace.#entityId);
 
         const entityKind = entity.kind === "scene" ? "location" : entity.kind;
         const dot = document.createElement("span");
-        dot.className = "nd-entity-dot";
+        dot.className = "nd-entity-dot nd-campaign-list-row__dot";
         dot.dataset.entityKind = entityKind;
         dot.setAttribute("aria-hidden", "true");
 
         const button = document.createElement("button");
         button.type = "button";
-        button.className = "nd-entity-nav-row__name";
+        button.className = "nd-campaign-list-row__title nd-entity-nav-row__name";
         button.dataset.campaignEntityId = entity.uuid;
         button.textContent = entity.name;
 
@@ -1265,25 +1269,26 @@ export class CampaignWorkspace {
     }
     for (const faction of factions) {
       const row = document.createElement("div");
-      row.className = "nd-quest-sidebar__quest nd-faction-nav-row";
+      row.className = "nd-campaign-list-row nd-faction-nav-row";
+
+      const dot = document.createElement("span");
+      dot.className = "nd-entity-dot nd-campaign-list-row__dot";
+      dot.dataset.entityKind = "faction";
+      dot.setAttribute("aria-hidden", "true");
 
       const button = document.createElement("button");
       button.type = "button";
-      button.className = "nd-faction-nav-row__name";
+      button.className = "nd-campaign-list-row__title nd-faction-nav-row__name";
       button.dataset.factionNavId = faction.id;
       button.textContent = faction.name?.trim() || "Untitled Faction";
-
-      const type = document.createElement("span");
-      type.className = "nd-rel-type";
-      type.dataset.relType = "faction";
-      type.textContent = "Faction";
 
       const reputation = QuickEdit.badge(faction.playerReputation, {
         kind: "faction",
         id: faction.id,
         field: "reputation"
       });
-      row.append(type, button, reputation);
+      reputation.classList.add("nd-campaign-list-row__meta");
+      row.append(dot, button, reputation);
       list.append(row);
     }
   }
@@ -1293,6 +1298,7 @@ export class CampaignWorkspace {
     if (!(view instanceof HTMLElement)) return;
     if (CampaignWorkspace.#view !== "entity") {
       view.hidden = true;
+      DmNotes.paint(view.querySelector("[data-dm-notes]"), { storageKey: null });
       return;
     }
     const entity = CampaignWorkspace.#entityId
@@ -1304,16 +1310,53 @@ export class CampaignWorkspace {
         CampaignWorkspace.#entityId = null;
       }
       view.hidden = true;
+      DmNotes.paint(view.querySelector("[data-dm-notes]"), { storageKey: null });
       return;
     }
+    const kindLabel = {
+      actor: "Actor",
+      scene: "Location",
+      item: "Item"
+    };
+    const kindEl = view.querySelector("[data-campaign-entity-kind]");
+    if (kindEl) kindEl.textContent = kindLabel[entity.kind] ?? "Entity";
     const title = view.querySelector("[data-campaign-entity-title]");
     if (title) {
       title.replaceChildren();
       title.append(document.createTextNode(entity.name));
     }
+
+    const contextKind = entity.kind === "scene" ? "location" : entity.kind;
+    const statusKey = ContextEngine.currentStatusKey({
+      kind: contextKind,
+      id: entity.uuid
+    });
+    const statusEditor = view.querySelector("[data-campaign-entity-current-status]");
+    const overview = view.querySelector("[data-campaign-entity-overview]");
+    if (overview instanceof HTMLElement) overview.hidden = !statusKey;
+    if (statusEditor instanceof HTMLElement) {
+      if (statusKey) {
+        LiveNotes.attach(statusEditor, statusKey, {
+          memory: true,
+          html: true,
+          sanitize: RichText.sanitize
+        });
+      } else {
+        LiveNotes.detach(statusEditor);
+        statusEditor.innerHTML = "";
+      }
+    }
+
+    DmNotes.paint(view.querySelector("[data-dm-notes]"), {
+      storageKey: `${entity.kind}:${entity.uuid}`
+    });
     ContextPanel.paint(
       view.querySelector("[data-context-panel=\"entity\"]"),
-      ContextEngine.getContext({ kind: entity.kind, id: entity.uuid })
+      ContextEngine.getContext({ kind: entity.kind, id: entity.uuid }),
+      {
+        showCurrentStatus: false,
+        showHeader: false
+      }
     );
   }
 
@@ -1332,20 +1375,26 @@ export class CampaignWorkspace {
     }
 
     for (const record of records) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "nd-quest-sidebar__quest nd-memory-nav";
-      button.dataset.memoryNavId = record.id;
-      button.classList.toggle(
+      const row = document.createElement("button");
+      row.type = "button";
+      row.className = "nd-campaign-list-row nd-memory-nav";
+      row.dataset.memoryNavId = record.id;
+      row.classList.toggle(
         "is-active",
         CampaignWorkspace.#view === "memory" && record.id === CampaignWorkspace.#memoryId
       );
+      const dot = document.createElement("span");
+      dot.className = "nd-entity-dot nd-campaign-list-row__dot";
+      dot.dataset.entityKind = "chronicle";
+      dot.setAttribute("aria-hidden", "true");
       const title = document.createElement("span");
+      title.className = "nd-campaign-list-row__title";
       title.textContent = CampaignMemoryService.label(record);
       const source = document.createElement("small");
+      source.className = "nd-campaign-list-row__meta";
       source.textContent = record.source === "imported" ? "Imported" : "Live";
-      button.append(title, source);
-      list.append(button);
+      row.append(dot, title, source);
+      list.append(row);
     }
   }
 
@@ -1462,6 +1511,11 @@ export class CampaignWorkspace {
     playActions.append(load, remove);
     body.append(playActions);
 
+    const dmNotes = document.createElement("div");
+    dmNotes.dataset.dmNotes = "";
+    body.append(dmNotes);
+    DmNotes.paint(dmNotes, { storageKey: `quest:${entry.id}` });
+
     const entryContext = document.createElement("section");
     entryContext.dataset.contextPanel = "questEntry";
     body.append(entryContext);
@@ -1469,7 +1523,6 @@ export class CampaignWorkspace {
       entryContext,
       ContextEngine.getContext({ kind: "questEntry", id: entry.id }),
       {
-        showCampaignMemory: false,
         showCurrentStatus: false,
         showHeader: false
       }
@@ -1749,7 +1802,7 @@ export class CampaignWorkspace {
     const currentStatus = view.querySelector("[data-faction-current-status]");
     const resources = view.querySelector("[data-faction-resources]");
     const reputation = view.querySelector("[data-faction-reputation]");
-    const notes = view.querySelector("[data-faction-notes]");
+    const dmNotesEditor = view.querySelector("[data-dm-notes-editor]");
     const safeDescription = description instanceof HTMLElement
       ? RichText.sanitize(description.innerHTML)
       : "";
@@ -1766,11 +1819,14 @@ export class CampaignWorkspace {
     const leadershipActorIds = [...view.querySelectorAll("[data-faction-leader-id]")]
       .map((row) => row.getAttribute("data-faction-leader-id"))
       .filter(Boolean);
+    const dmNotesHtml = dmNotesEditor instanceof HTMLElement
+      ? RichText.sanitize(dmNotesEditor.innerHTML)
+      : CompanionStorage.getMemory(`faction:${id}`);
     const mentionHtml = [
       safeDescription,
       safeStatus,
       safeResources,
-      notes instanceof HTMLElement ? RichText.sanitize(notes.innerHTML) : "",
+      dmNotesHtml,
       ...currentObjectives
     ].join("");
     await FactionService.update(id, {

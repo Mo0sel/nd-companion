@@ -22,7 +22,7 @@ import { CompanionStorage } from "./storage.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
-const WORKSPACES = new Set(["play", "campaign", "notes"]);
+const WORKSPACES = new Set(["play", "campaign"]);
 
 const WINDOW_DEFAULT_WIDTH = 1100;
 const WINDOW_DEFAULT_HEIGHT = 780;
@@ -33,7 +33,7 @@ const WINDOW_MIN_HEIGHT = 520;
  * The N&D Companion window.
  */
 export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
-  /** @type {"play"|"campaign"|"notes"} */
+  /** @type {"play"|"campaign"} */
   workspace = "play";
 
   /** @type {boolean} */
@@ -178,6 +178,8 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * @param {"play"|"campaign"|"notes"} workspace
    */
   setWorkspace(workspace) {
+    // Legacy "notes" (Actors) workspace redirects to Campaign.
+    if (workspace === "notes") workspace = "campaign";
     if (!WORKSPACES.has(workspace)) return;
     if (this.element instanceof HTMLElement) {
       if (this.workspace === "campaign") {

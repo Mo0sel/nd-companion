@@ -1,172 +1,44 @@
 /**
- * Companion Memory workspace (internally retains the existing "notes" key).
- * Sprint 28 deviation: the approved ActorsWorkspace design shows an NPC roster,
- * which is not an implemented feature. The existing Companion Memory workflow
- * is preserved and styled with the shared design system instead.
+ * Shared DM Notes component (Campaign entity pages).
  */
 
-[data-workspace-panel="notes"] {
-  padding: var(--nd-space-4) var(--nd-page-x, 20px);
-  overflow-y: auto;
-}
-
-.nd-actors-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.6fr);
-  gap: var(--nd-card-gap);
-  flex: 1;
-  min-height: 0;
-}
-
-.nd-companion-memory-card {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.nd-companion-memory-card__actor {
-  margin-left: auto;
-  display: grid;
-  justify-items: end;
-  min-width: 0;
-}
-
-.nd-companion-memory-card__focus {
-  overflow: hidden;
-  max-width: 220px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.nd-companion-memory-card__actor + .nd-live-notes__status {
-  margin-left: var(--nd-space-2);
-}
-
-.nd-companion-memory-card__body {
+.nd-dm-notes {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  min-height: 0;
-  padding-top: var(--nd-space-2);
-  border-top: 1px solid var(--nd-border);
+  gap: 8px;
+  margin-top: var(--nd-space-3, 12px);
 }
 
-.nd-companion-memory-card__label {
-  margin-bottom: var(--nd-space-2);
-  color: var(--nd-text-3);
-  font-family: var(--nd-font-mono);
-  font-size: var(--nd-text-micro);
-  font-weight: var(--nd-weight-semibold);
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-.nd-companion-memory-card__editor {
-  flex: 1;
-  min-height: 10em;
-  overflow-y: auto;
-}
-
-.nd-companion-memory-card [data-memory-toolbar] {
-  flex-shrink: 0;
-  margin-bottom: var(--nd-space-2);
-}
-
-.nd-companion-memory-card [data-memory-toolbar][hidden] {
+.nd-dm-notes[hidden] {
   display: none !important;
 }
 
-.nd-reputation-card {
-  min-height: 0;
+.nd-dm-notes__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.nd-reputation-card__empty {
-  display: grid;
-  place-content: center;
-  flex: 1;
-  min-height: 180px;
-  padding: var(--nd-space-5);
-  color: var(--nd-text-3);
-  text-align: center;
+.nd-dm-notes__header .nd-hierarchy-group {
+  margin: 0;
 }
 
-.nd-reputation-card__empty strong {
-  margin-bottom: var(--nd-space-2);
+.nd-dm-notes__editor {
+  min-height: 120px;
+  padding: 10px 12px;
   color: var(--nd-text-2);
-}
-
-.nd-reputation-card__empty span {
-  max-width: 30ch;
-  font-size: var(--nd-text-caption);
-  line-height: var(--nd-leading-normal);
-}
-
-.nd-companion-memory-card [data-memory-editor][hidden],
-.nd-companion-memory-card [data-memory-empty][hidden] {
-  display: none !important;
-}
-
-.nd-companion-memory-card .nd-object-history {
-  margin-top: var(--nd-space-4);
-  padding-top: var(--nd-space-4);
-  border-top: 1px solid var(--nd-border);
-}
-
-.nd-companion-memory-card .nd-object-history[hidden] {
-  display: none !important;
-}
-
-.nd-companion-memory-card .nd-object-history__meta {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--nd-space-2);
-  margin: 0 0 var(--nd-space-3);
-}
-
-.nd-companion-memory-card .nd-object-history__meta > div {
-  padding: 8px 10px;
   background: var(--nd-surface-2);
   border: 1px solid var(--nd-border);
   border-radius: var(--nd-radius-md);
 }
 
-.nd-companion-memory-card .nd-object-history__meta dt {
-  margin: 0 0 4px;
+.nd-dm-notes__editor:focus-visible {
+  outline: 1px solid var(--nd-blue-border);
+}
+
+.nd-dm-notes__editor:empty::before {
+  content: attr(data-placeholder);
   color: var(--nd-text-3);
-  font-family: var(--nd-font-mono);
-  font-size: var(--nd-text-micro);
-  font-weight: var(--nd-weight-bold);
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-
-.nd-companion-memory-card .nd-object-history__meta dd {
-  margin: 0;
-  color: var(--nd-text-1);
-  font-size: var(--nd-text-caption);
-}
-
-.nd-companion-memory-card .nd-object-history__list {
-  display: grid;
-  gap: 4px;
-}
-
-.nd-companion-memory-card .nd-object-history__item {
-  padding: 7px 9px;
-  color: var(--nd-text-2);
-  border: 1px solid var(--nd-border);
-  border-radius: var(--nd-radius-md);
-  font-size: var(--nd-text-caption);
-}
-
-@container nd-companion (max-width: 560px) {
-  .nd-actors-grid {
-    grid-template-columns: 1fr;
-    overflow-y: auto;
-  }
-
-  [data-workspace-panel="notes"] {
-    padding-right: 16px;
-    padding-left: 16px;
-  }
+  pointer-events: none;
 }
