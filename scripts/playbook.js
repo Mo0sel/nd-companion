@@ -184,19 +184,19 @@ export class Playbook {
 
     const status = snapshot.status;
     panel.dataset.beatStatus = status;
+    const accent = panel.querySelector("[data-playbook=\"accent\"]");
+    if (accent) accent.dataset.status = status;
 
     const empty = panel.querySelector("[data-play-empty]");
     const content = panel.querySelector("[data-play-content]");
-    const missionBoard = panel.querySelector("[data-play-mission-board]");
     const questContext = panel.querySelector("[data-play-quest-context]");
+    const entryNav = panel.querySelector(".nd-play-entry-nav");
     const hasQuest = snapshot.total > 0;
 
     if (empty instanceof HTMLElement) empty.hidden = hasQuest;
-    if (missionBoard instanceof HTMLElement) {
-      missionBoard.hidden = !hasQuest;
-      missionBoard.dataset.beatStatus = status;
-    }
+    if (questContext instanceof HTMLElement) questContext.hidden = !hasQuest;
     if (content instanceof HTMLElement) content.classList.toggle("is-empty", !hasQuest);
+    if (entryNav instanceof HTMLElement) entryNav.hidden = !hasQuest;
     panel.querySelectorAll(
       ".nd-play-section-title, .nd-play-entry-grid, [data-playbook-field-block=\"npcs\"]"
     ).forEach((el) => {
@@ -216,9 +216,6 @@ export class Playbook {
         threadEl.hidden = true;
         threadEl.textContent = "";
       }
-    }
-    if (missionBoard instanceof HTMLElement) {
-      missionBoard.classList.toggle("has-story-thread", Boolean(ownerThread));
     }
     if (questContext instanceof HTMLElement) {
       questContext.classList.toggle("has-story-thread", Boolean(ownerThread));
@@ -258,6 +255,11 @@ export class Playbook {
 
     Playbook.#paintStatus(panel, hasQuest ? status : "idle");
     Playbook.#paintRunControls(root);
+
+    const prevBtn = panel.querySelector("[data-playbook-nav=\"prev\"]");
+    const nextBtn = panel.querySelector("[data-playbook-nav=\"next\"]");
+    if (prevBtn instanceof HTMLButtonElement) prevBtn.disabled = !snapshot.canPrev;
+    if (nextBtn instanceof HTMLButtonElement) nextBtn.disabled = !snapshot.canNext;
 
     Playbook.#attachInlineEditors(root, snapshot);
     Playbook.#paintSessionNpcs(root, snapshot);
@@ -426,9 +428,9 @@ export class Playbook {
   static #paintStatus(panel, status) {
     const state = panel.querySelector("[data-playbook-state]");
     const value = panel.querySelector("[data-playbook-state-value]");
-    const board = panel.querySelector("[data-play-mission-board]");
+    const accent = panel.querySelector("[data-playbook=\"accent\"]");
     if (state instanceof HTMLElement) state.dataset.state = status;
-    if (board instanceof HTMLElement) board.dataset.beatStatus = status;
+    if (accent instanceof HTMLElement) accent.dataset.status = status;
     if (value) {
       value.textContent = status === "done"
         ? "Completed"
@@ -727,7 +729,12 @@ export class Playbook {
         if (!(target instanceof Element)) return;
 
         const nav = target.closest("[data-playbook-nav]");
-        if (nav) return;
+        if (nav) {
+          const direction = nav.getAttribute("data-playbook-nav");
+          if (direction === "prev") void Playbook.prev();
+          else if (direction === "next") void Playbook.next();
+          return;
+        }
 
         if (target.closest("[data-end-session]")) {
           void Promise.resolve(options.onEndSession?.());

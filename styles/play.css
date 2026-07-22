@@ -313,58 +313,28 @@
   overflow-y: auto;
 }
 
-/* ── Quest context + continuous mission board ────────────────────────────── */
-
-.nd-play-mission-board {
-  position: relative;
-  margin: 0 0 14px;
-  padding: 0 0 12px;
-  border-radius: var(--nd-radius-lg);
-}
-
-.nd-play-mission-board[hidden] {
-  display: none;
-}
-
-.nd-play-mission-board.has-story-thread {
-  padding: 0 12px 14px 16px;
-  background: color-mix(
-    in srgb,
-    var(--nd-entity-story-thread-color) 6%,
-    var(--nd-surface-2)
-  );
-  border: 1px solid color-mix(
-    in srgb,
-    var(--nd-entity-story-thread-color) 28%,
-    var(--nd-border)
-  );
-  box-shadow: inset 3px 0 0 var(--nd-entity-story-thread-color);
-}
-
-.nd-play-mission-board.has-story-thread .nd-play-section-title--scene-flow {
-  margin-top: 10px;
-}
+/* ── Quest context: Story Thread parent + Current Quest ──────────────────── */
 
 .nd-play-quest-context {
   flex-shrink: 0;
-  margin: 0 -12px 0 -16px;
-  padding: 10px 12px 10px 16px;
-  border-bottom: 1px solid color-mix(
-    in srgb,
-    var(--nd-entity-story-thread-color) 18%,
-    var(--nd-border)
-  );
-}
-
-.nd-play-mission-board:not(.has-story-thread) .nd-play-quest-context {
-  margin: 0;
-  padding: 8px 0;
   border-bottom: 1px solid var(--nd-border);
 }
 
-.nd-play-mission-board .nd-play-entry-nav {
-  padding: 0;
-  background: transparent;
+.nd-play-quest-context[hidden] {
+  display: none;
+}
+
+.nd-play-quest-context.has-story-thread .nd-play-entry-nav {
+  background: color-mix(
+    in srgb,
+    var(--nd-entity-story-thread-color) 6%,
+    var(--nd-bg)
+  );
+}
+
+.nd-play-quest-context.has-story-thread .nd-play-entry-nav__accent {
+  background: var(--nd-entity-story-thread-color);
+  opacity: 0.7;
 }
 
 .nd-play-entry-nav__titles {
@@ -394,14 +364,14 @@
   margin-top: 0;
 }
 
-.nd-play-mission-board .nd-play-entry-nav__meta {
+.nd-play-quest-context .nd-play-entry-nav__meta {
   align-items: center;
 }
 
 /* ── Active Story Threads cards ──────────────────────────────────────────── */
 
 .nd-play-story-threads {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   padding: 10px 12px;
   background: var(--nd-surface-2);
   border: 1px solid var(--nd-border);
@@ -459,7 +429,7 @@
   width: 3px;
   border-radius: 0 2px 2px 0;
   background: var(--nd-entity-story-thread-color);
-  opacity: 0.4;
+  opacity: 0.45;
 }
 
 .nd-play-story-thread__open {
@@ -480,16 +450,16 @@
 }
 
 .nd-play-story-thread:hover {
-  border-color: color-mix(in srgb, var(--nd-entity-story-thread-color) 35%, var(--nd-border));
+  border-color: color-mix(in srgb, var(--nd-entity-story-thread-color) 40%, var(--nd-border));
 }
 
 .nd-play-story-thread.is-current {
   background: color-mix(
     in srgb,
-    var(--nd-entity-story-thread-color) 8%,
+    var(--nd-entity-story-thread-color) 10%,
     var(--nd-surface)
   );
-  border-color: color-mix(in srgb, var(--nd-entity-story-thread-color) 40%, var(--nd-border));
+  border-color: color-mix(in srgb, var(--nd-entity-story-thread-color) 55%, var(--nd-border));
 }
 
 .nd-play-story-thread.is-current::before {
