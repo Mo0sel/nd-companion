@@ -99,37 +99,55 @@
         </div>
       </div>
 
-      {{!-- Entry navigation --}}
-      <div class="nd-play-entry-nav" aria-label="Entry navigation">
-        <span class="nd-play-entry-nav__accent" data-playbook="accent" aria-hidden="true"></span>
-        <button type="button" class="nd-button nd-button--nav" data-playbook-nav="prev" aria-label="Previous entry">←</button>
-        <div class="nd-play-entry-nav__meta">
-          <span class="nd-play-entry-nav__counter nd-mono" data-playbook="counter" aria-label="Entry position">
-            <span class="nd-play-entry-nav__counter-current" data-playbook-counter="current">0</span>
-            <span class="nd-play-entry-nav__counter-sep">/</span>
-            <span class="nd-play-entry-nav__counter-total" data-playbook-counter="total">0</span>
-          </span>
-          <span class="nd-play-entry-nav__eyebrow">Current Quest</span>
-          <h2 class="nd-play-entry-nav__title" data-playbook="title"></h2>
-        </div>
-        <button type="button" class="nd-button nd-button--nav" data-playbook-nav="next" aria-label="Next entry">→</button>
-      </div>
-
       <div class="nd-play-empty" data-play-empty hidden>
         <h3>No Quest Loaded</h3>
         <p>Select a Quest from the Campaign Explorer to begin running the session.</p>
       </div>
 
-      {{!-- Scrollable dashboard content --}}
+      {{!-- Scrollable dashboard — Mission Context owns Story Thread → Quest → Beat --}}
       <div class="nd-play-content" data-play-content>
 
-        <details class="nd-play-story-threads" data-play-story-threads hidden open>
-          <summary>
+        <section class="nd-play-mission" data-play-mission hidden aria-label="Mission Context">
+          <header class="nd-play-mission__rail">
             <span class="nd-play-card__label">Active Story Threads</span>
-            <span class="nd-play-story-threads__count" data-play-story-thread-count></span>
-          </summary>
-          <div class="nd-play-story-threads__list" data-play-story-thread-list></div>
-        </details>
+            <span class="nd-play-mission__count" data-play-story-thread-count></span>
+          </header>
+          <div class="nd-play-mission__threads" data-play-story-thread-list></div>
+          <div class="nd-play-mission__shell" data-play-mission-shell>
+            <header class="nd-play-mission__header" data-play-mission-header>
+              <div class="nd-play-mission__hierarchy">
+                <div class="nd-play-mission__step">
+                  <span class="nd-play-mission__eyebrow">Story Thread</span>
+                  <strong class="nd-play-mission__name" data-play-mission-thread>No Story Thread</strong>
+                </div>
+                <span class="nd-play-mission__arrow" aria-hidden="true">↓</span>
+                <div class="nd-play-mission__step">
+                  <span class="nd-play-mission__eyebrow">Current Quest</span>
+                  <strong class="nd-play-mission__name" data-play-mission-quest>—</strong>
+                </div>
+                <span class="nd-play-mission__arrow" aria-hidden="true">↓</span>
+                <div class="nd-play-mission__step">
+                  <span class="nd-play-mission__eyebrow">Current Beat</span>
+                  <strong class="nd-play-mission__name" data-play-mission-beat>—</strong>
+                </div>
+              </div>
+            </header>
+            <div class="nd-play-entry-nav" aria-label="Beat navigation" hidden>
+              <span class="nd-play-entry-nav__accent" data-playbook="accent" aria-hidden="true"></span>
+              <button type="button" class="nd-button nd-button--nav" data-playbook-nav="prev" aria-label="Previous beat">←</button>
+              <div class="nd-play-entry-nav__meta">
+                <span class="nd-play-entry-nav__counter nd-mono" data-playbook="counter" aria-label="Beat position">
+                  <span class="nd-play-entry-nav__counter-current" data-playbook-counter="current">0</span>
+                  <span class="nd-play-entry-nav__counter-sep">/</span>
+                  <span class="nd-play-entry-nav__counter-total" data-playbook-counter="total">0</span>
+                </span>
+                <span class="nd-play-entry-nav__eyebrow">Beat</span>
+                <h2 class="nd-play-entry-nav__title" data-playbook="title"></h2>
+              </div>
+              <button type="button" class="nd-button nd-button--nav" data-playbook-nav="next" aria-label="Next beat">→</button>
+            </div>
+          </div>
+        </section>
 
         {{!-- Scene Flow group --}}
         <h3 class="nd-play-section-title nd-play-section-title--scene-flow">Scene Flow</h3>

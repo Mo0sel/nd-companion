@@ -648,11 +648,6 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
         if (!await SessionService.setActive(id)) return;
         await this.render({ force: true });
       },
-      onOpenStoryThread: (id) => {
-        if (CampaignWorkspace.selectStoryThread(this.element, id)) {
-          this.setWorkspace("campaign");
-        }
-      },
       onEndSession: async () => {
         const active = SessionService.getActive();
         if (!active) {
@@ -702,6 +697,7 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       onOpenBeat: async (index) => {
         const moved = await PlaybookService.setCurrentIndex(index);
         if (!moved) return;
+        Playbook.adoptMissionFromCurrentBeat();
         this.setWorkspace("play");
         Playbook.paint(this.element, Playbook.get());
       }
