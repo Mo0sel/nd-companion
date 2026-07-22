@@ -197,18 +197,6 @@ export class Playbook {
     const panel = root.querySelector("[data-playbook]");
     if (!panel) return;
 
-    const setText = (key, value) => {
-      const el = panel.querySelector(`[data-playbook="${key}"]`);
-      if (el) el.textContent = value ?? "";
-    };
-
-    const setCounter = (current, total) => {
-      const currentEl = panel.querySelector("[data-playbook-counter=\"current\"]");
-      const totalEl = panel.querySelector("[data-playbook-counter=\"total\"]");
-      if (currentEl) currentEl.textContent = String(current);
-      if (totalEl) totalEl.textContent = String(total);
-    };
-
     const setTextField = (key, value, { alwaysVisible = false } = {}) => {
       const field = panel.querySelector(`[data-playbook-field-block="${key}"]`);
       const renderer = panel.querySelector(`[data-playbook="${key}"]`);
@@ -222,19 +210,13 @@ export class Playbook {
 
     const status = snapshot.status;
     panel.dataset.beatStatus = status;
-    const accent = panel.querySelector("[data-playbook=\"accent\"]");
-    if (accent) accent.dataset.status = status;
 
     const empty = panel.querySelector("[data-play-empty]");
     const content = panel.querySelector("[data-play-content]");
-    const questContext = panel.querySelector("[data-play-quest-context]");
-    const entryNav = panel.querySelector(".nd-play-entry-nav");
     const hasQuest = snapshot.total > 0;
 
     if (empty instanceof HTMLElement) empty.hidden = hasQuest;
-    if (questContext instanceof HTMLElement) questContext.hidden = !hasQuest;
     if (content instanceof HTMLElement) content.classList.toggle("is-empty", !hasQuest);
-    if (entryNav instanceof HTMLElement) entryNav.hidden = !hasQuest;
     panel.querySelectorAll(
       ".nd-play-section-title, .nd-play-entry-grid, [data-playbook-field-block=\"npcs\"]"
     ).forEach((el) => {
@@ -242,26 +224,9 @@ export class Playbook {
     });
 
     const ownerThreadId = hasQuest ? (snapshot.beat?.sourceStoryThreadId || "") : "";
-    const ownerThread = ownerThreadId ? StoryThreadService.getById(ownerThreadId) : null;
     if (ownerThreadId) Playbook.#missionStoryThreadId = ownerThreadId;
 
-    const threadEl = panel.querySelector("[data-playbook=\"storyThread\"]");
-    if (threadEl instanceof HTMLElement) {
-      if (ownerThread) {
-        threadEl.hidden = false;
-        threadEl.textContent = ownerThread.title?.trim() || "Untitled Story Thread";
-      } else {
-        threadEl.hidden = true;
-        threadEl.textContent = "";
-      }
-    }
-    if (questContext instanceof HTMLElement) {
-      questContext.classList.toggle("has-story-thread", Boolean(ownerThread));
-    }
-
     if (!hasQuest) {
-      setCounter(0, 0);
-      setText("title", "No Quest Loaded");
       for (const field of [
         "speechNotes",
         "setup",
@@ -275,8 +240,6 @@ export class Playbook {
       }
       Playbook.#paintEntities(panel, null);
     } else {
-      setCounter(snapshot.index + 1, snapshot.total);
-      setText("title", snapshot.beat.title?.trim() || "Untitled Quest");
       for (const field of [
         "speechNotes",
         "setup",
@@ -293,12 +256,6 @@ export class Playbook {
 
     Playbook.#paintStatus(panel, hasQuest ? status : "idle");
     Playbook.#paintRunControls(root);
-
-    const prevBtn = panel.querySelector("[data-playbook-nav=\"prev\"]");
-    const nextBtn = panel.querySelector("[data-playbook-nav=\"next\"]");
-    if (prevBtn instanceof HTMLButtonElement) prevBtn.disabled = !snapshot.canPrev;
-    if (nextBtn instanceof HTMLButtonElement) nextBtn.disabled = !snapshot.canNext;
-
     Playbook.#attachInlineEditors(root, snapshot);
     Playbook.#paintSessionNpcs(root, snapshot);
     const ownerQuestId = hasQuest ? (snapshot.beat?.sourceStoryEntryId || "") : "";
@@ -510,9 +467,7 @@ export class Playbook {
   static #paintStatus(panel, status) {
     const state = panel.querySelector("[data-playbook-state]");
     const value = panel.querySelector("[data-playbook-state-value]");
-    const accent = panel.querySelector("[data-playbook=\"accent\"]");
     if (state instanceof HTMLElement) state.dataset.state = status;
-    if (accent instanceof HTMLElement) accent.dataset.status = status;
     if (value) {
       value.textContent = status === "done"
         ? "Completed"
@@ -809,14 +764,6 @@ export class Playbook {
       (event) => {
         const target = event.target;
         if (!(target instanceof Element)) return;
-
-        const nav = target.closest("[data-playbook-nav]");
-        if (nav) {
-          const direction = nav.getAttribute("data-playbook-nav");
-          if (direction === "prev") void Playbook.prev();
-          else if (direction === "next") void Playbook.next();
-          return;
-        }
 
         if (target.closest("[data-end-session]")) {
           void Promise.resolve(options.onEndSession?.());
