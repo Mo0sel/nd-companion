@@ -115,7 +115,35 @@ export class Playbook {
   }
 
   /**
-   * Play-only: jump to the first loaded Beat for this Story Thread.
+   * Preferred Quest for a Story Thread: ACTIVE, else first by title.
+   * @param {string} storyThreadId
+   * @returns {import("./campaign-document.js").CampaignQuestEntry|null}
+   */
+  static #preferredQuest(storyThreadId) {
+    const quests = QuestEntryService.listForStoryThread(storyThreadId);
+    if (!quests.length) return null;
+    const active = quests.find((quest) => quest.status === "ACTIVE");
+    if (active) return active;
+    return [...quests].sort((a, b) =>
+      (a.title ?? "").localeCompare(b.title ?? "")
+    )[0];
+  }
+
+  /**
+   * Ensure a Quest is in the Play playlist and focus its Beat.
+   * @param {import("./campaign-document.js").CampaignQuestEntry} entry
+   */
+  static async #activateQuest(entry) {
+    if (!entry?.id) return;
+    const indices = await PlaybookService.importStoryEntries([entry]);
+    const index = indices[0];
+    if (typeof index === "number" && index >= 0) {
+      await PlaybookService.setCurrentIndex(index);
+    }
+  }
+
+  /**
+   * Play-only: select a Story Thread and open its preferred Quest.
    * @param {string} storyThreadId
    */
   static async selectMission(storyThreadId) {
@@ -124,14 +152,24 @@ export class Playbook {
     if (!thread || thread.status !== "ACTIVE") return;
 
     Playbook.#missionStoryThreadId = storyThreadId;
-    const beats = PlaybookService.listBeats();
-    const current = PlaybookService.getCurrent();
-    if (current.beat?.sourceStoryThreadId !== storyThreadId) {
-      const index = beats.findIndex(
-        (beat) => beat.sourceStoryThreadId === storyThreadId
-      );
-      if (index >= 0) await PlaybookService.setCurrentIndex(index);
-    }
+    const quest = Playbook.#preferredQuest(storyThreadId);
+    if (quest) await Playbook.#activateQuest(quest);
+    Playbook.refreshOpen();
+  }
+
+  /**
+   * Play-only: load a Quest's Beat and refresh the dashboard.
+   * @param {string} questEntryId
+   */
+  static async selectQuest(questEntryId) {
+    if (!questEntryId) return;
+    const entry = QuestEntryService.getById(questEntryId);
+    if (!entry) return;
+    const thread = StoryThreadService.getById(entry.storyThreadId);
+    if (!thread || thread.status !== "ACTIVE") return;
+
+    Playbook.#missionStoryThreadId = entry.storyThreadId;
+    await Playbook.#activateQuest(entry);
     Playbook.refreshOpen();
   }
 
@@ -263,14 +301,18 @@ export class Playbook {
 
     Playbook.#attachInlineEditors(root, snapshot);
     Playbook.#paintSessionNpcs(root, snapshot);
-    Playbook.#paintStoryThreads(root, ownerThreadId);
+    const ownerQuestId = hasQuest ? (snapshot.beat?.sourceStoryEntryId || "") : "";
+    Playbook.#paintStoryThreads(root, ownerThreadId, ownerQuestId);
   }
 
   /**
+   * Mission launcher: every visible Story Thread lists its Quests.
+   * ST title and Quest rows are independent click targets.
    * @param {HTMLElement} root
    * @param {string} [ownerThreadId]
+   * @param {string} [ownerQuestId]
    */
-  static #paintStoryThreads(root, ownerThreadId = "") {
+  static #paintStoryThreads(root, ownerThreadId = "", ownerQuestId = "") {
     const card = root.querySelector("[data-play-story-threads]");
     const list = root.querySelector("[data-play-story-thread-list]");
     const count = root.querySelector("[data-play-story-thread-count]");
@@ -284,7 +326,9 @@ export class Playbook {
     if (count) count.textContent = String(threads.length);
 
     for (const thread of threads) {
-      const quests = QuestEntryService.listForStoryThread(thread.id);
+      const quests = [...QuestEntryService.listForStoryThread(thread.id)].sort((a, b) =>
+        (a.title ?? "").localeCompare(b.title ?? "")
+      );
       const actorIds = Playbook.#storyThreadActorIds(thread);
       const actors = actorIds
         .map((id) => EntityRegistry.findByUUID(id))
@@ -305,7 +349,7 @@ export class Playbook {
         "aria-label",
         isOwner
           ? `Current Story Thread: ${thread.title?.trim() || "Untitled Story Thread"}`
-          : `Switch to ${thread.title?.trim() || "Untitled Story Thread"}`
+          : `Open ${thread.title?.trim() || "Untitled Story Thread"}`
       );
       open.setAttribute("aria-pressed", isOwner ? "true" : "false");
 
@@ -353,14 +397,52 @@ export class Playbook {
       }
       meta.append(actorRow);
 
-      const questCount = document.createElement("span");
-      questCount.className = "nd-play-story-thread__quests";
-      questCount.textContent =
-        quests.length === 1 ? "1 Quest" : `${quests.length} Quests`;
-      meta.append(questCount);
-
       open.append(head, state, meta);
-      threadCard.append(open);
+
+      const questList = document.createElement("div");
+      questList.className = "nd-play-story-thread__quest-list";
+      questList.setAttribute("role", "list");
+
+      if (!quests.length) {
+        const emptyQuests = document.createElement("p");
+        emptyQuests.className = "nd-play-story-thread__quests-empty";
+        emptyQuests.textContent = "No Quests";
+        questList.append(emptyQuests);
+      } else {
+        for (const quest of quests) {
+          const isCurrentQuest =
+            Boolean(ownerQuestId) && quest.id === ownerQuestId;
+          const questBtn = document.createElement("button");
+          questBtn.type = "button";
+          questBtn.className = "nd-play-story-thread__quest";
+          questBtn.classList.toggle("is-current", isCurrentQuest);
+          questBtn.dataset.playQuestId = quest.id;
+          questBtn.setAttribute("role", "listitem");
+          questBtn.setAttribute(
+            "aria-label",
+            isCurrentQuest
+              ? `Current Quest: ${quest.title?.trim() || "Untitled Quest"}`
+              : `Open Quest: ${quest.title?.trim() || "Untitled Quest"}`
+          );
+          questBtn.setAttribute("aria-pressed", isCurrentQuest ? "true" : "false");
+
+          const questTitle = document.createElement("span");
+          questTitle.className = "nd-play-story-thread__quest-title";
+          questTitle.textContent = quest.title?.trim() || "Untitled Quest";
+          questBtn.append(questTitle);
+
+          if (quest.status === "ACTIVE") {
+            const questBadge = document.createElement("span");
+            questBadge.className = "nd-play-story-thread__quest-status";
+            questBadge.textContent = "Active";
+            questBtn.append(questBadge);
+          }
+
+          questList.append(questBtn);
+        }
+      }
+
+      threadCard.append(open, questList);
       list.append(threadCard);
     }
   }
@@ -741,8 +823,15 @@ export class Playbook {
           return;
         }
 
+        const questTarget = target.closest("[data-play-quest-id]");
+        if (questTarget) {
+          const questId = questTarget.getAttribute("data-play-quest-id");
+          if (questId) void Playbook.selectQuest(questId);
+          return;
+        }
+
         const storyThread = target.closest(
-          ".nd-play-story-thread__open[data-play-story-thread-id], .nd-play-story-thread[data-play-story-thread-id]"
+          ".nd-play-story-thread__open[data-play-story-thread-id]"
         );
         if (storyThread) {
           const id = storyThread.getAttribute("data-play-story-thread-id");
