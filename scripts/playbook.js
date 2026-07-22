@@ -4,6 +4,7 @@ import { Navigation } from "./navigation.js";
 import { PlaybookEntities } from "./playbook-entities.js";
 import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
+import { RelationshipService } from "./relationship-service.js";
 import { RichText } from "./rich-text.js";
 import { SessionService } from "./session-service.js";
 import { StoryThreadService } from "./story-thread-service.js";
@@ -20,15 +21,14 @@ import { StoryThreadService } from "./story-thread-service.js";
 
 /**
  * Play workspace Playbook viewer. Data comes only from PlaybookService.
- * Mission Context (selected Story Thread) is Play-owned UI state — not campaign data.
  */
 export class Playbook {
   /** @type {WeakMap<HTMLElement, AbortController>} */
   static #listeners = new WeakMap();
 
   /**
-   * Play-owned Mission Context: which Story Thread the dashboard is running.
-   * Not persisted. May initialize from the current Beat once, but Beat is not SoT.
+   * Last Story Thread focused from Play ST cards (Play-only UI hint).
+   * Owning thread for the Current Quest is derived from the Beat for display.
    * @type {string|null}
    */
   static #missionStoryThreadId = null;
@@ -105,75 +105,17 @@ export class Playbook {
   }
 
   static async prev() {
-    const moved = await Playbook.#moveWithinMission(-1);
+    const moved = await PlaybookService.previous();
     if (moved) Playbook.refreshOpen();
   }
 
   static async next() {
-    const moved = await Playbook.#moveWithinMission(1);
+    const moved = await PlaybookService.next();
     if (moved) Playbook.refreshOpen();
   }
 
   /**
-   * Navigate to the nearest beat that belongs to the current Mission Context.
-   * @param {-1|1} direction
-   * @returns {Promise<boolean>}
-   */
-  static async #moveWithinMission(direction) {
-    Playbook.#ensureMissionContext();
-    const missionId = Playbook.#missionStoryThreadId;
-    const beats = PlaybookService.listBeats();
-    const current = PlaybookService.getCurrent().index;
-    if (!beats.length) return false;
-
-    if (!missionId) {
-      return direction < 0
-        ? PlaybookService.previous()
-        : PlaybookService.next();
-    }
-
-    if (direction < 0) {
-      for (let i = current - 1; i >= 0; i -= 1) {
-        if (beats[i]?.sourceStoryThreadId === missionId) {
-          return PlaybookService.setCurrentIndex(i);
-        }
-      }
-      return false;
-    }
-
-    for (let i = current + 1; i < beats.length; i += 1) {
-      if (beats[i]?.sourceStoryThreadId === missionId) {
-        return PlaybookService.setCurrentIndex(i);
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Ensure Mission Context exists. Initializes from the current Beat only when unset.
-   */
-  static #ensureMissionContext() {
-    if (Playbook.#missionStoryThreadId) {
-      const stillActive = StoryThreadService.getById(Playbook.#missionStoryThreadId);
-      if (stillActive?.status === "ACTIVE") return;
-      Playbook.#missionStoryThreadId = null;
-    }
-
-    const beat = PlaybookService.getCurrent().beat;
-    const fromBeat = beat?.sourceStoryThreadId || "";
-    if (fromBeat && StoryThreadService.getById(fromBeat)?.status === "ACTIVE") {
-      Playbook.#missionStoryThreadId = fromBeat;
-      return;
-    }
-
-    const firstActive = StoryThreadService.list()
-      .filter((thread) => thread.status === "ACTIVE")
-      .sort((a, b) => a.title.localeCompare(b.title))[0];
-    Playbook.#missionStoryThreadId = firstActive?.id ?? null;
-  }
-
-  /**
-   * Play-only: switch Mission Context to a Story Thread and load its playable Beat if any.
+   * Play-only: jump to the first loaded Beat for this Story Thread.
    * @param {string} storyThreadId
    */
   static async selectMission(storyThreadId) {
@@ -182,19 +124,23 @@ export class Playbook {
     if (!thread || thread.status !== "ACTIVE") return;
 
     Playbook.#missionStoryThreadId = storyThreadId;
-
     const beats = PlaybookService.listBeats();
     const current = PlaybookService.getCurrent();
-    const alreadyOnMission =
-      current.beat?.sourceStoryThreadId === storyThreadId;
-    if (!alreadyOnMission) {
+    if (current.beat?.sourceStoryThreadId !== storyThreadId) {
       const index = beats.findIndex(
         (beat) => beat.sourceStoryThreadId === storyThreadId
       );
       if (index >= 0) await PlaybookService.setCurrentIndex(index);
     }
-
     Playbook.refreshOpen();
+  }
+
+  /** Align highlight when Play adopts a Beat from Campaign / beat picker. */
+  static adoptMissionFromCurrentBeat() {
+    const storyThreadId = PlaybookService.getCurrent().beat?.sourceStoryThreadId || "";
+    if (!storyThreadId) return;
+    if (StoryThreadService.getById(storyThreadId)?.status !== "ACTIVE") return;
+    Playbook.#missionStoryThreadId = storyThreadId;
   }
 
   static refreshOpen() {
@@ -243,29 +189,37 @@ export class Playbook {
 
     const empty = panel.querySelector("[data-play-empty]");
     const content = panel.querySelector("[data-play-content]");
+    const questContext = panel.querySelector("[data-play-quest-context]");
     const entryNav = panel.querySelector(".nd-play-entry-nav");
-    Playbook.#ensureMissionContext();
-    const onMission =
-      snapshot.total > 0 &&
-      (!Playbook.#missionStoryThreadId ||
-        snapshot.beat?.sourceStoryThreadId === Playbook.#missionStoryThreadId);
-    const hasQuest = onMission;
+    const hasQuest = snapshot.total > 0;
 
-    if (empty instanceof HTMLElement) {
-      empty.hidden = hasQuest || Boolean(Playbook.#missionStoryThreadId);
-    }
-    if (content instanceof HTMLElement) {
-      content.classList.toggle("is-empty", !hasQuest);
-      content.classList.toggle("has-mission", Boolean(Playbook.#missionStoryThreadId));
-    }
-    if (entryNav instanceof HTMLElement) {
-      entryNav.hidden = !hasQuest;
-    }
+    if (empty instanceof HTMLElement) empty.hidden = hasQuest;
+    if (questContext instanceof HTMLElement) questContext.hidden = !hasQuest;
+    if (content instanceof HTMLElement) content.classList.toggle("is-empty", !hasQuest);
+    if (entryNav instanceof HTMLElement) entryNav.hidden = !hasQuest;
     panel.querySelectorAll(
       ".nd-play-section-title, .nd-play-entry-grid, [data-playbook-field-block=\"npcs\"]"
     ).forEach((el) => {
       if (el instanceof HTMLElement) el.hidden = !hasQuest;
     });
+
+    const ownerThreadId = hasQuest ? (snapshot.beat?.sourceStoryThreadId || "") : "";
+    const ownerThread = ownerThreadId ? StoryThreadService.getById(ownerThreadId) : null;
+    if (ownerThreadId) Playbook.#missionStoryThreadId = ownerThreadId;
+
+    const threadEl = panel.querySelector("[data-playbook=\"storyThread\"]");
+    if (threadEl instanceof HTMLElement) {
+      if (ownerThread) {
+        threadEl.hidden = false;
+        threadEl.textContent = ownerThread.title?.trim() || "Untitled Story Thread";
+      } else {
+        threadEl.hidden = true;
+        threadEl.textContent = "";
+      }
+    }
+    if (questContext instanceof HTMLElement) {
+      questContext.classList.toggle("has-story-thread", Boolean(ownerThread));
+    }
 
     if (!hasQuest) {
       setCounter(0, 0);
@@ -283,12 +237,7 @@ export class Playbook {
       }
       Playbook.#paintEntities(panel, null);
     } else {
-      const missionBeats = Playbook.#missionBeatIndexes();
-      const missionPos = missionBeats.indexOf(snapshot.index);
-      setCounter(
-        missionPos >= 0 ? missionPos + 1 : snapshot.index + 1,
-        missionBeats.length || snapshot.total
-      );
+      setCounter(snapshot.index + 1, snapshot.total);
       setText("title", snapshot.beat.title?.trim() || "Untitled Quest");
       for (const field of [
         "speechNotes",
@@ -309,165 +258,130 @@ export class Playbook {
 
     const prevBtn = panel.querySelector("[data-playbook-nav=\"prev\"]");
     const nextBtn = panel.querySelector("[data-playbook-nav=\"next\"]");
-    const missionNav = Playbook.#missionNavState(snapshot.index);
-    if (prevBtn instanceof HTMLButtonElement) prevBtn.disabled = !missionNav.canPrev;
-    if (nextBtn instanceof HTMLButtonElement) nextBtn.disabled = !missionNav.canNext;
+    if (prevBtn instanceof HTMLButtonElement) prevBtn.disabled = !snapshot.canPrev;
+    if (nextBtn instanceof HTMLButtonElement) nextBtn.disabled = !snapshot.canNext;
 
     Playbook.#attachInlineEditors(root, snapshot);
     Playbook.#paintSessionNpcs(root, snapshot);
-    Playbook.#paintMissionContext(root, snapshot);
-  }
-
-  /** @returns {number[]} */
-  static #missionBeatIndexes() {
-    const missionId = Playbook.#missionStoryThreadId;
-    const beats = PlaybookService.listBeats();
-    if (!missionId) return beats.map((_, index) => index);
-    return beats
-      .map((beat, index) => (beat.sourceStoryThreadId === missionId ? index : -1))
-      .filter((index) => index >= 0);
-  }
-
-  /**
-   * @param {number} currentIndex
-   * @returns {{ canPrev: boolean, canNext: boolean }}
-   */
-  static #missionNavState(currentIndex) {
-    const indexes = Playbook.#missionBeatIndexes();
-    const pos = indexes.indexOf(currentIndex);
-    if (pos < 0) {
-      return { canPrev: indexes.length > 0, canNext: indexes.length > 0 };
-    }
-    return {
-      canPrev: pos > 0,
-      canNext: pos < indexes.length - 1
-    };
+    Playbook.#paintStoryThreads(root, ownerThreadId);
   }
 
   /**
    * @param {HTMLElement} root
-   * @param {ReturnType<typeof Playbook.get>} snapshot
+   * @param {string} [ownerThreadId]
    */
-  static #paintMissionContext(root, snapshot) {
-    const mission = root.querySelector("[data-play-mission]");
+  static #paintStoryThreads(root, ownerThreadId = "") {
+    const card = root.querySelector("[data-play-story-threads]");
     const list = root.querySelector("[data-play-story-thread-list]");
     const count = root.querySelector("[data-play-story-thread-count]");
-    const shell = root.querySelector("[data-play-mission-shell]");
-    if (!(mission instanceof HTMLElement) || !(list instanceof HTMLElement)) return;
+    if (!(card instanceof HTMLElement) || !(list instanceof HTMLElement)) return;
 
-    Playbook.#ensureMissionContext();
     const threads = StoryThreadService.list()
       .filter((thread) => thread.status === "ACTIVE")
       .sort((a, b) => a.title.localeCompare(b.title));
-
-    mission.hidden = threads.length === 0;
-    if (count) count.textContent = String(threads.length);
+    card.hidden = threads.length === 0;
     list.replaceChildren();
-
-    const missionId = Playbook.#missionStoryThreadId;
-    const missionThread = missionId ? StoryThreadService.getById(missionId) : null;
+    if (count) count.textContent = String(threads.length);
 
     for (const thread of threads) {
-      const isMission = thread.id === missionId;
-      if (isMission) continue;
+      const quests = QuestEntryService.listForStoryThread(thread.id);
+      const actorIds = Playbook.#storyThreadActorIds(thread);
+      const actors = actorIds
+        .map((id) => EntityRegistry.findByUUID(id))
+        .filter(Boolean)
+        .slice(0, 3);
+      const isOwner = Boolean(ownerThreadId) && thread.id === ownerThreadId;
 
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "nd-play-story-thread";
-      button.dataset.playStoryThreadId = thread.id;
-      button.setAttribute("aria-pressed", "false");
-      button.setAttribute(
+      const threadCard = document.createElement("article");
+      threadCard.className = "nd-play-story-thread";
+      threadCard.classList.toggle("is-current", isOwner);
+      threadCard.dataset.playStoryThreadId = thread.id;
+
+      const open = document.createElement("button");
+      open.type = "button";
+      open.className = "nd-play-story-thread__open";
+      open.dataset.playStoryThreadId = thread.id;
+      open.setAttribute(
         "aria-label",
-        `Switch Mission Context to ${thread.title?.trim() || "Untitled Story Thread"}`
+        isOwner
+          ? `Current Story Thread: ${thread.title?.trim() || "Untitled Story Thread"}`
+          : `Switch to ${thread.title?.trim() || "Untitled Story Thread"}`
       );
+      open.setAttribute("aria-pressed", isOwner ? "true" : "false");
 
+      const head = document.createElement("div");
+      head.className = "nd-play-story-thread__head";
       const title = document.createElement("strong");
       title.className = "nd-play-story-thread__title";
       title.textContent = thread.title?.trim() || "Untitled Story Thread";
-      button.append(title);
+      const badge = document.createElement("span");
+      badge.className = isOwner
+        ? "nd-play-story-thread__active"
+        : "nd-play-story-thread__active nd-play-story-thread__active--quiet";
+      badge.textContent = isOwner ? "Current" : "Active";
+      head.append(title, badge);
 
-      const quests = QuestEntryService.listForStoryThread(thread.id);
-      const meta = document.createElement("span");
-      meta.className = "nd-play-story-thread__quests";
-      meta.textContent = quests.length === 1 ? "1 Quest" : `${quests.length} Quests`;
-      button.append(meta);
+      const state = document.createElement("p");
+      state.className = "nd-play-story-thread__state";
+      state.textContent =
+        RichText.plainText(thread.currentState ?? "") || "No current state set.";
 
-      list.append(button);
+      const meta = document.createElement("div");
+      meta.className = "nd-play-story-thread__meta";
+
+      const actorRow = document.createElement("div");
+      actorRow.className = "nd-play-story-thread__actors";
+      if (actors.length) {
+        for (const actor of actors) {
+          const chip = document.createElement("span");
+          chip.className = "nd-play-story-thread__actor";
+          chip.textContent = Playbook.#shortActorName(actor.name);
+          actorRow.append(chip);
+        }
+        const extra = actorIds.length - actors.length;
+        if (extra > 0) {
+          const more = document.createElement("span");
+          more.className = "nd-play-story-thread__actor-more";
+          more.textContent = `+${extra}`;
+          actorRow.append(more);
+        }
+      } else {
+        const emptyActors = document.createElement("span");
+        emptyActors.className = "nd-play-story-thread__actors-empty";
+        emptyActors.textContent = "No linked actors";
+        actorRow.append(emptyActors);
+      }
+      meta.append(actorRow);
+
+      const questCount = document.createElement("span");
+      questCount.className = "nd-play-story-thread__quests";
+      questCount.textContent =
+        quests.length === 1 ? "1 Quest" : `${quests.length} Quests`;
+      meta.append(questCount);
+
+      open.append(head, state, meta);
+      threadCard.append(open);
+      list.append(threadCard);
     }
-
-    if (shell instanceof HTMLElement) {
-      shell.classList.toggle("is-active", Boolean(missionThread));
-      shell.hidden = !missionThread;
-      shell.dataset.playMissionThreadId = missionThread?.id ?? "";
-    }
-
-    const threadLabel = root.querySelector("[data-play-mission-thread]");
-    const questLabel = root.querySelector("[data-play-mission-quest]");
-    const beatLabel = root.querySelector("[data-play-mission-beat]");
-
-    if (threadLabel) {
-      threadLabel.textContent = missionThread?.title?.trim() || "No Story Thread";
-    }
-
-    const hierarchy = Playbook.#missionHierarchyLabels(snapshot);
-    if (questLabel) questLabel.textContent = hierarchy.quest;
-    if (beatLabel) beatLabel.textContent = hierarchy.beat;
   }
 
-  /**
-   * Resolve Quest / Beat labels from Mission Context (ST owns Quest; Beat is playable child).
-   * @param {ReturnType<typeof Playbook.get>} snapshot
-   * @returns {{ quest: string, beat: string }}
-   */
-  static #missionHierarchyLabels(snapshot) {
-    const missionId = Playbook.#missionStoryThreadId;
-    if (!missionId) return { quest: "—", beat: "—" };
-
-    const onMission =
-      snapshot.total > 0 &&
-      snapshot.beat?.sourceStoryThreadId === missionId;
-
-    if (onMission) {
-      const entry = snapshot.beat.sourceStoryEntryId
-        ? QuestEntryService.getById(snapshot.beat.sourceStoryEntryId)
-        : null;
-      const questTitle =
-        entry?.title?.trim() ||
-        snapshot.beat.title?.trim() ||
-        "Untitled Quest";
-      const indexes = Playbook.#missionBeatIndexes();
-      const pos = indexes.indexOf(snapshot.index);
-      const beatTitle = snapshot.beat.title?.trim() || "Untitled Beat";
-      return {
-        quest: questTitle,
-        beat: pos >= 0 ? `${pos + 1}. ${beatTitle}` : beatTitle
-      };
+  /** @param {object} thread @returns {string[]} */
+  static #storyThreadActorIds(thread) {
+    const ids = new Set((thread.relatedActorIds ?? []).filter(Boolean));
+    for (const neighbor of RelationshipService.neighbors({
+      kind: "storyThread",
+      id: thread.id
+    })) {
+      if (neighbor.kind === "actor" && neighbor.id) ids.add(neighbor.id);
     }
-
-    const quests = QuestEntryService.listForStoryThread(missionId)
-      .slice()
-      .sort((a, b) => a.title.localeCompare(b.title));
-    const liveId = PlaybookService.getLiveSourceEntryId() || "";
-    const preferred =
-      quests.find((quest) => quest.id === liveId) ||
-      quests.find((quest) => quest.status === "ACTIVE") ||
-      quests[0];
-
-    return {
-      quest: preferred?.title?.trim() || "No Quest Loaded",
-      beat: "No Beat Loaded"
-    };
+    return [...ids];
   }
 
-  /**
-   * When Play adopts a Beat from outside Mission switching (e.g. Campaign → Play),
-   * align Mission Context to that Beat's Story Thread once — without making Beat SoT ongoing.
-   */
-  static adoptMissionFromCurrentBeat() {
-    const storyThreadId = PlaybookService.getCurrent().beat?.sourceStoryThreadId || "";
-    if (!storyThreadId) return;
-    if (StoryThreadService.getById(storyThreadId)?.status !== "ACTIVE") return;
-    Playbook.#missionStoryThreadId = storyThreadId;
+  /** @param {string} [name] */
+  static #shortActorName(name) {
+    const text = String(name ?? "").trim();
+    if (!text) return "Actor";
+    return text.split(/\s+/)[0];
   }
 
   static #paintRunControls(root) {
@@ -828,7 +742,7 @@ export class Playbook {
         }
 
         const storyThread = target.closest(
-          ".nd-play-story-thread[data-play-story-thread-id]"
+          ".nd-play-story-thread__open[data-play-story-thread-id], .nd-play-story-thread[data-play-story-thread-id]"
         );
         if (storyThread) {
           const id = storyThread.getAttribute("data-play-story-thread-id");
