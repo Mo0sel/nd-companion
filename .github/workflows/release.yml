@@ -3,10 +3,10 @@ name: Release
 # Publishes a Foundry-compatible module.zip for tag vX.Y.Z.
 # Prerequisite: module.json "version" must equal the tag without the leading "v".
 #
-# Example:
-#   1. Set version in module.json to 0.3.30 (and matching manifest/download URLs)
-#   2. Commit + push to main
-#   3. git tag v0.3.30 && git push origin v0.3.30
+# Preferred local trigger (do not hand-roll tags):
+#   npm run release              # auto patch bump from module.json
+#   npm run release -- 0.3.34    # explicit version override
+# See RELEASE.md.
 
 on:
   push:

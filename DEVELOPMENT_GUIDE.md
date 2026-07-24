@@ -84,46 +84,22 @@ Remote default: `origin` → `https://github.com/Mo0sel/nd-companion` (`main`).
 
 ## How to publish a Foundry Release
 
-Do **not** use GitHub branch archives (`…/archive/refs/heads/main.zip`). Releases ship a flat `module.zip` built by GitHub Actions.
+**Preferred:** use the release script (see [RELEASE.md](./RELEASE.md)). `module.json` is the version source of truth.
 
-### 1. Bump the version
-
-In `module.json`:
-
-- Set `"version"` (e.g. `0.3.30`)
-- Set versioned URLs (must match that version):
-
-```text
-manifest → https://github.com/Mo0sel/nd-companion/releases/download/v0.3.30/module.json
-download → https://github.com/Mo0sel/nd-companion/releases/download/v0.3.30/module.zip
+```bash
+npm run release
+# or: npm run release -- 0.3.34
 ```
 
-### 2. Commit and push `main`
+That bumps/sets the version, rewrites manifest/download URLs, validates consistency, commits, tags `vX.Y.Z`, and pushes branch + tag. GitHub Actions then uploads `module.zip` + `module.json`.
 
-```powershell
-git add module.json
-git commit -m "Release v0.3.30"
-git push origin HEAD
-```
+Do **not** use GitHub branch archives (`…/archive/refs/heads/main.zip`).
 
-### 3. Tag and push the tag
+### Manual equivalent (avoid unless debugging)
 
-Tag name must be `v` + `module.json` version (e.g. version `0.3.30` → tag `v0.3.30`).
-
-```powershell
-git tag v0.3.30
-git push origin v0.3.30
-```
-
-### 4. GitHub Action
-
-Workflow: `.github/workflows/release.yml`
-
-- Whitelist-packages: `module.json`, `scripts/`, `styles/`, `templates/`, `lang/`, and `assets/` if present
-- Validates flat zip root, required folders, and version/URL match
-- Creates/updates the GitHub Release and uploads `module.zip` + `module.json`
-
-Confirm the Action is green under the repo **Actions** tab before updating Forge.
+1. Set `module.json` `version` + versioned `manifest` / `download` URLs.
+2. Commit, tag `vX.Y.Z`, push branch and tag.
+3. Confirm `.github/workflows/release.yml` is green.
 
 **Cache trap:** Pushing `main` alone does not publish a Release. Forge only sees new bits after the tag Action succeeds and you update the package.
 

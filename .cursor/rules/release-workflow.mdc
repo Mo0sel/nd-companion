@@ -1,0 +1,63 @@
+---
+description: Finish Sprint / Publish must run the release script (commit + tag + push).
+alwaysApply: true
+---
+
+# Release workflow (mandatory)
+
+A sprint or feature is **NOT complete** until a GitHub Release exists for its version.
+
+GitHub Actions publishes Foundry assets **only** when tag `vX.Y.Z` is pushed. Committing `module.json` alone is not enough.
+
+`module.json` is the **single source of truth** for the current module version.
+
+## When the user says
+
+- "Finish Sprint N"
+- "Publish vX.Y.Z"
+- "Ship this"
+- "Release"
+
+Do the following **in order**:
+
+1. Ensure all sprint/feature code is committed (clean working tree).
+2. Prefer the auto patch bump (reads `module.json`, increments patch):
+
+```bash
+npm run release
+```
+
+3. Only use an explicit version when the user names one, or for minor/major bumps:
+
+```bash
+npm run release -- X.Y.Z
+```
+
+4. Confirm the command printed a release summary, pushed the branch **and** the tag, and printed the GitHub Release URL.
+5. Tell the user to watch GitHub Actions and update Forge when green.
+
+## If you cannot run git push
+
+Still prepare everything, then give the user the exact command and state that the sprint is incomplete until it succeeds:
+
+```bash
+npm run release
+```
+
+or, if they named a version:
+
+```bash
+npm run release -- X.Y.Z
+```
+
+## Do not
+
+- Hand-edit version in multiple places (only `module.json`, via the release script)
+- Stop after only editing `module.json` version
+- Rely on `archive/refs/heads/main.zip`
+- Create a tag without pushing it
+- Consider the sprint done without a Release tag
+
+## Reference
+
+See `RELEASE.md` for the full one-minute guide.

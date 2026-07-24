@@ -1,0 +1,12 @@
+{
+  "name": "nd-companion",
+  "private": true,
+  "description": "Dev tooling for the N&D Companion Foundry module (not a runtime dependency).",
+  "type": "module",
+  "scripts": {
+    "release": "node tools/release.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
