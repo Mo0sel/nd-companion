@@ -25,6 +25,7 @@
     "styles/play.css",
     "styles/campaign.css",
     "styles/notes.css",
+    "styles/ai-platform.css",
     "styles/nd-companion.css"
   ],
   "languages": [

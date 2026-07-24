@@ -2,7 +2,11 @@ import { CompanionApp } from "./companion-app.js";
 import { CampaignAwareness } from "./campaign-context.js";
 import { CampaignDocument } from "./campaign-document.js";
 import { CampaignMemoryService } from "./campaign-memory-service.js";
+import { AIProviderRegistry } from "./ai-provider-registry.js";
+import { AISettings } from "./ai-settings.js";
+import { ToolRegistry } from "./ai-tool-registry.js";
 import { ContextEngine } from "./context-engine.js";
+import { ContextSerializer } from "./context-serializer.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { FactionService } from "./faction-service.js";
 import { FocusManager } from "./focus-manager.js";
@@ -10,6 +14,7 @@ import { GraphService } from "./graph-service.js";
 import { GraphValidator } from "./graph-validator.js";
 import { Navigation } from "./navigation.js";
 import { PlaybookService } from "./playbook-service.js";
+import { PromptBuilder } from "./prompt-builder.js";
 import { QuestEntryService } from "./quest-entry-service.js";
 import { RelationshipService } from "./relationship-service.js";
 import { SessionService } from "./session-service.js";
@@ -23,6 +28,7 @@ Hooks.once("init", () => {
   console.log("%cN&D Companion", "color:#7dd3fc;font-size:16px;font-weight:bold;");
   console.log("N&D Companion initialized.");
   CompanionStorage.register();
+  AISettings.register();
 });
 
 Hooks.once("ready", async () => {
@@ -41,6 +47,8 @@ Hooks.once("ready", async () => {
     console.error("N&D Companion: relationship migration failed", error);
   }
   GraphService.initialize();
+  AIProviderRegistry.initialize();
+  ToolRegistry.initialize();
   registerSearchProviders();
   window.nd ??= {};
   window.nd.EntityRegistry = EntityRegistry;
@@ -58,6 +66,11 @@ Hooks.once("ready", async () => {
   window.nd.SearchService = SearchService;
   window.nd.GraphValidator = GraphValidator;
   window.nd.RelationshipService = RelationshipService;
+  window.nd.PromptBuilder = PromptBuilder;
+  window.nd.ContextSerializer = ContextSerializer;
+  window.nd.AIProviderRegistry = AIProviderRegistry;
+  window.nd.ToolRegistry = ToolRegistry;
+  window.nd.AISettings = AISettings;
   CampaignAwareness.registerHooks();
   FocusManager.registerHooks();
   GraphValidator.registerDeleteHooks();

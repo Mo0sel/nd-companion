@@ -128,6 +128,47 @@ export class CompanionStorage {
   }
 
   /**
+   * Client-scoped AI provider settings (API key never enters campaign data).
+   * Called from AISettings.register() during init.
+   */
+  static registerAISettings() {
+    game.settings.register(MODULE_ID, "aiSettings", {
+      name: "AI Settings",
+      scope: "client",
+      config: false,
+      type: Object,
+      default: {
+        provider: "none",
+        model: "",
+        apiKey: "",
+        temperature: 0.2,
+        maxContextSize: 12000,
+        streaming: false,
+        timeoutMs: 60000
+      }
+    });
+  }
+
+  /**
+   * @returns {object}
+   */
+  static getAISettings() {
+    const value = game.settings.get(MODULE_ID, "aiSettings");
+    return value && typeof value === "object" ? foundry.utils.duplicate(value) : {};
+  }
+
+  /**
+   * @param {object|null} value
+   */
+  static async setAISettings(value) {
+    return game.settings.set(
+      MODULE_ID,
+      "aiSettings",
+      value && typeof value === "object" ? foundry.utils.duplicate(value) : {}
+    );
+  }
+
+  /**
    * @param {string} key
    * @returns {string}
    */

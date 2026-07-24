@@ -41,6 +41,12 @@
         <button type="button" data-action="openActivityDrawer" role="menuitem">
           Campaign Activity
         </button>
+        <button type="button" data-action="openAISettings" role="menuitem">
+          AI Settings
+        </button>
+        <button type="button" data-action="openPromptPreview" role="menuitem">
+          Prompt Preview
+        </button>
         <button type="button" data-action="resetWindowLayout" role="menuitem">
           Reset Window Layout
         </button>
@@ -873,6 +879,52 @@
           data-activity-show-filters
           data-activity-limit="500"
         ></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="nd-activity-drawer" data-ai-settings-drawer hidden>
+    <button
+      type="button"
+      class="nd-activity-drawer__backdrop"
+      data-action="closeAISettings"
+      aria-label="Close AI Settings"
+    ></button>
+    <aside class="nd-activity-drawer__panel" aria-label="AI Settings">
+      <header class="nd-activity-drawer__head">
+        <h2 class="nd-type-h3">AI Settings</h2>
+        <button
+          type="button"
+          class="nd-activity-drawer__close"
+          data-action="closeAISettings"
+          aria-label="Close"
+        >×</button>
+      </header>
+      <div class="nd-activity-drawer__body">
+        <div data-ai-settings></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="nd-activity-drawer nd-prompt-preview-drawer" data-prompt-preview-drawer hidden>
+    <button
+      type="button"
+      class="nd-activity-drawer__backdrop"
+      data-action="closePromptPreview"
+      aria-label="Close Prompt Preview"
+    ></button>
+    <aside class="nd-activity-drawer__panel" aria-label="Prompt Preview">
+      <header class="nd-activity-drawer__head">
+        <h2 class="nd-type-h3">Prompt Preview</h2>
+        <button
+          type="button"
+          class="nd-activity-drawer__close"
+          data-action="closePromptPreview"
+          aria-label="Close"
+        >×</button>
+      </header>
+      <div class="nd-activity-drawer__body">
+        <div data-prompt-preview></div>
       </div>
     </aside>
   </div>

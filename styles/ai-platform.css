@@ -1,0 +1,116 @@
+/**
+ * AI platform UI — settings + prompt preview (developer tools).
+ * Scoped under the Companion shell.
+ */
+
+.nd-companion .nd-ai-settings,
+.nd-companion .nd-prompt-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.nd-companion .nd-ai-settings__note,
+.nd-companion .nd-ai-settings__hint,
+.nd-companion .nd-ai-settings__status {
+  margin: 0;
+  color: var(--nd-text-2);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.nd-companion .nd-ai-settings__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  color: var(--nd-text-2);
+  font-size: 0.8rem;
+}
+
+.nd-companion .nd-ai-settings__field input,
+.nd-companion .nd-ai-settings__field select {
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--nd-border);
+  border-radius: 4px;
+  background: var(--nd-surface-2);
+  color: var(--nd-text-1);
+}
+
+.nd-companion .nd-ai-settings__check {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--nd-text-2);
+  font-size: 0.85rem;
+}
+
+.nd-companion .nd-ai-settings__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.nd-companion .nd-ai-settings__actions button {
+  min-height: 2rem;
+  padding: 0.35rem 0.75rem;
+}
+
+.nd-companion .nd-prompt-preview-drawer .nd-activity-drawer__panel {
+  width: min(44rem, 96vw);
+}
+
+.nd-companion .nd-prompt-preview__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.nd-companion .nd-prompt-preview__toolbar select,
+.nd-companion .nd-prompt-preview__toolbar button {
+  min-height: 2rem;
+  padding: 0.3rem 0.65rem;
+}
+
+.nd-companion .nd-prompt-preview__meta {
+  color: var(--nd-text-2);
+  font-size: 0.8rem;
+}
+
+.nd-companion .nd-prompt-preview__sections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.nd-companion .nd-prompt-preview__chip {
+  padding: 0.15rem 0.45rem;
+  border: 1px solid var(--nd-blue-border);
+  border-radius: 999px;
+  background: var(--nd-blue-dim);
+  color: var(--nd-text-1);
+  font-size: 0.72rem;
+}
+
+.nd-companion .nd-prompt-preview__empty {
+  color: var(--nd-text-3);
+  font-size: 0.8rem;
+}
+
+.nd-companion .nd-prompt-preview__body {
+  margin: 0;
+  padding: 0.75rem;
+  max-height: min(60vh, 36rem);
+  overflow: auto;
+  border: 1px solid var(--nd-border);
+  border-radius: 6px;
+  background: var(--nd-surface-inset);
+  color: var(--nd-text-1);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

@@ -2,6 +2,7 @@ import { CampaignAwareness, CampaignContext } from "./campaign-context.js";
 import { CampaignActivityPanel } from "./campaign-activity-panel.js";
 import { CampaignDocument } from "./campaign-document.js";
 import { CampaignWorkspace } from "./campaign-workspace.js";
+import { AISettingsPanel } from "./ai-settings-panel.js";
 import { ContextEngine } from "./context-engine.js";
 import { ContextPanel } from "./context-panel.js";
 import { EntityRegistry } from "./entity-registry.js";
@@ -14,6 +15,7 @@ import { NavigationHistory } from "./navigation-history.js";
 import { PanelResizer } from "./panel-resizer.js";
 import { Playbook } from "./playbook.js";
 import { PlaybookService } from "./playbook-service.js";
+import { PromptPreviewPanel } from "./prompt-preview-panel.js";
 import { QuickEdit } from "./quick-edit.js";
 import { RelationshipExplorer } from "./relationship-explorer.js";
 import { RichText } from "./rich-text.js";
@@ -58,6 +60,10 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       importCampaign: CompanionApp.#onImportCampaign,
       openActivityDrawer: CompanionApp.#onOpenActivityDrawer,
       closeActivityDrawer: CompanionApp.#onCloseActivityDrawer,
+      openAISettings: CompanionApp.#onOpenAISettings,
+      closeAISettings: CompanionApp.#onCloseAISettings,
+      openPromptPreview: CompanionApp.#onOpenPromptPreview,
+      closePromptPreview: CompanionApp.#onClosePromptPreview,
       resetWindowLayout: CompanionApp.#onResetWindowLayout
     }
   };
@@ -211,6 +217,7 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!(root instanceof HTMLElement)) return;
     const settings = root.querySelector(".nd-companion-settings");
     if (settings instanceof HTMLDetailsElement) settings.open = false;
+    CompanionApp.#closeUtilityDrawers(root, "activity");
     CompanionApp.#paintActivityDrawer(root, true);
   }
 
@@ -222,6 +229,96 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const root = this.element;
     if (!(root instanceof HTMLElement)) return;
     CompanionApp.#paintActivityDrawer(root, false);
+  }
+
+  /**
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} _target
+   */
+  static #onOpenAISettings(_event, _target) {
+    const root = this.element;
+    if (!(root instanceof HTMLElement)) return;
+    const settings = root.querySelector(".nd-companion-settings");
+    if (settings instanceof HTMLDetailsElement) settings.open = false;
+    CompanionApp.#closeUtilityDrawers(root, "ai");
+    CompanionApp.#paintAISettingsDrawer(root, true);
+  }
+
+  /**
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} _target
+   */
+  static #onCloseAISettings(_event, _target) {
+    const root = this.element;
+    if (!(root instanceof HTMLElement)) return;
+    CompanionApp.#paintAISettingsDrawer(root, false);
+  }
+
+  /**
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} _target
+   */
+  static #onOpenPromptPreview(_event, _target) {
+    const root = this.element;
+    if (!(root instanceof HTMLElement)) return;
+    const settings = root.querySelector(".nd-companion-settings");
+    if (settings instanceof HTMLDetailsElement) settings.open = false;
+    CompanionApp.#closeUtilityDrawers(root, "prompt");
+    CompanionApp.#paintPromptPreviewDrawer(root, true);
+  }
+
+  /**
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} _target
+   */
+  static #onClosePromptPreview(_event, _target) {
+    const root = this.element;
+    if (!(root instanceof HTMLElement)) return;
+    CompanionApp.#paintPromptPreviewDrawer(root, false);
+  }
+
+  /**
+   * @param {HTMLElement} root
+   * @param {"activity"|"ai"|"prompt"|null} keep
+   */
+  static #closeUtilityDrawers(root, keep = null) {
+    if (keep !== "activity") CompanionApp.#paintActivityDrawer(root, false);
+    if (keep !== "ai") CompanionApp.#paintAISettingsDrawer(root, false);
+    if (keep !== "prompt") CompanionApp.#paintPromptPreviewDrawer(root, false);
+  }
+
+  /**
+   * @param {HTMLElement} root
+   * @param {boolean} [open]
+   */
+  static #paintAISettingsDrawer(root, open) {
+    const drawer = root.querySelector("[data-ai-settings-drawer]");
+    if (!(drawer instanceof HTMLElement)) return;
+    if (open === false) {
+      drawer.hidden = true;
+      return;
+    }
+    if (open === true) drawer.hidden = false;
+    if (drawer.hidden) return;
+    const container = drawer.querySelector("[data-ai-settings]");
+    if (container instanceof HTMLElement) AISettingsPanel.paint(container);
+  }
+
+  /**
+   * @param {HTMLElement} root
+   * @param {boolean} [open]
+   */
+  static #paintPromptPreviewDrawer(root, open) {
+    const drawer = root.querySelector("[data-prompt-preview-drawer]");
+    if (!(drawer instanceof HTMLElement)) return;
+    if (open === false) {
+      drawer.hidden = true;
+      return;
+    }
+    if (open === true) drawer.hidden = false;
+    if (drawer.hidden) return;
+    const container = drawer.querySelector("[data-prompt-preview]");
+    if (container instanceof HTMLElement) PromptPreviewPanel.paint(container);
   }
 
   /**
