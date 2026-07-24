@@ -243,6 +243,9 @@ export class CampaignActivityService {
   }
 
   static refreshUI() {
+    void import("./context-engine.js").then(({ ContextEngine }) => {
+      ContextEngine.invalidate();
+    });
     void import("./campaign-activity-panel.js").then(({ CampaignActivityPanel }) => {
       CampaignActivityPanel.refreshAll();
     });

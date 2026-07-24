@@ -1,3 +1,4 @@
+import { ContextEngine } from "./context-engine.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { LiveNotes } from "./live-notes.js";
 import { Navigation } from "./navigation.js";
@@ -275,8 +276,10 @@ export class Playbook {
     const count = root.querySelector("[data-play-story-thread-count]");
     if (!(card instanceof HTMLElement) || !(list instanceof HTMLElement)) return;
 
-    const threads = StoryThreadService.list()
-      .filter((thread) => thread.status === "ACTIVE")
+    const playContext = ContextEngine.getPlayContext();
+    const threads = playContext.activeStoryThreads
+      .map((entry) => StoryThreadService.getById(entry.id))
+      .filter(Boolean)
       .sort((a, b) => a.title.localeCompare(b.title));
     card.hidden = threads.length === 0;
     list.replaceChildren();
