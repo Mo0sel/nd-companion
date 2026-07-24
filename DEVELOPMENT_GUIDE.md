@@ -82,16 +82,28 @@ Remote default: `origin` → `https://github.com/Mo0sel/nd-companion` (`main`).
 
 ---
 
+## How to test locally (no GitHub Release)
+
+```bash
+npm run dev-build
+```
+
+Produces `build/module.json` and `build/module.zip` without changing the version or touching git. Unpack into Foundry `Data/modules/nd-companion/` (or use this repo as the module folder) and hard refresh.
+
+See [RELEASE.md](./RELEASE.md) for **Finish Sprint** vs **Release Sprint**.
+
 ## How to publish a Foundry Release
 
 **Preferred:** use the release script (see [RELEASE.md](./RELEASE.md)). `module.json` is the version source of truth.
 
 ```bash
 npm run release
-# or: npm run release -- 0.3.34
+# or: npm run release -- 0.3.36
 ```
 
-That bumps/sets the version, rewrites manifest/download URLs, validates consistency, commits, tags `vX.Y.Z`, and pushes branch + tag. GitHub Actions then uploads `module.zip` + `module.json`.
+That validates the project, bumps/sets the version, rewrites manifest/download URLs, commits, tags `vX.Y.Z`, and pushes branch + tag. GitHub Actions then uploads `module.zip` + `module.json`.
+
+Only run this when explicitly releasing — not for day-to-day Foundry testing.
 
 Do **not** use GitHub branch archives (`…/archive/refs/heads/main.zip`).
 

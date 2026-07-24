@@ -4,6 +4,8 @@
   "description": "Dev tooling for the N&D Companion Foundry module (not a runtime dependency).",
   "type": "module",
   "scripts": {
+    "validate": "node tools/validate.mjs",
+    "dev-build": "node tools/dev-build.mjs",
     "release": "node tools/release.mjs"
   },
   "engines": {

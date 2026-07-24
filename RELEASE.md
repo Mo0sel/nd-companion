@@ -1,98 +1,130 @@
-# N&D Companion — Releases
+# N&D Companion — Build & Release
 
-One-minute guide to shipping a Foundry-ready build.
+## Two different commands
 
-## How it works
+| Phrase | Meaning | GitHub Release? |
+|--------|---------|-----------------|
+| **Finish Sprint** | Validate + local test package + checklist | No |
+| **Release Sprint** / **Release vX.Y.Z** | Version bump + tag + push + GitHub Release | Yes |
+
+Do not release every sprint just to test in Foundry. Use a **dev build** first.
+
+---
+
+## Local development build
+
+```bash
+npm run dev-build
+```
+
+This will:
+
+1. Run syntax validation (`scripts/` + `tools/`)
+2. Walk the static import graph from `module.json` → `esmodules`
+3. Check module integrity (required files, styles, languages, `window.nd` AI exports)
+4. Write a Foundry package into **`build/`**
+
+Output:
 
 ```text
+build/module.json
+build/module.zip
+```
+
+It does **not**:
+
+- change the version
+- commit
+- tag
+- push
+- create a GitHub Release
+
+### Install the dev build in Foundry
+
+1. Unpack `build/module.zip` into `Data/modules/nd-companion/` (flat root — `module.json` at the top).
+2. Or develop against this repo folder as the module directory.
+3. Hard refresh Foundry (`Ctrl+Shift+R`).
+
+---
+
+## Finish Sprint (no release)
+
+When you say **Finish Sprint**, Cursor should:
+
+1. Run `npm run validate` (or `npm run dev-build`)
+2. Confirm syntax, imports, and module integrity pass
+3. Print a sprint testing checklist (see below)
+4. **Stop** — no version bump, no tag, no GitHub Release
+
+### Sprint testing checklist (template)
+
+- [ ] `npm run validate` passes
+- [ ] `npm run dev-build` produces `build/module.zip`
+- [ ] Foundry loads the module without console SyntaxErrors
+- [ ] Companion button appears for the GM
+- [ ] Runtime APIs (as applicable to the sprint):
+
+```js
+window.nd
+window.nd.PromptBuilder
+window.nd.AIProviderRegistry
+window.nd.ToolRegistry
+window.nd.AISettings
+```
+
+- [ ] Feature-specific checks for this sprint are listed by Cursor and verified
+
+---
+
+## Release Sprint (GitHub Release)
+
+Only when you explicitly say **Release Sprint**, **Release vX.Y.Z**, or **Publish**:
+
+```bash
 npm run release
+# or
+npm run release -- 0.3.36
+```
+
+Flow:
+
+```text
+Validate (syntax + imports + integrity)
         ↓
-Read version from module.json (source of truth)
+Bump / set version in module.json
         ↓
-Bump patch (or use -- X.Y.Z override)
+Commit + tag vX.Y.Z + push branch + tag
         ↓
-Syntax gate: node --check every .js/.mjs under scripts/ and tools/
+GitHub Action builds module.zip
         ↓
-Rewrite module.json version + manifest/download URLs
-        ↓
-Validate: version ≡ tag ≡ URLs ≡ release title ≡ module.zip
-        ↓
-Print summary → commit → tag → push branch + tag
-        ↓
-GitHub Action (.github/workflows/release.yml)
-        ↓
-GitHub Release: module.json + module.zip
+GitHub Release assets published
         ↓
 Forge / Foundry → Update module
 ```
 
-No manual GitHub UI steps. The Action builds a **flat** `module.zip` containing only:
+`module.json` remains the version source of truth.
 
-`module.json`, `scripts/`, `styles/`, `templates/`, `lang/`, and `assets/` if present.
+### After release (printed by the script)
 
-## Prerequisites
+- GitHub Release URL
+- Manifest URL
+- Download URL
+- Runtime verification checklist (`window.nd.*`)
 
-1. Sprint / feature work is already **committed** (working tree clean).
-2. Node.js 18+.
-3. Push access to `origin`.
+---
 
-## Publish
+## Validation details
 
-### Default (auto patch bump)
+| Gate | What it checks |
+|------|----------------|
+| Syntax | `node --check` on every `.js`/`.mjs`/`.cjs` under `scripts/` and `tools/` |
+| Imports | Static relative import graph from the module entry resolves |
+| Integrity | Required folders/files, style/lang paths, `window.nd` AI assignments |
 
-`module.json` is the source of truth. This bumps the patch and releases:
+Any failure aborts. Releases never mutate git if validation fails.
 
-```bash
-npm run release
-```
+---
 
-Example: `0.3.34` in `module.json` → releases `0.3.35` / tag `v0.3.35`.
-
-### Explicit version (override)
-
-```bash
-npm run release -- 0.3.35
-```
-
-Use this for minor/major bumps, or to tag a version already written in `module.json`.
-
-## What the script checks
-
-### Syntax gate (before any commit/tag/push)
-
-Every `.js` / `.mjs` / `.cjs` file under `scripts/` and `tools/` is parsed with `node --check`.
-
-If **any** file fails:
-
-- the filename and parser error are printed
-- the release **aborts**
-- **no** `module.json` write / commit / tag / push is performed
-
-### Version identity
-
-Before pushing, everything must agree on the same `X.Y.Z`:
-
-| Artifact | Must be |
-|----------|---------|
-| `module.json` `version` | `X.Y.Z` |
-| Git tag | `vX.Y.Z` |
-| Release title | `N&D Companion X.Y.Z` |
-| ZIP asset name | `module.zip` |
-| `manifest` | `…/releases/download/vX.Y.Z/module.json` |
-| `download` | `…/releases/download/vX.Y.Z/module.zip` |
-
-Any mismatch aborts with a clear error. A short summary is printed before push; the GitHub Release URL is printed after.
-
-## After the command succeeds
-
-1. Open the printed **GitHub Release** / **Actions** URLs; wait for green.
-2. On Forge: Module Management → **Update** N&D Companion.
-3. Hard refresh Foundry (`Ctrl+Shift+R`).
-
-Never use `…/archive/refs/heads/main.zip` for installs.
-
-## Cursor / “Finish Sprint”
-
-A sprint is **not complete** until `npm run release` (or an explicit override) has succeeded.
+## Cursor rules
 
 See `.cursor/rules/release-workflow.mdc`.
