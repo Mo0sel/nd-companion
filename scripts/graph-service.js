@@ -373,12 +373,18 @@ export class GraphService {
   }
 
   /**
-   * Portrait helper for UI: Foundry img or null (caller draws initials).
-   * @param {string} type
-   * @param {string} id
-   * @returns {{ img: string, name: string, documentType: string }|null}
+   * Lightweight graph diagnostics for context packets / AI later.
+   * @returns {{ nodeCount: number, edgeCount: number, relationshipCount: number }}
    */
-  static getPortrait(type, id) {
+  static getStats() {
+    GraphService.#ensureFresh();
+    return {
+      nodeCount: GraphService.#nodes.size,
+      edgeCount: GraphService.#edges.size,
+      relationshipCount: RelationshipService.list().length
+    };
+  }
+
     GraphService.#ensureFresh();
     const node = GraphService.getNode(type, id);
     if (!node) return null;

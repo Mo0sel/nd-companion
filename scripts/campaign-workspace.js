@@ -6,7 +6,6 @@ import { DmNotes } from "./dm-notes.js";
 import { EntityMentions } from "./entity-mentions.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { FactionService } from "./faction-service.js";
-import { GraphService } from "./graph-service.js";
 import { LiveNotes } from "./live-notes.js";
 import { NavigationHistory } from "./navigation-history.js";
 import { Playbook } from "./playbook.js";
@@ -1330,7 +1329,7 @@ export class CampaignWorkspace {
 
     const docType = view.querySelector("[data-campaign-entity-doc-type]");
     if (docType instanceof HTMLElement) {
-      const portrait = GraphService.getPortrait(contextKind, entity.uuid);
+      const portrait = ContextEngine.getPortrait(contextKind, entity.uuid);
       docType.textContent = portrait?.documentType
         ? `Foundry ${kindLabel[entity.kind] ?? portrait.documentType}`
         : `Foundry ${kindLabel[entity.kind] ?? "Document"}`;
@@ -1367,6 +1366,7 @@ export class CampaignWorkspace {
     DmNotes.paint(view.querySelector("[data-dm-notes]"), {
       storageKey: `${entity.kind}:${entity.uuid}`
     });
+    CampaignWorkspace.#paintEntityTimeline(view, contextKind, entity.uuid);
     ContextPanel.paint(
       view.querySelector("[data-context-panel=\"entity\"]"),
       ContextEngine.getContext({ kind: entity.kind, id: entity.uuid }),
@@ -1378,7 +1378,7 @@ export class CampaignWorkspace {
   }
 
   /**
-   * Sidebar / header portrait from GraphService (Foundry img or initials).
+   * Sidebar / header portrait from ContextEngine (Foundry img or initials).
    * @param {string} type
    * @param {string} id
    * @param {string} name
@@ -1388,7 +1388,7 @@ export class CampaignWorkspace {
     const wrap = document.createElement("span");
     wrap.className = "nd-portrait nd-portrait--thumb nd-campaign-list-row__portrait";
     wrap.setAttribute("aria-hidden", "true");
-    const portrait = GraphService.getPortrait(type, id);
+    const portrait = ContextEngine.getPortrait(type, id);
     if (portrait?.img) {
       const img = document.createElement("img");
       img.src = portrait.img;
@@ -1396,7 +1396,7 @@ export class CampaignWorkspace {
       wrap.append(img);
     } else {
       wrap.classList.add("nd-portrait--initials");
-      wrap.textContent = GraphService.initials(name);
+      wrap.textContent = ContextEngine.initials(name);
     }
     return wrap;
   }
@@ -1412,7 +1412,7 @@ export class CampaignWorkspace {
     if (!(host instanceof HTMLElement)) return;
     host.replaceChildren();
     host.className = "nd-portrait nd-portrait--header";
-    const portrait = GraphService.getPortrait(type, id);
+    const portrait = ContextEngine.getPortrait(type, id);
     if (portrait?.img) {
       host.classList.remove("nd-portrait--initials");
       const img = document.createElement("img");
@@ -1421,8 +1421,52 @@ export class CampaignWorkspace {
       host.append(img);
     } else {
       host.classList.add("nd-portrait--initials");
-      host.textContent = GraphService.initials(name);
+      host.textContent = ContextEngine.initials(name);
     }
+  }
+
+  /**
+   * Chronicle timeline for the open entity (ContextEngine-backed).
+   * @param {HTMLElement} view
+   * @param {string} type
+   * @param {string} id
+   */
+  static #paintEntityTimeline(view, type, id) {
+    const host = view.querySelector("[data-campaign-entity-timeline]");
+    if (!(host instanceof HTMLElement)) return;
+    host.replaceChildren();
+    const packet = ContextEngine.getEntityContext(type, id);
+    const timeline = packet.timeline ?? [];
+    if (!timeline.length) {
+      host.hidden = true;
+      return;
+    }
+    host.hidden = false;
+    const heading = document.createElement("h3");
+    heading.className = "nd-hierarchy-group";
+    heading.textContent = "Timeline";
+    host.append(heading);
+
+    const list = document.createElement("ol");
+    list.className = "nd-entity-timeline";
+    for (const entry of timeline) {
+      const item = document.createElement("li");
+      item.className = "nd-entity-timeline__item";
+
+      const meta = document.createElement("button");
+      meta.type = "button";
+      meta.className = "nd-entity-timeline__session";
+      meta.dataset.memoryNavId = entry.sessionId;
+      meta.textContent = entry.label || `Session ${entry.sessionNumber}`;
+
+      const excerpt = document.createElement("p");
+      excerpt.className = "nd-entity-timeline__excerpt";
+      excerpt.textContent = entry.excerpt || "Referenced in this session.";
+
+      item.append(meta, excerpt);
+      list.append(item);
+    }
+    host.append(list);
   }
 
   static #paintMemoryList(panel) {

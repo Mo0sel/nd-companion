@@ -2,16 +2,34 @@ import { CampaignDocument } from "./campaign-document.js";
 import { CampaignMemoryService } from "./campaign-memory-service.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { GraphService } from "./graph-service.js";
+import { PlaybookService } from "./playbook-service.js";
+import { QuestEntryService } from "./quest-entry-service.js";
 import { RelationshipService } from "./relationship-service.js";
 import { RichText } from "./rich-text.js";
+import { SessionService } from "./session-service.js";
+import { StoryThreadService } from "./story-thread-service.js";
 import { CompanionStorage } from "./storage.js";
 
 /**
- * Read-only contextual projection of the existing campaign relationship graph.
- * Document revisions trigger a full rebuild. Relationship store changes update
- * only the affected edge when the document index is already current.
+ * Context Engine — "What matters right now?"
+ *
+ * Orchestrates GraphService relationships, session state, chronicle history,
+ * and Foundry metadata into cached context packets.
+ * Not an AI system. UI and future AI consume this layer only.
  */
 export class ContextEngine {
+  /** @type {number} */
+  static #stampDoc = -1;
+
+  /** @type {number} */
+  static #stampLinks = -1;
+
+  /** @type {number} */
+  static #stampPlay = -1;
+
+  /** @type {Map<string, object>} */
+  static #packetCache = new Map();
+
   /** @type {number} */
   static #revision = -1;
 
@@ -36,14 +54,29 @@ export class ContextEngine {
   /** @type {Map<string, object>} */
   static #factions = new Map();
 
+  /** Drop all cached packets. Next getters rebuild. */
+  static invalidate() {
+    ContextEngine.#packetCache.clear();
+    ContextEngine.#stampDoc = -1;
+    ContextEngine.#stampLinks = -1;
+    ContextEngine.#stampPlay = -1;
+  }
+
+  /** Force a fresh rebuild of graph-backed indexes + clear packet cache. */
+  static refresh() {
+    ContextEngine.invalidate();
+    GraphService.rebuild();
+    ContextEngine.#ensureIndex();
+  }
+
   /**
-   * Incrementally add/remove one undirected edge without rebuilding the graph.
-   * Falls back to ensuring a fresh index when the document revision is stale.
+   * Relationship store hook — keep legacy adjacency warm and drop packets.
    * @param {{ kind: string, id: string }} left
    * @param {{ kind: string, id: string }} right
    * @param {boolean} connect
    */
   static applyEdge(left, right, connect) {
+    ContextEngine.invalidate();
     if (!left?.kind || !left?.id || !right?.kind || !right?.id) return;
     if (left.kind === right.kind && left.id === right.id) return;
 
@@ -65,7 +98,74 @@ export class ContextEngine {
   }
 
   /**
-   * @param {object} entity Actor, Quest, Location, Item, or Chronicle Session
+   * Portrait/metadata for UI — delegates to GraphService so UI never imports it.
+   * @param {string} type
+   * @param {string} id
+   */
+  static getPortrait(type, id) {
+    ContextEngine.#syncStamps();
+    return GraphService.getPortrait(type, id);
+  }
+
+  /** @param {string} name */
+  static initials(name) {
+    return GraphService.initials(name);
+  }
+
+  /**
+   * @param {string|{ kind?: string, type?: string, id?: string, uuid?: string }} typeOrRef
+   * @param {string} [id]
+   * @returns {EntityContextPacket}
+   */
+  static getEntityContext(typeOrRef, id) {
+    ContextEngine.#syncStamps();
+    const target = ContextEngine.#resolveRef(typeOrRef, id);
+    if (!target) return ContextEngine.#emptyEntityPacket();
+
+    const cacheKey = `entity:${target.type}:${target.id}`;
+    const cached = ContextEngine.#packetCache.get(cacheKey);
+    if (cached) return cached;
+
+    const graph = GraphService.getEntityContext(target.type, target.id);
+    const status = ContextEngine.#statusFor(target);
+    const notesKey = ContextEngine.#notesKey(target);
+    const notes = notesKey ? CompanionStorage.getMemory(notesKey) : "";
+    const timeline = ContextEngine.#buildTimeline(target.type, target.id);
+    const stats = GraphService.getStats();
+    const connectedCount = graph.neighbors?.length ?? 0;
+
+    /** @type {EntityContextPacket} */
+    const packet = {
+      entity: graph.entity,
+      foundryDocument: graph.foundryDocument,
+      foundry: graph.entity?.foundry ?? null,
+      connectedKnowledge: graph.neighbors ?? [],
+      relatedActors: graph.connectedActors ?? [],
+      relatedItems: graph.connectedItems ?? [],
+      relatedLocations: graph.connectedLocations ?? [],
+      relatedFactions: graph.connectedFactions ?? [],
+      relatedStoryThreads: graph.connectedStoryThreads ?? [],
+      relatedQuests: graph.connectedQuests ?? [],
+      recentChronicleEvents: timeline.slice(0, 8),
+      activeSessions: ContextEngine.#activeSessionNodes(),
+      notes,
+      status,
+      timeline,
+      graphSummary: {
+        nodeCount: stats.nodeCount,
+        edgeCount: stats.edgeCount,
+        relationshipCount: stats.relationshipCount,
+        connectedEntityCount: connectedCount
+      }
+    };
+
+    ContextEngine.#packetCache.set(cacheKey, packet);
+    return packet;
+  }
+
+  /**
+   * Legacy Connected Knowledge shape used by RelationshipExplorer / ContextPanel.
+   * @param {object} entity
    * @returns {ContextResult}
    */
   static getContext(entity) {
@@ -73,47 +173,234 @@ export class ContextEngine {
     if (!target) return ContextEngine.#empty();
     ContextEngine.#ensureIndex();
 
-    // GraphService is the knowledge layer; keep status/history from local index.
     const graphType = target.kind === "questEntry" ? "quest" : target.kind;
-    const status =
-      target.kind === "storyThread"
-        ? ContextEngine.#storyThreads.get(target.id)?.currentState ?? ""
-        : target.kind === "faction"
-          ? ContextEngine.#factions.get(target.id)?.currentStatus ?? ""
-          : CompanionStorage.getMemory(ContextEngine.currentStatusKey(target));
-    const campaignMemory = CompanionStorage.getMemory(
-      `${ContextEngine.#storageKind(target.kind)}:${target.id}`
-    );
-
-    const targetKey = ContextEngine.#key(target.kind, target.id);
-    const relatedKeys = ContextEngine.#adjacency.get(targetKey) ?? new Set();
-    const related = [...relatedKeys]
-      .map((key) => ContextEngine.#nodeFromKey(key))
-      .filter(Boolean);
-    const sessions = related
-      .filter((node) => node.kind === "session")
-      .concat(target.kind === "session" ? [ContextEngine.#node(target.kind, target.id)] : [])
-      .filter(Boolean)
-      .sort((a, b) => a.sessionNumber - b.sessionNumber);
-    const unique = (nodes) => {
-      const seen = new Set();
-      return nodes.filter((node) => {
-        const key = ContextEngine.#key(node.kind, node.id);
-        if (seen.has(key) || key === targetKey) return false;
-        seen.add(key);
-        return true;
-      });
-    };
-
+    const packet = ContextEngine.getEntityContext(graphType, target.id);
     const base = {
       target: ContextEngine.#node(target.kind, target.id),
-      lastSeen: unique(sessions).at(-1) ?? null,
-      sessions: unique(sessions),
-      currentStatus: status,
-      campaignMemory
+      lastSeen: packet.timeline[0]
+        ? {
+            kind: "session",
+            id: packet.timeline[0].sessionId,
+            label: packet.timeline[0].label,
+            sessionNumber: packet.timeline[0].sessionNumber,
+            excerpt: packet.timeline[0].excerpt
+          }
+        : null,
+      sessions: packet.timeline.map((entry) => ({
+        kind: "session",
+        id: entry.sessionId,
+        label: entry.label,
+        sessionNumber: entry.sessionNumber,
+        excerpt: entry.excerpt,
+        title: entry.title ?? "",
+        sessionLog: entry.sessionLog ?? ""
+      })),
+      currentStatus: packet.status,
+      campaignMemory: packet.notes,
+      timeline: packet.timeline,
+      graphSummary: packet.graphSummary
     };
 
-    return GraphService.toContextResult(graphType, target.id, base);
+    return {
+      ...GraphService.toContextResult(graphType, target.id, base),
+      timeline: packet.timeline,
+      graphSummary: packet.graphSummary
+    };
+  }
+
+  /** @returns {SessionContextPacket} */
+  static getSessionContext() {
+    ContextEngine.#syncStamps();
+    const cacheKey = "session:active";
+    const cached = ContextEngine.#packetCache.get(cacheKey);
+    if (cached) return cached;
+
+    const currentSession = SessionService.getActive();
+    const activeStoryThreads = StoryThreadService.list()
+      .filter((thread) => thread.status === "ACTIVE")
+      .map((thread) => ({
+        id: thread.id,
+        type: "storyThread",
+        name: thread.title?.trim() || "Untitled Story Thread",
+        status: thread.status
+      }));
+
+    const activeQuests = QuestEntryService.list()
+      .filter((entry) => entry.status === "ACTIVE")
+      .map((entry) => ({
+        id: entry.id,
+        type: "quest",
+        name: entry.title?.trim() || "Untitled Quest",
+        status: entry.status,
+        storyThreadId: entry.storyThreadId ?? ""
+      }));
+
+    const recentChronicle = CampaignMemoryService.list()
+      .slice()
+      .sort((a, b) => (b.sessionNumber ?? 0) - (a.sessionNumber ?? 0))
+      .slice(0, 6)
+      .map((session) => ContextEngine.#chronicleEntry(session));
+
+    const recentlyUpdatedEntities = ContextEngine.#recentActivity(12);
+    const stats = GraphService.getStats();
+
+    const importantNPCs = [];
+    const importantLocations = [];
+    const importantItems = [];
+    for (const thread of activeStoryThreads) {
+      for (const node of GraphService.getNeighbors("storyThread", thread.id)) {
+        if (node.type === "actor") importantNPCs.push(node);
+        if (node.type === "location") importantLocations.push(node);
+        if (node.type === "item") importantItems.push(node);
+      }
+    }
+
+    /** @type {SessionContextPacket} */
+    const packet = {
+      currentSession: currentSession
+        ? {
+            id: currentSession.id,
+            sessionNumber: currentSession.sessionNumber,
+            title: currentSession.title ?? "",
+            status: currentSession.status ?? ""
+          }
+        : null,
+      activeStoryThreads,
+      activeQuests,
+      recentlyUpdatedEntities,
+      unresolvedProblems: activeQuests.filter((quest) => quest.status === "ACTIVE"),
+      recentChronicle,
+      importantNPCs: ContextEngine.#uniqueNodes(importantNPCs).slice(0, 12),
+      importantLocations: ContextEngine.#uniqueNodes(importantLocations).slice(0, 12),
+      importantItems: ContextEngine.#uniqueNodes(importantItems).slice(0, 12),
+      graphSummary: {
+        nodeCount: stats.nodeCount,
+        edgeCount: stats.edgeCount,
+        relationshipCount: stats.relationshipCount,
+        connectedEntityCount:
+          activeStoryThreads.length + activeQuests.length
+      }
+    };
+
+    ContextEngine.#packetCache.set(cacheKey, packet);
+    return packet;
+  }
+
+  /** @returns {CampaignContextPacket} */
+  static getCampaignContext() {
+    ContextEngine.#syncStamps();
+    const cacheKey = "campaign";
+    const cached = ContextEngine.#packetCache.get(cacheKey);
+    if (cached) return cached;
+
+    const threads = StoryThreadService.list();
+    const quests = QuestEntryService.list();
+    const currentSession = SessionService.getActive();
+    const stats = GraphService.getStats();
+
+    /** @type {CampaignContextPacket} */
+    const packet = {
+      campaign: {
+        name: game.world?.title?.trim() || "Campaign",
+        id: game.world?.id ?? ""
+      },
+      currentSession: currentSession
+        ? {
+            id: currentSession.id,
+            sessionNumber: currentSession.sessionNumber,
+            title: currentSession.title ?? "",
+            status: currentSession.status ?? ""
+          }
+        : null,
+      activeThreads: threads
+        .filter((thread) => thread.status === "ACTIVE")
+        .map((thread) => ({
+          id: thread.id,
+          name: thread.title?.trim() || "Untitled Story Thread",
+          status: thread.status
+        })),
+      completedThreads: threads
+        .filter((thread) => thread.status === "COMPLETED")
+        .map((thread) => ({
+          id: thread.id,
+          name: thread.title?.trim() || "Untitled Story Thread",
+          status: thread.status
+        })),
+      openQuests: quests
+        .filter((entry) => entry.status === "ACTIVE" || entry.status === "PLANNED")
+        .map((entry) => ({
+          id: entry.id,
+          name: entry.title?.trim() || "Untitled Quest",
+          status: entry.status
+        })),
+      completedQuests: quests
+        .filter((entry) => entry.status === "COMPLETED")
+        .map((entry) => ({
+          id: entry.id,
+          name: entry.title?.trim() || "Untitled Quest",
+          status: entry.status
+        })),
+      recentlyChanged: ContextEngine.#recentActivity(20),
+      graphStats: stats,
+      recentChronicle: CampaignMemoryService.list()
+        .slice()
+        .sort((a, b) => (b.sessionNumber ?? 0) - (a.sessionNumber ?? 0))
+        .slice(0, 8)
+        .map((session) => ContextEngine.#chronicleEntry(session)),
+      graphSummary: {
+        nodeCount: stats.nodeCount,
+        edgeCount: stats.edgeCount,
+        relationshipCount: stats.relationshipCount,
+        connectedEntityCount: threads.length + quests.length
+      }
+    };
+
+    ContextEngine.#packetCache.set(cacheKey, packet);
+    return packet;
+  }
+
+  /** @returns {PlayContextPacket} */
+  static getPlayContext() {
+    ContextEngine.#syncStamps();
+    const playIndex = PlaybookService.getCurrent()?.index ?? -1;
+    if (ContextEngine.#stampPlay !== playIndex) {
+      ContextEngine.#stampPlay = playIndex;
+      ContextEngine.#packetCache.delete("play");
+    }
+
+    const cacheKey = "play";
+    const cached = ContextEngine.#packetCache.get(cacheKey);
+    if (cached) return cached;
+
+    const session = ContextEngine.getSessionContext();
+    const current = PlaybookService.getCurrent();
+    const beat = current.beat ?? null;
+    const stats = GraphService.getStats();
+
+    /** @type {PlayContextPacket} */
+    const packet = {
+      ...session,
+      currentBeat: beat
+        ? {
+            index: current.index,
+            total: current.total,
+            title: beat.title ?? "",
+            sourceStoryThreadId: beat.sourceStoryThreadId ?? "",
+            sourceStoryEntryId: beat.sourceStoryEntryId ?? ""
+          }
+        : null,
+      missionStoryThreadId: beat?.sourceStoryThreadId || "",
+      missionQuestId: beat?.sourceStoryEntryId || "",
+      graphSummary: {
+        nodeCount: stats.nodeCount,
+        edgeCount: stats.edgeCount,
+        relationshipCount: stats.relationshipCount,
+        connectedEntityCount: session.activeStoryThreads.length
+      }
+    };
+
+    ContextEngine.#packetCache.set(cacheKey, packet);
+    return packet;
   }
 
   /**
@@ -133,6 +420,204 @@ export class ContextEngine {
     return `status:${ContextEngine.#storageKind(target.kind)}:${target.id}`;
   }
 
+  static #syncStamps() {
+    const docRev = CampaignDocument.revision;
+    const linksRev = RelationshipService.revision();
+    if (
+      ContextEngine.#stampDoc !== docRev ||
+      ContextEngine.#stampLinks !== linksRev
+    ) {
+      ContextEngine.#packetCache.clear();
+      ContextEngine.#stampDoc = docRev;
+      ContextEngine.#stampLinks = linksRev;
+    }
+  }
+
+  static #resolveRef(typeOrRef, id) {
+    if (typeof typeOrRef === "string" && id) {
+      const type = ContextEngine.#graphType(typeOrRef);
+      return type ? { type, id } : null;
+    }
+    if (typeOrRef && typeof typeOrRef === "object") {
+      const normalized = ContextEngine.#normalizeTarget(typeOrRef);
+      if (!normalized) return null;
+      return {
+        type: ContextEngine.#graphType(normalized.kind),
+        id: normalized.id
+      };
+    }
+    return null;
+  }
+
+  static #graphType(kind) {
+    if (!kind) return null;
+    if (kind === "scene") return "location";
+    if (kind === "questEntry" || kind === "beat") return "quest";
+    return kind;
+  }
+
+  static #statusFor(target) {
+    if (target.type === "storyThread") {
+      return (
+        StoryThreadService.getById(target.id)?.currentState ??
+        CompanionStorage.getMemory(`storyThread:${target.id}`) ??
+        ""
+      );
+    }
+    if (target.type === "faction") {
+      ContextEngine.#ensureIndex();
+      return ContextEngine.#factions.get(target.id)?.currentStatus ?? "";
+    }
+    const key = ContextEngine.currentStatusKey({
+      kind: target.type === "quest" ? "questEntry" : target.type,
+      id: target.id
+    });
+    return key ? CompanionStorage.getMemory(key) : "";
+  }
+
+  static #notesKey(target) {
+    if (["actor", "item", "location"].includes(target.type)) {
+      const storageKind = ContextEngine.#storageKind(target.type);
+      return `${storageKind}:${target.id}`;
+    }
+    if (target.type === "faction") return `faction:${target.id}`;
+    if (target.type === "storyThread") return `storyThread:${target.id}`;
+    if (target.type === "quest") return `quest:${target.id}`;
+    return "";
+  }
+
+  /**
+   * Chronicle sessions that reference this entity — newest first.
+   * @param {string} type
+   * @param {string} id
+   * @returns {TimelineEntry[]}
+   */
+  static #buildTimeline(type, id) {
+    ContextEngine.#ensureIndex();
+    const node = GraphService.getNode(type, id);
+    const name = node?.name?.trim() || "";
+    /** @type {Map<string, TimelineEntry>} */
+    const byId = new Map();
+
+    for (const session of CampaignMemoryService.list()) {
+      if (!ContextEngine.#sessionReferences(session, type, id, name)) continue;
+      byId.set(session.id, ContextEngine.#chronicleEntry(session));
+    }
+
+    for (const neighbor of GraphService.getConnected(type, id, "session")) {
+      const session = CampaignMemoryService.getById(neighbor.id);
+      if (!session || byId.has(session.id)) continue;
+      byId.set(session.id, ContextEngine.#chronicleEntry(session));
+    }
+
+    return [...byId.values()].sort(
+      (a, b) => (b.sessionNumber ?? 0) - (a.sessionNumber ?? 0)
+    );
+  }
+
+  static #sessionReferences(session, type, id, name) {
+    const lists = {
+      actor: session.relatedActors ?? [],
+      location: session.relatedLocations ?? [],
+      item: session.relatedItems ?? [],
+      quest: [
+        ...(session.relatedQuestEntries ?? []),
+        ...(session.relatedQuests ?? [])
+      ]
+    };
+    if (lists[type]?.includes(id)) return true;
+
+    const log = RichText.plainText(session.sessionLog ?? "");
+    if (id && log.includes(id)) return true;
+    if (name && name.length > 2) {
+      const pattern = new RegExp(
+        `\\b${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
+        "i"
+      );
+      if (pattern.test(log)) return true;
+    }
+    return false;
+  }
+
+  static #chronicleEntry(session) {
+    return {
+      sessionId: session.id,
+      sessionNumber: session.sessionNumber ?? 0,
+      label: CampaignMemoryService.label(session),
+      title: session.title ?? "",
+      excerpt: ContextEngine.#excerpt(session.sessionLog),
+      sessionLog: session.sessionLog ?? "",
+      updated: session.updated ?? session.created ?? 0
+    };
+  }
+
+  static #activeSessionNodes() {
+    const active = SessionService.getActive();
+    if (!active) return [];
+    return [
+      {
+        id: active.id,
+        type: "session",
+        name: active.title?.trim() || `Session ${active.sessionNumber ?? ""}`,
+        sessionNumber: active.sessionNumber ?? 0
+      }
+    ];
+  }
+
+  static #recentActivity(limit) {
+    try {
+      return CompanionStorage.getActivityEvents()
+        .slice(0, limit)
+        .map((event) => ({
+          id: event.id,
+          timestamp: event.timestamp,
+          action: event.action,
+          entityKind: event.entityKind,
+          entityId: event.entityId,
+          entityName: event.entityName,
+          fieldName: event.fieldName ?? null
+        }));
+    } catch {
+      return [];
+    }
+  }
+
+  static #uniqueNodes(nodes) {
+    const seen = new Set();
+    return nodes.filter((node) => {
+      const key = `${node.type}:${node.id}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  static #emptyEntityPacket() {
+    return {
+      entity: null,
+      foundryDocument: null,
+      foundry: null,
+      connectedKnowledge: [],
+      relatedActors: [],
+      relatedItems: [],
+      relatedLocations: [],
+      relatedFactions: [],
+      relatedStoryThreads: [],
+      relatedQuests: [],
+      recentChronicleEvents: [],
+      activeSessions: [],
+      notes: "",
+      status: "",
+      timeline: [],
+      graphSummary: {
+        nodeCount: 0,
+        edgeCount: 0,
+        relationshipCount: 0,
+        connectedEntityCount: 0
+      }
+    };
+  }
+
   static #ensureIndex() {
     const linksRevision = RelationshipService.revision();
     if (
@@ -149,7 +634,6 @@ export class ContextEngine {
       ContextEngine.#linksRevision !== linksRevision;
 
     if (linksOnly) {
-      // Document graph is current — only re-apply relationship edges.
       ContextEngine.#stripRelationshipEdges();
       for (const rel of RelationshipService.list()) {
         ContextEngine.#connectGroup([
@@ -186,16 +670,22 @@ export class ContextEngine {
     for (const session of ContextEngine.#sessions.values()) {
       const sessionEntryIds = session.relatedQuestEntries ?? [];
       const owningStoryThreadIds = sessionEntryIds
-        .map((id) => ContextEngine.#entries.get(id)?.storyThreadId)
+        .map((entryId) => ContextEngine.#entries.get(entryId)?.storyThreadId)
         .filter(Boolean);
       ContextEngine.#connectGroup([
         { kind: "session", id: session.id },
-        ...(session.relatedActors ?? []).map((id) => ({ kind: "actor", id })),
-        ...(session.relatedLocations ?? []).map((id) => ({ kind: "location", id })),
-        ...(session.relatedItems ?? []).map((id) => ({ kind: "item", id })),
-        ...(session.relatedQuests ?? []).map((id) => ({ kind: "quest", id })),
-        ...owningStoryThreadIds.map((id) => ({ kind: "storyThread", id })),
-        ...sessionEntryIds.map((id) => ({ kind: "questEntry", id }))
+        ...(session.relatedActors ?? []).map((actorId) => ({ kind: "actor", id: actorId })),
+        ...(session.relatedLocations ?? []).map((locationId) => ({
+          kind: "location",
+          id: locationId
+        })),
+        ...(session.relatedItems ?? []).map((itemId) => ({ kind: "item", id: itemId })),
+        ...(session.relatedQuests ?? []).map((questId) => ({ kind: "quest", id: questId })),
+        ...owningStoryThreadIds.map((threadId) => ({
+          kind: "storyThread",
+          id: threadId
+        })),
+        ...sessionEntryIds.map((entryId) => ({ kind: "questEntry", id: entryId }))
       ]);
     }
 
@@ -203,11 +693,17 @@ export class ContextEngine {
       ContextEngine.#connectGroup([
         { kind: "quest", id: quest.id },
         ...(quest.relatedBeatIds ?? [])
-          .filter((id) => ContextEngine.#entries.has(id))
-          .map((id) => ({ kind: "questEntry", id })),
-        ...(quest.relatedCharacterIds ?? []).map((id) => ({ kind: "actor", id })),
-        ...(quest.relatedLocationIds ?? []).map((id) => ({ kind: "location", id })),
-        ...(quest.relatedItemIds ?? []).map((id) => ({ kind: "item", id }))
+          .filter((entryId) => ContextEngine.#entries.has(entryId))
+          .map((entryId) => ({ kind: "questEntry", id: entryId })),
+        ...(quest.relatedCharacterIds ?? []).map((actorId) => ({
+          kind: "actor",
+          id: actorId
+        })),
+        ...(quest.relatedLocationIds ?? []).map((locationId) => ({
+          kind: "location",
+          id: locationId
+        })),
+        ...(quest.relatedItemIds ?? []).map((itemId) => ({ kind: "item", id: itemId }))
       ]);
     }
 
@@ -218,22 +714,40 @@ export class ContextEngine {
           ? [{ kind: "storyThread", id: entry.storyThreadId }]
           : []),
         ...(entry.relatedBeatIds ?? [])
-          .filter((id) => ContextEngine.#entries.has(id))
-          .map((id) => ({ kind: "questEntry", id })),
-        ...(entry.relatedCharacterIds ?? []).map((id) => ({ kind: "actor", id })),
-        ...(entry.relatedLocationIds ?? []).map((id) => ({ kind: "location", id })),
-        ...(entry.relatedItemIds ?? []).map((id) => ({ kind: "item", id }))
+          .filter((entryId) => ContextEngine.#entries.has(entryId))
+          .map((entryId) => ({ kind: "questEntry", id: entryId })),
+        ...(entry.relatedCharacterIds ?? []).map((actorId) => ({
+          kind: "actor",
+          id: actorId
+        })),
+        ...(entry.relatedLocationIds ?? []).map((locationId) => ({
+          kind: "location",
+          id: locationId
+        })),
+        ...(entry.relatedItemIds ?? []).map((itemId) => ({ kind: "item", id: itemId }))
       ]);
     }
 
     for (const thread of ContextEngine.#storyThreads.values()) {
       ContextEngine.#connectGroup([
         { kind: "storyThread", id: thread.id },
-        ...(thread.relatedSessionIds ?? []).map((id) => ({ kind: "session", id })),
-        ...(thread.relatedActorIds ?? []).map((id) => ({ kind: "actor", id })),
-        ...(thread.relatedLocationIds ?? []).map((id) => ({ kind: "location", id })),
-        ...(thread.relatedItemIds ?? []).map((id) => ({ kind: "item", id })),
-        ...(thread.relatedQuestIds ?? []).map((id) => ({ kind: "quest", id }))
+        ...(thread.relatedSessionIds ?? []).map((sessionId) => ({
+          kind: "session",
+          id: sessionId
+        })),
+        ...(thread.relatedActorIds ?? []).map((actorId) => ({
+          kind: "actor",
+          id: actorId
+        })),
+        ...(thread.relatedLocationIds ?? []).map((locationId) => ({
+          kind: "location",
+          id: locationId
+        })),
+        ...(thread.relatedItemIds ?? []).map((itemId) => ({ kind: "item", id: itemId })),
+        ...(thread.relatedQuestIds ?? []).map((questId) => ({
+          kind: "quest",
+          id: questId
+        }))
       ]);
     }
 
@@ -244,15 +758,28 @@ export class ContextEngine {
       ];
       ContextEngine.#connectGroup([
         { kind: "faction", id: faction.id },
-        ...(faction.relatedFactionIds ?? []).map((id) => ({ kind: "faction", id })),
-        ...(faction.relatedStoryThreadIds ?? []).map(
-          (id) => ({ kind: "storyThread", id })
-        ),
-        ...(faction.relatedSessionIds ?? []).map((id) => ({ kind: "session", id })),
-        ...actors.map((id) => ({ kind: "actor", id })),
-        ...(faction.relatedLocationIds ?? []).map((id) => ({ kind: "location", id })),
-        ...(faction.relatedItemIds ?? []).map((id) => ({ kind: "item", id })),
-        ...(faction.relatedQuestIds ?? []).map((id) => ({ kind: "quest", id }))
+        ...(faction.relatedFactionIds ?? []).map((factionId) => ({
+          kind: "faction",
+          id: factionId
+        })),
+        ...(faction.relatedStoryThreadIds ?? []).map((threadId) => ({
+          kind: "storyThread",
+          id: threadId
+        })),
+        ...(faction.relatedSessionIds ?? []).map((sessionId) => ({
+          kind: "session",
+          id: sessionId
+        })),
+        ...actors.map((actorId) => ({ kind: "actor", id: actorId })),
+        ...(faction.relatedLocationIds ?? []).map((locationId) => ({
+          kind: "location",
+          id: locationId
+        })),
+        ...(faction.relatedItemIds ?? []).map((itemId) => ({ kind: "item", id: itemId })),
+        ...(faction.relatedQuestIds ?? []).map((questId) => ({
+          kind: "quest",
+          id: questId
+        }))
       ]);
     }
 
@@ -267,40 +794,44 @@ export class ContextEngine {
     ContextEngine.#linksRevision = linksRevision;
   }
 
-  /**
-   * Remove edges that exist only in the relationship store before re-applying.
-   * Document-derived edges are preserved by rebuilding from documents on full index.
-   * For links-only refresh we rebuild adjacency from documents + relationships —
-   * cheaper than a full entity map rebuild, still O(edges).
-   */
   static #stripRelationshipEdges() {
-    // Rebuild adjacency from document maps already in memory, then caller
-    // re-adds relationship edges.
     ContextEngine.#adjacency = new Map();
     for (const session of ContextEngine.#sessions.values()) {
       const sessionEntryIds = session.relatedQuestEntries ?? [];
       const owningStoryThreadIds = sessionEntryIds
-        .map((id) => ContextEngine.#entries.get(id)?.storyThreadId)
+        .map((entryId) => ContextEngine.#entries.get(entryId)?.storyThreadId)
         .filter(Boolean);
       ContextEngine.#connectGroup([
         { kind: "session", id: session.id },
-        ...(session.relatedActors ?? []).map((id) => ({ kind: "actor", id })),
-        ...(session.relatedLocations ?? []).map((id) => ({ kind: "location", id })),
-        ...(session.relatedItems ?? []).map((id) => ({ kind: "item", id })),
-        ...(session.relatedQuests ?? []).map((id) => ({ kind: "quest", id })),
-        ...owningStoryThreadIds.map((id) => ({ kind: "storyThread", id })),
-        ...sessionEntryIds.map((id) => ({ kind: "questEntry", id }))
+        ...(session.relatedActors ?? []).map((actorId) => ({ kind: "actor", id: actorId })),
+        ...(session.relatedLocations ?? []).map((locationId) => ({
+          kind: "location",
+          id: locationId
+        })),
+        ...(session.relatedItems ?? []).map((itemId) => ({ kind: "item", id: itemId })),
+        ...(session.relatedQuests ?? []).map((questId) => ({ kind: "quest", id: questId })),
+        ...owningStoryThreadIds.map((threadId) => ({
+          kind: "storyThread",
+          id: threadId
+        })),
+        ...sessionEntryIds.map((entryId) => ({ kind: "questEntry", id: entryId }))
       ]);
     }
     for (const quest of ContextEngine.#quests.values()) {
       ContextEngine.#connectGroup([
         { kind: "quest", id: quest.id },
         ...(quest.relatedBeatIds ?? [])
-          .filter((id) => ContextEngine.#entries.has(id))
-          .map((id) => ({ kind: "questEntry", id })),
-        ...(quest.relatedCharacterIds ?? []).map((id) => ({ kind: "actor", id })),
-        ...(quest.relatedLocationIds ?? []).map((id) => ({ kind: "location", id })),
-        ...(quest.relatedItemIds ?? []).map((id) => ({ kind: "item", id }))
+          .filter((entryId) => ContextEngine.#entries.has(entryId))
+          .map((entryId) => ({ kind: "questEntry", id: entryId })),
+        ...(quest.relatedCharacterIds ?? []).map((actorId) => ({
+          kind: "actor",
+          id: actorId
+        })),
+        ...(quest.relatedLocationIds ?? []).map((locationId) => ({
+          kind: "location",
+          id: locationId
+        })),
+        ...(quest.relatedItemIds ?? []).map((itemId) => ({ kind: "item", id: itemId }))
       ]);
     }
     for (const entry of ContextEngine.#entries.values()) {
@@ -310,21 +841,39 @@ export class ContextEngine {
           ? [{ kind: "storyThread", id: entry.storyThreadId }]
           : []),
         ...(entry.relatedBeatIds ?? [])
-          .filter((id) => ContextEngine.#entries.has(id))
-          .map((id) => ({ kind: "questEntry", id })),
-        ...(entry.relatedCharacterIds ?? []).map((id) => ({ kind: "actor", id })),
-        ...(entry.relatedLocationIds ?? []).map((id) => ({ kind: "location", id })),
-        ...(entry.relatedItemIds ?? []).map((id) => ({ kind: "item", id }))
+          .filter((entryId) => ContextEngine.#entries.has(entryId))
+          .map((entryId) => ({ kind: "questEntry", id: entryId })),
+        ...(entry.relatedCharacterIds ?? []).map((actorId) => ({
+          kind: "actor",
+          id: actorId
+        })),
+        ...(entry.relatedLocationIds ?? []).map((locationId) => ({
+          kind: "location",
+          id: locationId
+        })),
+        ...(entry.relatedItemIds ?? []).map((itemId) => ({ kind: "item", id: itemId }))
       ]);
     }
     for (const thread of ContextEngine.#storyThreads.values()) {
       ContextEngine.#connectGroup([
         { kind: "storyThread", id: thread.id },
-        ...(thread.relatedSessionIds ?? []).map((id) => ({ kind: "session", id })),
-        ...(thread.relatedActorIds ?? []).map((id) => ({ kind: "actor", id })),
-        ...(thread.relatedLocationIds ?? []).map((id) => ({ kind: "location", id })),
-        ...(thread.relatedItemIds ?? []).map((id) => ({ kind: "item", id })),
-        ...(thread.relatedQuestIds ?? []).map((id) => ({ kind: "quest", id }))
+        ...(thread.relatedSessionIds ?? []).map((sessionId) => ({
+          kind: "session",
+          id: sessionId
+        })),
+        ...(thread.relatedActorIds ?? []).map((actorId) => ({
+          kind: "actor",
+          id: actorId
+        })),
+        ...(thread.relatedLocationIds ?? []).map((locationId) => ({
+          kind: "location",
+          id: locationId
+        })),
+        ...(thread.relatedItemIds ?? []).map((itemId) => ({ kind: "item", id: itemId })),
+        ...(thread.relatedQuestIds ?? []).map((questId) => ({
+          kind: "quest",
+          id: questId
+        }))
       ]);
     }
     for (const faction of ContextEngine.#factions.values()) {
@@ -334,23 +883,32 @@ export class ContextEngine {
       ];
       ContextEngine.#connectGroup([
         { kind: "faction", id: faction.id },
-        ...(faction.relatedFactionIds ?? []).map((id) => ({ kind: "faction", id })),
-        ...(faction.relatedStoryThreadIds ?? []).map(
-          (id) => ({ kind: "storyThread", id })
-        ),
-        ...(faction.relatedSessionIds ?? []).map((id) => ({ kind: "session", id })),
-        ...actors.map((id) => ({ kind: "actor", id })),
-        ...(faction.relatedLocationIds ?? []).map((id) => ({ kind: "location", id })),
-        ...(faction.relatedItemIds ?? []).map((id) => ({ kind: "item", id })),
-        ...(faction.relatedQuestIds ?? []).map((id) => ({ kind: "quest", id }))
+        ...(faction.relatedFactionIds ?? []).map((factionId) => ({
+          kind: "faction",
+          id: factionId
+        })),
+        ...(faction.relatedStoryThreadIds ?? []).map((threadId) => ({
+          kind: "storyThread",
+          id: threadId
+        })),
+        ...(faction.relatedSessionIds ?? []).map((sessionId) => ({
+          kind: "session",
+          id: sessionId
+        })),
+        ...actors.map((actorId) => ({ kind: "actor", id: actorId })),
+        ...(faction.relatedLocationIds ?? []).map((locationId) => ({
+          kind: "location",
+          id: locationId
+        })),
+        ...(faction.relatedItemIds ?? []).map((itemId) => ({ kind: "item", id: itemId })),
+        ...(faction.relatedQuestIds ?? []).map((questId) => ({
+          kind: "quest",
+          id: questId
+        }))
       ]);
     }
   }
 
-  /**
-   * Connect every member that already co-occurs in one stored relationship record.
-   * @param {{ kind: string, id: string }[]} members
-   */
   static #connectGroup(members) {
     const unique = [];
     const seen = new Set();
@@ -372,7 +930,7 @@ export class ContextEngine {
 
   static #normalizeTarget(entity) {
     if (!entity || typeof entity !== "object") return null;
-    let kind = entity.kind;
+    let kind = entity.kind ?? entity.type;
     if (kind === "scene") kind = "location";
     if (!kind && Number.isFinite(entity.sessionNumber)) kind = "session";
     if (!kind && (entity.category || Array.isArray(entity.entryIds))) kind = "quest";
@@ -393,12 +951,6 @@ export class ContextEngine {
       return null;
     }
     return { kind, id };
-  }
-
-  static #nodeFromKey(key) {
-    const separator = key.indexOf(":");
-    if (separator < 0) return null;
-    return ContextEngine.#node(key.slice(0, separator), key.slice(separator + 1));
   }
 
   static #node(kind, id) {
@@ -476,10 +1028,84 @@ export class ContextEngine {
       storyThreads: [],
       factions: [],
       currentStatus: "",
-      campaignMemory: ""
+      campaignMemory: "",
+      timeline: [],
+      graphSummary: {
+        nodeCount: 0,
+        edgeCount: 0,
+        relationshipCount: 0,
+        connectedEntityCount: 0
+      }
     };
   }
 }
+
+/**
+ * @typedef {object} TimelineEntry
+ * @property {string} sessionId
+ * @property {number} sessionNumber
+ * @property {string} label
+ * @property {string} title
+ * @property {string} excerpt
+ * @property {string} [sessionLog]
+ * @property {number} [updated]
+ */
+
+/**
+ * @typedef {object} EntityContextPacket
+ * @property {object|null} entity
+ * @property {object|null} foundryDocument
+ * @property {object|null} foundry
+ * @property {object[]} connectedKnowledge
+ * @property {object[]} relatedActors
+ * @property {object[]} relatedItems
+ * @property {object[]} relatedLocations
+ * @property {object[]} relatedFactions
+ * @property {object[]} relatedStoryThreads
+ * @property {object[]} relatedQuests
+ * @property {TimelineEntry[]} recentChronicleEvents
+ * @property {object[]} activeSessions
+ * @property {string} notes
+ * @property {string} status
+ * @property {TimelineEntry[]} timeline
+ * @property {object} graphSummary
+ */
+
+/**
+ * @typedef {object} SessionContextPacket
+ * @property {object|null} currentSession
+ * @property {object[]} activeStoryThreads
+ * @property {object[]} activeQuests
+ * @property {object[]} recentlyUpdatedEntities
+ * @property {object[]} unresolvedProblems
+ * @property {TimelineEntry[]} recentChronicle
+ * @property {object[]} importantNPCs
+ * @property {object[]} importantLocations
+ * @property {object[]} importantItems
+ * @property {object} graphSummary
+ */
+
+/**
+ * @typedef {object} CampaignContextPacket
+ * @property {object} campaign
+ * @property {object|null} currentSession
+ * @property {object[]} activeThreads
+ * @property {object[]} completedThreads
+ * @property {object[]} openQuests
+ * @property {object[]} completedQuests
+ * @property {object[]} recentlyChanged
+ * @property {object} graphStats
+ * @property {TimelineEntry[]} recentChronicle
+ * @property {object} graphSummary
+ */
+
+/**
+ * @typedef {SessionContextPacket & {
+ *   currentBeat: object|null,
+ *   missionStoryThreadId: string,
+ *   missionQuestId: string
+ * }} PlayContextPacket
+ */
 
 /**
  * @typedef {object} ContextNode
@@ -506,4 +1132,6 @@ export class ContextEngine {
  * @property {ContextNode[]} factions
  * @property {string} currentStatus
  * @property {string} campaignMemory
+ * @property {TimelineEntry[]} [timeline]
+ * @property {object} [graphSummary]
  */

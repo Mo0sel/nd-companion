@@ -297,6 +297,46 @@
   display: none;
 }
 
+.nd-entity-timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nd-entity-timeline__item {
+  padding-left: 12px;
+  border-left: 2px solid color-mix(in srgb, var(--nd-blue) 45%, var(--nd-border));
+}
+
+.nd-entity-timeline__session {
+  display: block;
+  margin: 0 0 2px;
+  padding: 0;
+  color: var(--nd-text-1);
+  background: transparent;
+  border: 0;
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  font-weight: var(--nd-weight-bold);
+  letter-spacing: 0.04em;
+  text-align: left;
+  cursor: pointer;
+}
+
+.nd-entity-timeline__session:hover {
+  color: var(--nd-blue);
+}
+
+.nd-entity-timeline__excerpt {
+  margin: 0;
+  color: var(--nd-text-2);
+  font-size: var(--nd-text-caption);
+  line-height: 1.4;
+}
+
 .nd-campaign-list-row__title {
   min-width: 0;
   margin: 0;
