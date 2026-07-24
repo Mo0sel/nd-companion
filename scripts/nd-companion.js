@@ -2,9 +2,11 @@ import { CompanionApp } from "./companion-app.js";
 import { CampaignAwareness } from "./campaign-context.js";
 import { CampaignDocument } from "./campaign-document.js";
 import { CampaignMemoryService } from "./campaign-memory-service.js";
+import { AIProvider } from "./ai-provider.js";
 import { AIProviderRegistry } from "./ai-provider-registry.js";
 import { AISettings } from "./ai-settings.js";
 import { ToolRegistry } from "./ai-tool-registry.js";
+import { ClaudeProvider } from "./claude-provider.js";
 import { ContextEngine } from "./context-engine.js";
 import { ContextSerializer } from "./context-serializer.js";
 import { EntityRegistry } from "./entity-registry.js";
@@ -13,6 +15,7 @@ import { FocusManager } from "./focus-manager.js";
 import { GraphService } from "./graph-service.js";
 import { GraphValidator } from "./graph-validator.js";
 import { Navigation } from "./navigation.js";
+import { OpenAIProvider } from "./openai-provider.js";
 import { PlaybookService } from "./playbook-service.js";
 import { PromptBuilder } from "./prompt-builder.js";
 import { QuestEntryService } from "./quest-entry-service.js";
@@ -23,6 +26,11 @@ import { registerSearchProviders } from "./search-providers.js";
 import { SearchService } from "./search-service.js";
 import { CompanionStorage } from "./storage.js";
 import { ThreadService } from "./thread-service.js";
+
+// Keep provider classes referenced so the import graph cannot drop them.
+void AIProvider;
+void OpenAIProvider;
+void ClaudeProvider;
 
 Hooks.once("init", () => {
   console.log("%cN&D Companion", "color:#7dd3fc;font-size:16px;font-weight:bold;");
@@ -47,9 +55,10 @@ Hooks.once("ready", async () => {
     console.error("N&D Companion: relationship migration failed", error);
   }
   GraphService.initialize();
-  AIProviderRegistry.initialize();
-  ToolRegistry.initialize();
   registerSearchProviders();
+
+  // Expose developer APIs before optional AI init so a provider failure
+  // cannot leave window.nd without PromptBuilder / registries.
   window.nd ??= {};
   window.nd.EntityRegistry = EntityRegistry;
   window.nd.FocusManager = FocusManager;
@@ -71,6 +80,14 @@ Hooks.once("ready", async () => {
   window.nd.AIProviderRegistry = AIProviderRegistry;
   window.nd.ToolRegistry = ToolRegistry;
   window.nd.AISettings = AISettings;
+
+  try {
+    AIProviderRegistry.initialize();
+    ToolRegistry.initialize();
+  } catch (error) {
+    console.error("N&D Companion: AI platform initialize failed", error);
+  }
+
   CampaignAwareness.registerHooks();
   FocusManager.registerHooks();
   GraphValidator.registerDeleteHooks();

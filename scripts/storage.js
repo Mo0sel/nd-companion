@@ -153,8 +153,12 @@ export class CompanionStorage {
    * @returns {object}
    */
   static getAISettings() {
-    const value = game.settings.get(MODULE_ID, "aiSettings");
-    return value && typeof value === "object" ? foundry.utils.duplicate(value) : {};
+    try {
+      const value = game.settings.get(MODULE_ID, "aiSettings");
+      return value && typeof value === "object" ? foundry.utils.duplicate(value) : {};
+    } catch (_error) {
+      return {};
+    }
   }
 
   /**
