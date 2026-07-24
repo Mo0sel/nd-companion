@@ -42,10 +42,10 @@ Confirm Foundry is loading *this* checkout: change a `console.log` in `scripts/n
 ### The Forge
 
 1. Open your Forge hosted world.
-2. Module Management → confirm `N&D Companion` is enabled.
-3. Forge pulls from the GitHub package (`module.json` `manifest` / `download` point at `main`).
+2. Module Management → confirm **N&D Companion** is enabled.
+3. Forge installs from the GitHub **Release** assets (`module.json` `manifest` / `download`).
 
-After pushing to `main`, update the module on Forge (see below), then hard refresh the client.
+After publishing a Release (see below), update the module on Forge, then hard refresh the client.
 
 ---
 
@@ -72,8 +72,6 @@ git commit -m "Short why-focused message"
 git status
 ```
 
-Bump `version` in `module.json` when you publish a Forge-facing build so clients can tell packages apart.
-
 ### Push
 
 ```powershell
@@ -82,20 +80,63 @@ git push origin HEAD
 
 Remote default: `origin` → `https://github.com/Mo0sel/nd-companion` (`main`).
 
-**Cache trap:** Pushing alone does not update a Forge world’s running code until Forge refreshes the package and the browser hard-reloads.
+---
+
+## How to publish a Foundry Release
+
+Do **not** use GitHub branch archives (`…/archive/refs/heads/main.zip`). Releases ship a flat `module.zip` built by GitHub Actions.
+
+### 1. Bump the version
+
+In `module.json`:
+
+- Set `"version"` (e.g. `0.3.30`)
+- Set versioned URLs (must match that version):
+
+```text
+manifest → https://github.com/Mo0sel/nd-companion/releases/download/v0.3.30/module.json
+download → https://github.com/Mo0sel/nd-companion/releases/download/v0.3.30/module.zip
+```
+
+### 2. Commit and push `main`
+
+```powershell
+git add module.json
+git commit -m "Release v0.3.30"
+git push origin HEAD
+```
+
+### 3. Tag and push the tag
+
+Tag name must be `v` + `module.json` version (e.g. version `0.3.30` → tag `v0.3.30`).
+
+```powershell
+git tag v0.3.30
+git push origin v0.3.30
+```
+
+### 4. GitHub Action
+
+Workflow: `.github/workflows/release.yml`
+
+- Whitelist-packages: `module.json`, `scripts/`, `styles/`, `templates/`, `lang/`, and `assets/` if present
+- Validates flat zip root, required folders, and version/URL match
+- Creates/updates the GitHub Release and uploads `module.zip` + `module.json`
+
+Confirm the Action is green under the repo **Actions** tab before updating Forge.
+
+**Cache trap:** Pushing `main` alone does not publish a Release. Forge only sees new bits after the tag Action succeeds and you update the package.
 
 ---
 
 ## How to update the module on Forge
 
-Exact UI labels can change; the goal is always: **Forge serves the latest GitHub package, then the browser loads that build.**
-
-1. Push commits to `main` (and bump `module.json` `version` if needed).
-2. On Forge: open **Game Configuration** / **Module Management** for the world.
-3. Find **N&D Companion** → **Update** / **Check for updates** / reinstall from manifest if Forge still shows an old version.
-4. Confirm the listed version matches `module.json`.
+1. Publish a Release (previous section) and confirm version `X.Y.Z` exists on GitHub → Releases.
+2. On Forge: **Game Configuration** / **Module Management**.
+3. **N&D Companion** → **Update** / reinstall from the release manifest URL if needed.
+4. Confirm the listed version matches the Release.
 5. Hard refresh the Foundry client (next section).
-6. In Console, confirm bootstrap log (`N&D Companion ready.`).
+6. In Console, confirm bootstrap log (`N&D Companion ready.`) and that `lang/en.json` no longer 404s.
 
 If DevTools still shows old logs after update, the browser is caching the previous ESM bundle — hard refresh again or disable cache while DevTools is open.
 

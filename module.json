@@ -1,46 +1,46 @@
-{
-  "id": "nd-companion",
-  "type": "module",
-  "title": "N&D Companion",
-  "description": "DM Companion for Foundry VTT",
-  "version": "0.3.29",
-
-  "authors": [
-    {
-      "name": "Mo0sel"
-    }
-  ],
-
-  "compatibility": {
-    "minimum": "14",
-    "verified": "14.364"
-  },
-
-  "esmodules": [
-    "scripts/nd-companion.js"
-  ],
-
-  "styles": [
-    "styles/nd-tokens.css",
-    "styles/nd-patterns.css",
-    "styles/nd-components.css",
-    "styles/nd-richtext.css",
-    "styles/nd-layout.css",
-    "styles/play.css",
-    "styles/campaign.css",
-    "styles/notes.css",
-    "styles/nd-companion.css"
-  ],
-
-  "languages": [
-    {
-      "lang": "en",
-      "name": "English",
-      "path": "lang/en.json"
-    }
-  ],
-
-  "manifest": "https://raw.githubusercontent.com/Mo0sel/nd-companion/main/module.json",
-  "download": "https://github.com/Mo0sel/nd-companion/archive/refs/heads/main.zip",
-  "url": "https://github.com/Mo0sel/nd-companion"
-}
+{
+  "id": "nd-companion",
+  "type": "module",
+  "title": "N&D Companion",
+  "description": "DM Companion for Foundry VTT",
+  "version": "0.3.30",
+
+  "authors": [
+    {
+      "name": "Mo0sel"
+    }
+  ],
+
+  "compatibility": {
+    "minimum": "14",
+    "verified": "14.364"
+  },
+
+  "esmodules": [
+    "scripts/nd-companion.js"
+  ],
+
+  "styles": [
+    "styles/nd-tokens.css",
+    "styles/nd-patterns.css",
+    "styles/nd-components.css",
+    "styles/nd-richtext.css",
+    "styles/nd-layout.css",
+    "styles/play.css",
+    "styles/campaign.css",
+    "styles/notes.css",
+    "styles/nd-companion.css"
+  ],
+
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+
+  "manifest": "https://github.com/Mo0sel/nd-companion/releases/download/v0.3.30/module.json",
+  "download": "https://github.com/Mo0sel/nd-companion/releases/download/v0.3.30/module.zip",
+  "url": "https://github.com/Mo0sel/nd-companion"
+}

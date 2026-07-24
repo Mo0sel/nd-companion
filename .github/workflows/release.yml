@@ -1,0 +1,173 @@
+name: Release
+
+# Publishes a Foundry-compatible module.zip for tag vX.Y.Z.
+# Prerequisite: module.json "version" must equal the tag without the leading "v".
+#
+# Example:
+#   1. Set version in module.json to 0.3.30 (and matching manifest/download URLs)
+#   2. Commit + push to main
+#   3. git tag v0.3.30 && git push origin v0.3.30
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build (e.g. v0.3.30). Must already exist on the remote."
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve release tag and version
+        id: meta
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag must look like v0.3.30 (got: $TAG)"
+            exit 1
+          fi
+          VERSION="${TAG#v}"
+          {
+            echo "tag=$TAG"
+            echo "version=$VERSION"
+          } >> "$GITHUB_OUTPUT"
+          echo "Release tag=$TAG version=$VERSION"
+
+      - name: Checkout tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.meta.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Verify module.json version matches tag
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.meta.outputs.version }}"
+          FILE_VERSION="$(python3 -c "import json; print(json.load(open('module.json'))['version'])")"
+          if [[ "$FILE_VERSION" != "$VERSION" ]]; then
+            echo "::error::module.json version ($FILE_VERSION) does not match tag version ($VERSION)"
+            exit 1
+          fi
+          echo "Version match OK: $FILE_VERSION"
+
+      - name: Stage whitelist package
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.meta.outputs.tag }}"
+          VERSION="${{ steps.meta.outputs.version }}"
+          STAGE="${RUNNER_TEMP}/nd-companion-stage"
+          DIST="${GITHUB_WORKSPACE}/release-assets"
+          rm -rf "$STAGE" "$DIST"
+          mkdir -p "$STAGE" "$DIST"
+
+          # Explicit runtime whitelist only
+          cp module.json "$STAGE/module.json"
+          cp -a scripts "$STAGE/scripts"
+          cp -a styles "$STAGE/styles"
+          cp -a templates "$STAGE/templates"
+          cp -a lang "$STAGE/lang"
+          if [[ -d assets ]]; then
+            cp -a assets "$STAGE/assets"
+          fi
+
+          # Force versioned Release URLs in the published manifest
+          python3 << PY
+          import json
+          from pathlib import Path
+          tag = "${TAG}"
+          version = "${VERSION}"
+          path = Path(r"${STAGE}") / "module.json"
+          data = json.loads(path.read_text(encoding="utf-8"))
+          base = f"https://github.com/Mo0sel/nd-companion/releases/download/{tag}"
+          data["manifest"] = f"{base}/module.json"
+          data["download"] = f"{base}/module.zip"
+          if data.get("version") != version:
+              raise SystemExit(f"staged version mismatch: {data.get('version')}")
+          path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+          print("Staged manifest:", data["manifest"])
+          print("Staged download:", data["download"])
+          PY
+
+          echo "STAGE=$STAGE" >> "$GITHUB_ENV"
+          echo "DIST=$DIST" >> "$GITHUB_ENV"
+
+      - name: Build module.zip (flat root, no wrapper)
+        run: |
+          set -euo pipefail
+          OUT="${DIST}/module.zip"
+          rm -f "$OUT"
+          (
+            cd "$STAGE"
+            zip -r "$OUT" module.json scripts styles templates lang
+            if [[ -d assets ]]; then
+              zip -r "$OUT" assets
+            fi
+          )
+          cp "$STAGE/module.json" "${DIST}/module.json"
+          ls -la "$DIST"
+
+      - name: Validate module.zip
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.meta.outputs.version }}"
+          TAG="${{ steps.meta.outputs.tag }}"
+          CHECK="${RUNNER_TEMP}/nd-companion-zipcheck"
+          rm -rf "$CHECK"
+          mkdir -p "$CHECK"
+          unzip -q "${DIST}/module.zip" -d "$CHECK"
+
+          fail() { echo "::error::$*"; exit 1; }
+
+          [[ -f "$CHECK/module.json" ]] || fail "module.json missing at zip root"
+
+          mapfile -t TOP < <(find "$CHECK" -mindepth 1 -maxdepth 1 | sort)
+          if [[ ${#TOP[@]} -eq 1 && -d "${TOP[0]}" ]]; then
+            fail "Zip root is a single wrapper folder: $(basename "${TOP[0]}")"
+          fi
+
+          for dir in scripts styles templates lang; do
+            [[ -d "$CHECK/$dir" ]] || fail "Required folder missing: $dir/"
+          done
+          [[ -f "$CHECK/lang/en.json" ]] || fail "lang/en.json missing"
+          [[ -f "$CHECK/scripts/nd-companion.js" ]] || fail "scripts/nd-companion.js missing"
+
+          python3 << PY
+          import json
+          from pathlib import Path
+          data = json.loads(Path(r"${CHECK}/module.json").read_text(encoding="utf-8"))
+          version = data.get("version")
+          if version != "${VERSION}":
+              raise SystemExit(f"zip module.json version {version!r} != tag version ${VERSION!r}")
+          expected_base = f"https://github.com/Mo0sel/nd-companion/releases/download/{TAG}"
+          if data.get("manifest") != f"{expected_base}/module.json":
+              raise SystemExit(f"manifest URL incorrect: {data.get('manifest')}")
+          if data.get("download") != f"{expected_base}/module.zip":
+              raise SystemExit(f"download URL incorrect: {data.get('download')}")
+          print("Validation OK")
+          PY
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: N&D Companion ${{ steps.meta.outputs.version }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            release-assets/module.zip
+            release-assets/module.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
