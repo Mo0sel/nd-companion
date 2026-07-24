@@ -1,3 +1,4 @@
+import { CampaignCopilot } from "./campaign-copilot.js";
 import { CompanionApp } from "./companion-app.js";
 import { CampaignAwareness } from "./campaign-context.js";
 import { CampaignDocument } from "./campaign-document.js";
@@ -80,6 +81,8 @@ Hooks.once("ready", async () => {
   window.nd.AIProviderRegistry = AIProviderRegistry;
   window.nd.ToolRegistry = ToolRegistry;
   window.nd.AISettings = AISettings;
+  window.nd.CampaignCopilot = CampaignCopilot;
+  if (window.nd.debugAI !== true) window.nd.debugAI = false;
 
   try {
     AIProviderRegistry.initialize();

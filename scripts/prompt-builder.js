@@ -17,7 +17,7 @@ import { ContextSerializer } from "./context-serializer.js";
 
 /**
  * @typedef {object} BuiltPrompt
- * @property {string} type  entity | session | campaign | play
+ * @property {string} type  entity | session | campaign | play | search
  * @property {string} prompt
  * @property {string[]} sections
  * @property {number} charCount
@@ -25,6 +25,42 @@ import { ContextSerializer } from "./context-serializer.js";
  * @property {boolean} truncated
  * @property {object} packet  Source ContextEngine packet (for debugging)
  */
+
+const NO_INVENT =
+  "Answer using ONLY the campaign context below. If something is unknown or missing, say so. Do not invent names, events, motives, or relationships.";
+
+const EXPLAIN_ENTITY = [
+  NO_INVENT,
+  "Summarize this entity for a live GM:",
+  "- What this entity is",
+  "- Why it matters right now",
+  "- Recent events (from timeline/chronicle)",
+  "- Current status",
+  "- Known relationships",
+  "Be concise. No creative additions."
+].join("\n");
+
+const CAMPAIGN_SUMMARY = [
+  NO_INVENT,
+  "Produce a Campaign Summary with these sections:",
+  "- Campaign overview",
+  "- Major conflicts",
+  "- Important NPCs",
+  "- Current objectives",
+  "- Open mysteries",
+  "- Recent developments",
+  "Use only the provided context."
+].join("\n");
+
+const SESSION_RECAP = [
+  NO_INVENT,
+  "Produce a Session Recap with these sections:",
+  "- Major events",
+  "- Player decisions",
+  "- Consequences",
+  "- Loose ends",
+  "Prefer the current session, chronicle, and recent activity. Do not invent scenes."
+].join("\n");
 
 export class PromptBuilder {
   /**
@@ -73,6 +109,20 @@ export class PromptBuilder {
   }
 
   /**
+   * Explain Entity — same context packet, task-specific instructions.
+   * @param {string|{ kind?: string, type?: string, id?: string, uuid?: string }} typeOrRef
+   * @param {string} [id]
+   * @param {PromptBuildOptions} [options]
+   * @returns {BuiltPrompt}
+   */
+  static buildExplainEntityPrompt(typeOrRef, id, options = {}) {
+    return PromptBuilder.buildEntityPrompt(typeOrRef, id, {
+      ...options,
+      instructions: options.instructions ?? EXPLAIN_ENTITY
+    });
+  }
+
+  /**
    * @param {PromptBuildOptions} [options]
    * @returns {BuiltPrompt}
    */
@@ -83,6 +133,18 @@ export class PromptBuilder {
       PromptBuilder.#options(options)
     );
     return PromptBuilder.#result("session", serialized, packet);
+  }
+
+  /**
+   * Session Recap task prompt.
+   * @param {PromptBuildOptions} [options]
+   * @returns {BuiltPrompt}
+   */
+  static buildSessionRecapPrompt(options = {}) {
+    return PromptBuilder.buildSessionPrompt({
+      ...options,
+      instructions: options.instructions ?? SESSION_RECAP
+    });
   }
 
   /**
@@ -99,6 +161,18 @@ export class PromptBuilder {
   }
 
   /**
+   * Campaign Summary task prompt.
+   * @param {PromptBuildOptions} [options]
+   * @returns {BuiltPrompt}
+   */
+  static buildCampaignSummaryPrompt(options = {}) {
+    return PromptBuilder.buildCampaignPrompt({
+      ...options,
+      instructions: options.instructions ?? CAMPAIGN_SUMMARY
+    });
+  }
+
+  /**
    * @param {PromptBuildOptions} [options]
    * @returns {BuiltPrompt}
    */
@@ -109,6 +183,31 @@ export class PromptBuilder {
       PromptBuilder.#options(options)
     );
     return PromptBuilder.#result("play", serialized, packet);
+  }
+
+  /**
+   * Natural-language campaign search — campaign context + question.
+   * @param {string} question
+   * @param {PromptBuildOptions} [options]
+   * @returns {BuiltPrompt}
+   */
+  static buildSearchPrompt(question, options = {}) {
+    const query = String(question ?? "").trim();
+    if (!query) {
+      throw new Error("Search question is empty.");
+    }
+    const packet = ContextEngine.getCampaignContext();
+    const instructions = [
+      NO_INVENT,
+      `GM question: ${query}`,
+      "Answer only from the campaign context below.",
+      "If the answer is not present, say you cannot find it in the campaign records."
+    ].join("\n");
+    const serialized = ContextSerializer.serializeCampaign(
+      packet,
+      PromptBuilder.#options({ ...options, instructions })
+    );
+    return PromptBuilder.#result("search", serialized, packet);
   }
 
   /**

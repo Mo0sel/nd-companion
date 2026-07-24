@@ -293,7 +293,8 @@ export function assertModuleIntegrity() {
     "AIProviderRegistry",
     "ToolRegistry",
     "AISettings",
-    "ContextSerializer"
+    "ContextSerializer",
+    "CampaignCopilot"
   ]) {
     if (!entrySource.includes(`window.nd.${name}`)) {
       errors.push(`scripts/nd-companion.js does not assign window.nd.${name}`);

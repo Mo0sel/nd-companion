@@ -34,7 +34,7 @@ export class ClaudeProvider extends AIProvider {
     }
     return {
       ok: true,
-      message: "Claude settings look complete. Remote calls remain disabled this sprint."
+      message: "Claude settings look complete. Remote Claude calls are not implemented yet."
     };
   }
 }

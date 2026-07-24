@@ -1,6 +1,7 @@
 import { CampaignAwareness, CampaignContext } from "./campaign-context.js";
 import { CampaignActivityPanel } from "./campaign-activity-panel.js";
 import { CampaignDocument } from "./campaign-document.js";
+import { CampaignCopilotPanel } from "./campaign-copilot-panel.js";
 import { CampaignWorkspace } from "./campaign-workspace.js";
 import { AISettingsPanel } from "./ai-settings-panel.js";
 import { ContextEngine } from "./context-engine.js";
@@ -64,6 +65,9 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       closeAISettings: CompanionApp.#onCloseAISettings,
       openPromptPreview: CompanionApp.#onOpenPromptPreview,
       closePromptPreview: CompanionApp.#onClosePromptPreview,
+      openCampaignCopilot: CompanionApp.#onOpenCampaignCopilot,
+      closeCampaignCopilot: CompanionApp.#onCloseCampaignCopilot,
+      explainEntity: CompanionApp.#onExplainEntity,
       resetWindowLayout: CompanionApp.#onResetWindowLayout
     }
   };
@@ -278,13 +282,80 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /**
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} _target
+   */
+  static #onOpenCampaignCopilot(_event, _target) {
+    const root = this.element;
+    if (!(root instanceof HTMLElement)) return;
+    const settings = root.querySelector(".nd-companion-settings");
+    if (settings instanceof HTMLDetailsElement) settings.open = false;
+    CompanionApp.#closeUtilityDrawers(root, "copilot");
+    CompanionApp.#paintCampaignCopilotDrawer(root, true);
+  }
+
+  /**
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} _target
+   */
+  static #onCloseCampaignCopilot(_event, _target) {
+    const root = this.element;
+    if (!(root instanceof HTMLElement)) return;
+    CompanionApp.#paintCampaignCopilotDrawer(root, false);
+  }
+
+  /**
+   * Entity page → Explain via Campaign Copilot.
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} _target
+   */
+  static #onExplainEntity(_event, _target) {
+    const root = this.element;
+    if (!(root instanceof HTMLElement)) return;
+    const focus = CampaignWorkspace.getFocusTarget?.();
+    if (!focus?.kind || !focus?.id) {
+      ui.notifications?.warn("Open an entity in Campaign before using Explain.");
+      return;
+    }
+    CompanionApp.#closeUtilityDrawers(root, "copilot");
+    CompanionApp.#paintCampaignCopilotDrawer(root, true, {
+      type: focus.kind,
+      id: focus.id
+    });
+  }
+
+  /**
    * @param {HTMLElement} root
-   * @param {"activity"|"ai"|"prompt"|null} keep
+   * @param {"activity"|"ai"|"prompt"|"copilot"|null} keep
    */
   static #closeUtilityDrawers(root, keep = null) {
     if (keep !== "activity") CompanionApp.#paintActivityDrawer(root, false);
     if (keep !== "ai") CompanionApp.#paintAISettingsDrawer(root, false);
     if (keep !== "prompt") CompanionApp.#paintPromptPreviewDrawer(root, false);
+    if (keep !== "copilot") CompanionApp.#paintCampaignCopilotDrawer(root, false);
+  }
+
+  /**
+   * @param {HTMLElement} root
+   * @param {boolean} [open]
+   * @param {{ type: string, id: string }|null} [focus]
+   */
+  static #paintCampaignCopilotDrawer(root, open, focus = null) {
+    const drawer = root.querySelector("[data-campaign-copilot-drawer]");
+    if (!(drawer instanceof HTMLElement)) return;
+    if (open === false) {
+      drawer.hidden = true;
+      return;
+    }
+    if (open === true) drawer.hidden = false;
+    if (drawer.hidden) return;
+    const container = drawer.querySelector("[data-campaign-copilot]");
+    if (!(container instanceof HTMLElement)) return;
+    if (focus?.type && focus?.id) {
+      CampaignCopilotPanel.paintExplain(container, focus.type, focus.id);
+    } else {
+      CampaignCopilotPanel.paint(container);
+    }
   }
 
   /**

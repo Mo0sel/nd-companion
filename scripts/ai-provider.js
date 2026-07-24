@@ -2,7 +2,7 @@
  * AIProvider — abstract interface for LLM communication.
  *
  * Nothing outside AIProvider subclasses may talk to an LLM.
- * Sprint 13: infrastructure only — no network calls are made.
+ * Providers must never read Campaign data directly.
  */
 
 /**
@@ -23,7 +23,15 @@
 /**
  * @typedef {object} AIGenerateResult
  * @property {string} text
- * @property {object} [meta]
+ * @property {{
+ *   provider: string,
+ *   model: string,
+ *   latencyMs: number,
+ *   promptTokensEst?: number,
+ *   responseTokens?: number|null,
+ *   usage?: object|null,
+ *   streamed?: boolean
+ * }} [meta]
  */
 
 export class AIProvider {
@@ -42,26 +50,25 @@ export class AIProvider {
    * @returns {Promise<AIGenerateResult>}
    */
   async generate(_prompt, _options = {}) {
-    throw new Error(`${this.label}: generate() is not enabled (AI platform infrastructure only).`);
+    throw new Error(`${this.label}: generate() is not implemented.`);
   }
 
   /**
    * @param {string} _prompt
    * @param {object} [_options]
-   * @returns {AsyncIterable<string>}
+   * @returns {AsyncGenerator<string, void, unknown>}
    */
   async *stream(_prompt, _options = {}) {
-    throw new Error(`${this.label}: stream() is not enabled (AI platform infrastructure only).`);
+    throw new Error(`${this.label}: stream() is not implemented.`);
   }
 
   /**
-   * Local readiness check — must not call remote APIs in Sprint 13.
    * @returns {Promise<AIHealthResult>}
    */
   async healthCheck() {
     return {
       ok: false,
-      message: `${this.label}: LLM calls are disabled in this sprint.`
+      message: `${this.label}: healthCheck() is not implemented.`
     };
   }
 

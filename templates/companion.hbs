@@ -41,6 +41,9 @@
         <button type="button" data-action="openActivityDrawer" role="menuitem">
           Campaign Activity
         </button>
+        <button type="button" data-action="openCampaignCopilot" role="menuitem">
+          Campaign Copilot
+        </button>
         <button type="button" data-action="openAISettings" role="menuitem">
           AI Settings
         </button>
@@ -552,6 +555,13 @@
                 <div class="nd-campaign-entity-doc-type" data-campaign-entity-doc-type></div>
                 <div class="nd-campaign-entity-status-pill" data-campaign-entity-status-pill hidden></div>
               </div>
+              <button
+                type="button"
+                class="nd-campaign-entity-explain"
+                data-action="explainEntity"
+                data-campaign-entity-explain
+                title="Explain with Campaign Copilot"
+              >Explain</button>
             </header>
             <div class="nd-campaign-field nd-campaign-field--notes" data-campaign-entity-overview>
               <span>Current Status</span>
@@ -925,6 +935,29 @@
       </header>
       <div class="nd-activity-drawer__body">
         <div data-prompt-preview></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="nd-activity-drawer nd-copilot-drawer" data-campaign-copilot-drawer hidden>
+    <button
+      type="button"
+      class="nd-activity-drawer__backdrop"
+      data-action="closeCampaignCopilot"
+      aria-label="Close Campaign Copilot"
+    ></button>
+    <aside class="nd-activity-drawer__panel" aria-label="Campaign Copilot">
+      <header class="nd-activity-drawer__head">
+        <h2 class="nd-type-h3">Campaign Copilot</h2>
+        <button
+          type="button"
+          class="nd-activity-drawer__close"
+          data-action="closeCampaignCopilot"
+          aria-label="Close"
+        >×</button>
+      </header>
+      <div class="nd-activity-drawer__body">
+        <div data-campaign-copilot></div>
       </div>
     </aside>
   </div>
