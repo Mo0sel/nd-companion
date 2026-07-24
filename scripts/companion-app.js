@@ -6,6 +6,8 @@ import { CampaignWorkspace } from "./campaign-workspace.js";
 import { AISettingsPanel } from "./ai-settings-panel.js";
 import { ContextEngine } from "./context-engine.js";
 import { ContextPanel } from "./context-panel.js";
+import { DashboardWorkspace } from "./dashboard-workspace.js";
+import { EntityBrowserPanel } from "./entity-browser-panel.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { FocusManager } from "./focus-manager.js";
 import { FocusPanel } from "./focus-panel.js";
@@ -21,11 +23,34 @@ import { QuickEdit } from "./quick-edit.js";
 import { RelationshipExplorer } from "./relationship-explorer.js";
 import { RichText } from "./rich-text.js";
 import { SessionService } from "./session-service.js";
+import { SessionsBrowserPanel } from "./sessions-browser-panel.js";
+import { SessionWrapUpPanel } from "./session-wrap-up-panel.js";
 import { CompanionStorage } from "./storage.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
-const WORKSPACES = new Set(["play", "campaign"]);
+const WORKSPACES = new Set([
+  "dashboard",
+  "play",
+  "campaign",
+  "copilot",
+  "npcs",
+  "locations",
+  "sessions",
+  "ai-settings",
+  "wrapup"
+]);
+
+const NAV_WORKSPACES = new Set([
+  "dashboard",
+  "play",
+  "campaign",
+  "copilot",
+  "npcs",
+  "locations",
+  "sessions",
+  "ai-settings"
+]);
 
 const WINDOW_DEFAULT_WIDTH = 1100;
 const WINDOW_DEFAULT_HEIGHT = 780;
@@ -36,8 +61,11 @@ const WINDOW_MIN_HEIGHT = 520;
  * The N&D Companion window.
  */
 export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
-  /** @type {"play"|"campaign"} */
-  workspace = "play";
+  /** @type {string} */
+  workspace = "dashboard";
+
+  /** @type {string} */
+  #workspaceBeforeWrapUp = "dashboard";
 
   /** @type {boolean} */
   #persistLayout = false;
@@ -185,9 +213,10 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /**
    * Switch the lower workspace region. Safe to call from actions or future hotkeys.
-   * @param {"play"|"campaign"|"notes"} workspace
+   * @param {string} workspace
+   * @param {{ explain?: { type: string, id: string }|null, forceWrapUp?: boolean }} [options]
    */
-  setWorkspace(workspace) {
+  setWorkspace(workspace, options = {}) {
     // Legacy "notes" (Actors) workspace redirects to Campaign.
     if (workspace === "notes") workspace = "campaign";
     if (!WORKSPACES.has(workspace)) return;
@@ -199,8 +228,148 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
     this.workspace = workspace;
     this.#applyWorkspace();
-    if (workspace === "campaign") CampaignWorkspace.paint(this.element);
-    if (workspace === "play") Playbook.paint(this.element, Playbook.get());
+    this.#paintActiveWorkspace(options);
+  }
+
+  /**
+   * Paint content for the current workspace.
+   * @param {{ explain?: { type: string, id: string }|null, forceWrapUp?: boolean }} [options]
+   */
+  #paintActiveWorkspace(options = {}) {
+    const root = this.element;
+    if (!(root instanceof HTMLElement)) return;
+
+    switch (this.workspace) {
+      case "dashboard":
+        DashboardWorkspace.paint(root, {
+          onNavigate: (workspace) => this.setWorkspace(workspace),
+          onEndSession: () => this.#startSessionWrapUp(),
+          onAskCopilot: () => this.setWorkspace("copilot")
+        });
+        break;
+      case "play":
+        Playbook.paint(root, Playbook.get());
+        break;
+      case "campaign":
+        CampaignWorkspace.paint(root);
+        break;
+      case "copilot": {
+        const container = root.querySelector("[data-copilot-workspace]");
+        if (!(container instanceof HTMLElement)) break;
+        if (options.explain?.type && options.explain?.id) {
+          CampaignCopilotPanel.paintExplain(
+            container,
+            options.explain.type,
+            options.explain.id
+          );
+        } else {
+          CampaignCopilotPanel.paint(container);
+        }
+        break;
+      }
+      case "npcs": {
+        const container = root.querySelector("[data-entity-browser=\"actor\"]");
+        if (!(container instanceof HTMLElement)) break;
+        EntityBrowserPanel.paint(container, "actor", {
+          onOpen: (kind, uuid) => {
+            if (CampaignWorkspace.selectEntity(root, kind, uuid)) {
+              this.setWorkspace("campaign");
+            }
+          }
+        });
+        break;
+      }
+      case "locations": {
+        const container = root.querySelector("[data-entity-browser=\"scene\"]");
+        if (!(container instanceof HTMLElement)) break;
+        EntityBrowserPanel.paint(container, "scene", {
+          onOpen: (kind, uuid) => {
+            if (CampaignWorkspace.selectEntity(root, kind, uuid)) {
+              this.setWorkspace("campaign");
+            }
+          }
+        });
+        break;
+      }
+      case "sessions": {
+        const container = root.querySelector("[data-sessions-browser]");
+        if (!(container instanceof HTMLElement)) break;
+        SessionsBrowserPanel.paint(container, {
+          onOpen: (sessionId) => {
+            if (SessionService.getActive()?.id === sessionId) {
+              this.setWorkspace("play");
+              return;
+            }
+            if (CampaignWorkspace.selectMemory(root, sessionId)) {
+              this.setWorkspace("campaign");
+            }
+          }
+        });
+        break;
+      }
+      case "ai-settings": {
+        const container = root.querySelector("[data-ai-settings-workspace]");
+        if (container instanceof HTMLElement) AISettingsPanel.paint(container);
+        break;
+      }
+      case "wrapup": {
+        const container = root.querySelector("[data-session-wrap-up]");
+        if (!(container instanceof HTMLElement)) break;
+        // Avoid re-running the AI pipeline on incidental re-paints.
+        if (!options.forceWrapUp && container.querySelector(".nd-wrapup")) break;
+        SessionWrapUpPanel.paint(container, {
+          onComplete: async () => {
+            this.setWorkspace("dashboard");
+            await this.render({ force: true });
+          },
+          onCancel: () => {
+            this.setWorkspace(this.#workspaceBeforeWrapUp || "dashboard");
+          }
+        });
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  /**
+   * Launch Session Wrap-Up Wizard (AI proposes; CampaignUpdater writes).
+   */
+  async #startSessionWrapUp() {
+    const root = this.element;
+    if (!(root instanceof HTMLElement)) return;
+
+    const active = SessionService.getActive();
+    if (!active) {
+      ui.notifications?.warn("There is no active session to end.");
+      return;
+    }
+
+    try {
+      await LiveNotes.flushAll(root);
+    } catch {
+      return;
+    }
+
+    const log = root.querySelector("[data-storage=\"sessionLog\"]");
+    if (log instanceof HTMLElement) {
+      await SessionService.setActiveSessionLog(log.textContent ?? "");
+    }
+
+    const nextNumber = active.sessionNumber + 1;
+    if (SessionService.list().some(
+      (session) => session.id !== active.id && session.sessionNumber === nextNumber
+    )) {
+      ui.notifications?.warn(
+        `Session ${nextNumber} already exists. Resolve that Chronicle entry before ending this session.`
+      );
+      return;
+    }
+
+    this.#workspaceBeforeWrapUp =
+      this.workspace === "wrapup" ? "dashboard" : this.workspace;
+    this.setWorkspace("wrapup", { forceWrapUp: true });
   }
 
   /**
@@ -244,8 +413,8 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!(root instanceof HTMLElement)) return;
     const settings = root.querySelector(".nd-companion-settings");
     if (settings instanceof HTMLDetailsElement) settings.open = false;
-    CompanionApp.#closeUtilityDrawers(root, "ai");
-    CompanionApp.#paintAISettingsDrawer(root, true);
+    CompanionApp.#closeUtilityDrawers(root, null);
+    this.setWorkspace("ai-settings");
   }
 
   /**
@@ -290,8 +459,8 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!(root instanceof HTMLElement)) return;
     const settings = root.querySelector(".nd-companion-settings");
     if (settings instanceof HTMLDetailsElement) settings.open = false;
-    CompanionApp.#closeUtilityDrawers(root, "copilot");
-    CompanionApp.#paintCampaignCopilotDrawer(root, true);
+    CompanionApp.#closeUtilityDrawers(root, null);
+    this.setWorkspace("copilot");
   }
 
   /**
@@ -305,7 +474,7 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /**
-   * Entity page → Explain via Campaign Copilot.
+   * Entity page → Explain via Campaign Copilot workspace.
    * @param {PointerEvent} _event
    * @param {HTMLElement} _target
    */
@@ -317,10 +486,9 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       ui.notifications?.warn("Open an entity in Campaign before using Explain.");
       return;
     }
-    CompanionApp.#closeUtilityDrawers(root, "copilot");
-    CompanionApp.#paintCampaignCopilotDrawer(root, true, {
-      type: focus.kind,
-      id: focus.id
+    CompanionApp.#closeUtilityDrawers(root, null);
+    this.setWorkspace("copilot", {
+      explain: { type: focus.kind, id: focus.id }
     });
   }
 
@@ -651,6 +819,11 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
       const active = button.dataset.workspace === this.workspace;
       button.setAttribute("aria-pressed", active ? "true" : "false");
       button.classList.toggle("is-active", active);
+      // Wrap-up is wizard-only — keep nav unselected while reviewing.
+      if (this.workspace === "wrapup" && NAV_WORKSPACES.has(button.dataset.workspace)) {
+        button.setAttribute("aria-pressed", "false");
+        button.classList.remove("is-active");
+      }
     });
   }
 
@@ -805,7 +978,7 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
     this.#paintSessionBadge();
     CampaignAwareness.paint(this.element, CampaignContext.get());
     FocusPanel.paint(this.element, FocusManager.get());
-    Playbook.paint(this.element, Playbook.get());
+    this.#paintActiveWorkspace();
     Playbook.attach(this.element, {
       onSelectSession: async (id) => {
         try {
@@ -816,49 +989,7 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
         if (!await SessionService.setActive(id)) return;
         await this.render({ force: true });
       },
-      onEndSession: async () => {
-        const active = SessionService.getActive();
-        if (!active) {
-          ui.notifications?.warn("There is no active session to end.");
-          return;
-        }
-
-        const log = this.element.querySelector("[data-storage=\"sessionLog\"]");
-        if (log instanceof HTMLElement) {
-          await SessionService.setActiveSessionLog(log.textContent ?? "");
-        }
-
-        const nextNumber = active.sessionNumber + 1;
-        if (SessionService.list().some(
-          (session) => session.id !== active.id && session.sessionNumber === nextNumber
-        )) {
-          ui.notifications?.warn(
-            `Session ${nextNumber} already exists. Resolve that Chronicle entry before ending this session.`
-          );
-          return;
-        }
-        const confirmed = await foundry.applications.api.DialogV2.confirm({
-          window: { title: "End Session" },
-          content:
-            `<p>Archive <strong>Session ${active.sessionNumber}</strong> in Chronicle ` +
-            `and start <strong>Session ${nextNumber}</strong>?</p>`,
-          rejectClose: false,
-          modal: true
-        });
-        if (confirmed !== true) return;
-
-        const result = await SessionService.endActiveSession();
-        if (!result) {
-          ui.notifications?.error("The session could not be archived.");
-          return;
-        }
-
-        await PlaybookService.reset();
-        ui.notifications?.info(
-          `Session ${result.archived.sessionNumber} archived. Session ${result.next.sessionNumber} is ready.`
-        );
-        await this.render({ force: true });
-      }
+      onEndSession: () => this.#startSessionWrapUp()
     });
     CampaignWorkspace.paint(this.element);
     CampaignWorkspace.attach(this.element, {

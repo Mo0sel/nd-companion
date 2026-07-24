@@ -63,27 +63,82 @@
     </details>
   </header>
 
-  <nav class="nd-workspace-switcher" aria-label="Workspaces">
-    <button
-      type="button"
-      class="nd-workspace-switcher__button"
-      data-action="setWorkspace"
-      data-workspace="play"
-      aria-pressed="true"
-    ><span class="nd-workspace-switcher__icon" aria-hidden="true">▶</span>Play</button>
-    <button
-      type="button"
-      class="nd-workspace-switcher__button"
-      data-action="setWorkspace"
-      data-workspace="campaign"
-      aria-pressed="false"
-    ><span class="nd-workspace-switcher__icon" aria-hidden="true">⬡</span>Campaign</button>
+  <div class="nd-companion__body">
+  <nav class="nd-app-nav" aria-label="Companion navigation">
+    <button type="button" class="nd-app-nav__button is-active" data-action="setWorkspace" data-workspace="dashboard" aria-pressed="true">
+      <span class="nd-app-nav__icon" aria-hidden="true">▣</span>Dashboard
+    </button>
+    <button type="button" class="nd-app-nav__button" data-action="setWorkspace" data-workspace="play" aria-pressed="false">
+      <span class="nd-app-nav__icon" aria-hidden="true">▶</span>Play
+    </button>
+    <button type="button" class="nd-app-nav__button" data-action="setWorkspace" data-workspace="campaign" aria-pressed="false">
+      <span class="nd-app-nav__icon" aria-hidden="true">⬡</span>Campaign
+    </button>
+    <button type="button" class="nd-app-nav__button" data-action="setWorkspace" data-workspace="copilot" aria-pressed="false">
+      <span class="nd-app-nav__icon" aria-hidden="true">✦</span>Copilot
+    </button>
+    <button type="button" class="nd-app-nav__button" data-action="setWorkspace" data-workspace="npcs" aria-pressed="false">
+      <span class="nd-app-nav__icon" aria-hidden="true">◎</span>NPCs
+    </button>
+    <button type="button" class="nd-app-nav__button" data-action="setWorkspace" data-workspace="locations" aria-pressed="false">
+      <span class="nd-app-nav__icon" aria-hidden="true">⌖</span>Locations
+    </button>
+    <button type="button" class="nd-app-nav__button" data-action="setWorkspace" data-workspace="sessions" aria-pressed="false">
+      <span class="nd-app-nav__icon" aria-hidden="true">☰</span>Sessions
+    </button>
+    <div class="nd-app-nav__spacer" aria-hidden="true"></div>
+    <button type="button" class="nd-app-nav__button" data-action="setWorkspace" data-workspace="ai-settings" aria-pressed="false">
+      <span class="nd-app-nav__icon" aria-hidden="true">⚙</span>AI Settings
+    </button>
   </nav>
 
   <div class="nd-workspace-region">
 
+    {{!-- DASHBOARD — campaign operating overview (default landing) --}}
+    <section
+      class="nd-workspace nd-dashboard"
+      data-workspace-panel="dashboard"
+      aria-label="Dashboard"
+    ></section>
+
+    {{!-- COPILOT — dedicated Campaign Copilot workspace --}}
+    <section
+      class="nd-workspace nd-copilot-workspace"
+      data-workspace-panel="copilot"
+      aria-label="Campaign Copilot"
+      hidden
+    >
+      <div data-copilot-workspace></div>
+    </section>
+
+    {{!-- NPCs / Locations / Sessions browsers --}}
+    <section class="nd-workspace" data-workspace-panel="npcs" aria-label="NPCs" hidden>
+      <div data-entity-browser="actor"></div>
+    </section>
+    <section class="nd-workspace" data-workspace-panel="locations" aria-label="Locations" hidden>
+      <div data-entity-browser="scene"></div>
+    </section>
+    <section class="nd-workspace" data-workspace-panel="sessions" aria-label="Sessions" hidden>
+      <div data-sessions-browser></div>
+    </section>
+
+    {{!-- AI SETTINGS — configuration only --}}
+    <section class="nd-workspace" data-workspace-panel="ai-settings" aria-label="AI Settings" hidden>
+      <div class="nd-ai-settings-workspace" data-ai-settings-workspace></div>
+    </section>
+
+    {{!-- SESSION WRAP-UP — review AI proposals before writing --}}
+    <section
+      class="nd-workspace nd-wrapup-workspace"
+      data-workspace-panel="wrapup"
+      aria-label="Session Wrap-Up"
+      hidden
+    >
+      <div data-session-wrap-up></div>
+    </section>
+
     {{!-- PLAY — stable live-session dashboard (design/current PlayWorkspace) --}}
-    <section class="nd-workspace nd-play" data-workspace-panel="play" data-playbook aria-label="Play workspace">
+    <section class="nd-workspace nd-play" data-workspace-panel="play" data-playbook aria-label="Play workspace" hidden>
 
       {{!-- Run controls: choose today's campaign context without leaving PLAY --}}
       <div class="nd-play-context nd-play-run-controls" aria-label="Current run">
@@ -864,7 +919,8 @@
       </article>
     </template>
 
-  </div>
+  </div>{{!-- /.nd-workspace-region --}}
+  </div>{{!-- /.nd-companion__body --}}
 
   <div class="nd-activity-drawer" data-activity-drawer hidden>
     <button

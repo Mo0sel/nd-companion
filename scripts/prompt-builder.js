@@ -211,6 +211,115 @@ export class PromptBuilder {
   }
 
   /**
+   * Session Wrap-Up — structured JSON only (no markdown prose response).
+   * @param {object} collection  From SessionCollector.collect()
+   * @param {PromptBuildOptions} [options]
+   * @returns {BuiltPrompt}
+   */
+  static buildSessionWrapUpPrompt(collection, options = {}) {
+    const packet = ContextEngine.getSessionContext();
+    const sessionBlock = ContextSerializer.serializeSession(
+      packet,
+      PromptBuilder.#options({
+        ...options,
+        instructions: ""
+      })
+    );
+
+    const payload = {
+      session: collection?.session ?? null,
+      notes: collection?.notes ?? "",
+      sessionLog: collection?.sessionLog ?? "",
+      storyThreads: collection?.storyThreads ?? [],
+      quests: collection?.quests ?? [],
+      recentActivity: collection?.recentActivity ?? [],
+      chronicle: collection?.chronicle ?? [],
+      actors: (collection?.actors ?? []).map((actor) => ({
+        uuid: actor.uuid,
+        name: actor.name,
+        hasNotes: Boolean(String(actor.notes ?? "").trim())
+      })),
+      locations: (collection?.locations ?? []).map((location) => ({
+        uuid: location.uuid,
+        name: location.name,
+        hasNotes: Boolean(String(location.notes ?? "").trim())
+      })),
+      extras: collection?.extras ?? {}
+    };
+
+    const instructions = [
+      "You are a campaign historian for a tabletop RPG.",
+      "Use ONLY the provided campaign data. Do not invent facts.",
+      "Return ONE JSON object and nothing else.",
+      "Do not wrap the JSON in markdown fences.",
+      "Do not return prose outside JSON.",
+      "Required JSON shape:",
+      JSON.stringify(
+        {
+          sessionSummary: "",
+          timelineEvents: [],
+          questUpdates: [{ id: "", status: "", title: "", notes: "" }],
+          newNPCs: [{ name: "", note: "" }],
+          npcChanges: [{ uuid: "", note: "" }],
+          locationUpdates: [{ uuid: "", note: "" }],
+          storyThreads: [{ id: "", title: "", status: "", currentState: "", note: "" }],
+          playerDecisions: [],
+          futureHooks: [],
+          recommendedPrep: []
+        },
+        null,
+        2
+      ),
+      "Rules:",
+      "- questUpdates.id must match an existing quest id when updating.",
+      "- npcChanges.uuid / locationUpdates.uuid must match provided entity uuids when known.",
+      "- Prefer empty arrays over fabricated entries.",
+      "- sessionSummary should be concise and factual."
+    ].join("\n");
+
+    const prompt = [
+      `# Instructions`,
+      ``,
+      instructions,
+      ``,
+      sessionBlock.markdown,
+      ``,
+      `# Collected Session Data (JSON)`,
+      ``,
+      JSON.stringify(payload, null, 2)
+    ]
+      .filter((part) => part !== "")
+      .join("\n");
+
+    const truncated = PromptBuilder.#truncate(prompt, options);
+    return {
+      type: "wrapUp",
+      prompt: truncated.text,
+      sections: ["Instructions", ...sessionBlock.sections, "Collected Session Data"],
+      charCount: truncated.text.length,
+      estimatedTokens: ContextSerializer.estimateTokens(truncated.text),
+      truncated: truncated.truncated || sessionBlock.truncated,
+      packet: { session: packet, collection: payload }
+    };
+  }
+
+  /**
+   * @param {string} text
+   * @param {PromptBuildOptions} [options]
+   */
+  static #truncate(text, options = {}) {
+    const max =
+      Number.isFinite(options.maxChars) && options.maxChars > 0
+        ? Math.round(options.maxChars)
+        : AISettings.maxContextSize();
+    if (text.length <= max) return { text, truncated: false };
+    return {
+      text: `${text.slice(0, Math.max(0, max - 80))}\n\n<!-- truncated to max context size -->`,
+      truncated: true
+    };
+  }
+
+  /**
    * @param {PromptBuildOptions} [options]
    * @returns {PromptBuildOptions}
    */

@@ -487,6 +487,9 @@ export class CampaignDocument {
       relatedQuests: idList(session?.relatedQuests),
       relatedQuestEntries: idList(session?.relatedQuestEntries),
       beatIds: idList(session?.beatIds),
+      wrapUpHistory: Array.isArray(session?.wrapUpHistory)
+        ? session.wrapUpHistory.filter((entry) => entry && typeof entry === "object")
+        : [],
       created,
       updated: Number.isFinite(session?.updated) ? session.updated : now
     };

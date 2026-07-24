@@ -3,6 +3,7 @@ import { CompanionApp } from "./companion-app.js";
 import { CampaignAwareness } from "./campaign-context.js";
 import { CampaignDocument } from "./campaign-document.js";
 import { CampaignMemoryService } from "./campaign-memory-service.js";
+import { CampaignUpdater } from "./campaign-updater.js";
 import { AIProvider } from "./ai-provider.js";
 import { AIProviderRegistry } from "./ai-provider-registry.js";
 import { AISettings } from "./ai-settings.js";
@@ -21,7 +22,9 @@ import { PlaybookService } from "./playbook-service.js";
 import { PromptBuilder } from "./prompt-builder.js";
 import { QuestEntryService } from "./quest-entry-service.js";
 import { RelationshipService } from "./relationship-service.js";
+import { SessionCollector } from "./session-collector.js";
 import { SessionService } from "./session-service.js";
+import { SessionWrapUp } from "./session-wrap-up.js";
 import { StoryThreadService } from "./story-thread-service.js";
 import { registerSearchProviders } from "./search-providers.js";
 import { SearchService } from "./search-service.js";
@@ -82,6 +85,9 @@ Hooks.once("ready", async () => {
   window.nd.ToolRegistry = ToolRegistry;
   window.nd.AISettings = AISettings;
   window.nd.CampaignCopilot = CampaignCopilot;
+  window.nd.SessionCollector = SessionCollector;
+  window.nd.SessionWrapUp = SessionWrapUp;
+  window.nd.CampaignUpdater = CampaignUpdater;
   if (window.nd.debugAI !== true) window.nd.debugAI = false;
 
   try {
