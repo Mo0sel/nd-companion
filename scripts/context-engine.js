@@ -1,6 +1,7 @@
 import { CampaignDocument } from "./campaign-document.js";
 import { CampaignMemoryService } from "./campaign-memory-service.js";
 import { EntityRegistry } from "./entity-registry.js";
+import { GraphService } from "./graph-service.js";
 import { RelationshipService } from "./relationship-service.js";
 import { RichText } from "./rich-text.js";
 import { CompanionStorage } from "./storage.js";
@@ -72,18 +73,28 @@ export class ContextEngine {
     if (!target) return ContextEngine.#empty();
     ContextEngine.#ensureIndex();
 
+    // GraphService is the knowledge layer; keep status/history from local index.
+    const graphType = target.kind === "questEntry" ? "quest" : target.kind;
+    const status =
+      target.kind === "storyThread"
+        ? ContextEngine.#storyThreads.get(target.id)?.currentState ?? ""
+        : target.kind === "faction"
+          ? ContextEngine.#factions.get(target.id)?.currentStatus ?? ""
+          : CompanionStorage.getMemory(ContextEngine.currentStatusKey(target));
+    const campaignMemory = CompanionStorage.getMemory(
+      `${ContextEngine.#storageKind(target.kind)}:${target.id}`
+    );
+
     const targetKey = ContextEngine.#key(target.kind, target.id);
     const relatedKeys = ContextEngine.#adjacency.get(targetKey) ?? new Set();
     const related = [...relatedKeys]
       .map((key) => ContextEngine.#nodeFromKey(key))
       .filter(Boolean);
-
     const sessions = related
       .filter((node) => node.kind === "session")
       .concat(target.kind === "session" ? [ContextEngine.#node(target.kind, target.id)] : [])
       .filter(Boolean)
       .sort((a, b) => a.sessionNumber - b.sessionNumber);
-
     const unique = (nodes) => {
       const seen = new Set();
       return nodes.filter((node) => {
@@ -93,34 +104,16 @@ export class ContextEngine {
         return true;
       });
     };
-    const byLabel = (a, b) => a.label.localeCompare(b.label);
 
-    return {
+    const base = {
       target: ContextEngine.#node(target.kind, target.id),
-      lastSeen: sessions.at(-1) ?? null,
+      lastSeen: unique(sessions).at(-1) ?? null,
       sessions: unique(sessions),
-      quests: unique(related.filter((node) => node.kind === "quest")).sort(byLabel),
-      questEntries: unique(
-        related.filter((node) => node.kind === "questEntry")
-      ).sort(byLabel),
-      actors: unique(related.filter((node) => node.kind === "actor")).sort(byLabel),
-      locations: unique(related.filter((node) => node.kind === "location")).sort(byLabel),
-      items: unique(related.filter((node) => node.kind === "item")).sort(byLabel),
-      storyThreads: unique(
-        related.filter((node) => node.kind === "storyThread")
-      ).sort(byLabel),
-      factions: unique(
-        related.filter((node) => node.kind === "faction")
-      ).sort(byLabel),
-      currentStatus: target.kind === "storyThread"
-        ? ContextEngine.#storyThreads.get(target.id)?.currentState ?? ""
-        : target.kind === "faction"
-          ? ContextEngine.#factions.get(target.id)?.currentStatus ?? ""
-          : CompanionStorage.getMemory(ContextEngine.currentStatusKey(target)),
-      campaignMemory: CompanionStorage.getMemory(
-        `${ContextEngine.#storageKind(target.kind)}:${target.id}`
-      )
+      currentStatus: status,
+      campaignMemory
     };
+
+    return GraphService.toContextResult(graphType, target.id, base);
   }
 
   /**

@@ -184,11 +184,11 @@
   color: currentColor;
 }
 
-/* Shared Campaign sidebar list rows — left-aligned titles, fixed left dot column */
+/* Shared Campaign sidebar list rows — left-aligned titles, portrait + title + meta */
 .nd-campaign-list-row {
   display: grid;
-  grid-template-columns: 6px minmax(0, 1fr) auto;
-  align-items: start;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
   gap: 6px 8px;
   width: 100%;
   margin: 0 0 2px;
@@ -218,6 +218,83 @@
 .nd-campaign-list-row__dot {
   margin-top: 6px;
   justify-self: center;
+}
+
+.nd-campaign-list-row__portrait {
+  justify-self: center;
+}
+
+.nd-portrait {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--nd-surface-2) 80%, var(--nd-border));
+  border: 1px solid var(--nd-border);
+  color: var(--nd-text-2);
+  font-family: var(--nd-font-mono);
+  font-weight: var(--nd-weight-bold);
+  line-height: 1;
+  user-select: none;
+}
+
+.nd-portrait img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.nd-portrait--thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--nd-radius-md);
+  font-size: 9px;
+  letter-spacing: 0.02em;
+}
+
+.nd-portrait--header {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--nd-radius-lg);
+  font-size: 18px;
+  letter-spacing: 0.04em;
+}
+
+.nd-portrait--initials {
+  color: var(--nd-text-1);
+  background: color-mix(in srgb, var(--nd-blue) 16%, var(--nd-surface));
+  border-color: color-mix(in srgb, var(--nd-blue) 35%, var(--nd-border));
+}
+
+.nd-campaign-panel__header--entity {
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+}
+
+.nd-campaign-entity-doc-type {
+  margin-top: 4px;
+  color: var(--nd-text-3);
+  font-family: var(--nd-font-mono);
+  font-size: var(--nd-text-micro);
+  letter-spacing: 0.04em;
+}
+
+.nd-campaign-entity-status-pill {
+  margin-top: 6px;
+  max-width: 42ch;
+  overflow: hidden;
+  color: var(--nd-text-2);
+  font-size: var(--nd-text-caption);
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nd-campaign-entity-status-pill[hidden] {
+  display: none;
 }
 
 .nd-campaign-list-row__title {

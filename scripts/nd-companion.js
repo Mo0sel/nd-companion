@@ -6,6 +6,7 @@ import { ContextEngine } from "./context-engine.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { FactionService } from "./faction-service.js";
 import { FocusManager } from "./focus-manager.js";
+import { GraphService } from "./graph-service.js";
 import { GraphValidator } from "./graph-validator.js";
 import { Navigation } from "./navigation.js";
 import { PlaybookService } from "./playbook-service.js";
@@ -39,6 +40,7 @@ Hooks.once("ready", async () => {
   } catch (error) {
     console.error("N&D Companion: relationship migration failed", error);
   }
+  GraphService.initialize();
   registerSearchProviders();
   window.nd ??= {};
   window.nd.EntityRegistry = EntityRegistry;
@@ -52,6 +54,7 @@ Hooks.once("ready", async () => {
   window.nd.CampaignDocument = CampaignDocument;
   window.nd.CampaignMemoryService = CampaignMemoryService;
   window.nd.ContextEngine = ContextEngine;
+  window.nd.GraphService = GraphService;
   window.nd.SearchService = SearchService;
   window.nd.GraphValidator = GraphValidator;
   window.nd.RelationshipService = RelationshipService;

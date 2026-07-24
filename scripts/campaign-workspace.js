@@ -6,6 +6,7 @@ import { DmNotes } from "./dm-notes.js";
 import { EntityMentions } from "./entity-mentions.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { FactionService } from "./faction-service.js";
+import { GraphService } from "./graph-service.js";
 import { LiveNotes } from "./live-notes.js";
 import { NavigationHistory } from "./navigation-history.js";
 import { Playbook } from "./playbook.js";
@@ -991,10 +992,11 @@ export class CampaignWorkspace {
           faction.id === CampaignWorkspace.#factionId
       );
 
-      const dot = document.createElement("span");
-      dot.className = "nd-entity-dot nd-campaign-list-row__dot";
-      dot.dataset.entityKind = "faction";
-      dot.setAttribute("aria-hidden", "true");
+      const thumb = CampaignWorkspace.#portraitThumb(
+        "faction",
+        faction.id,
+        faction.name?.trim() || "Untitled Faction"
+      );
 
       const button = document.createElement("button");
       button.type = "button";
@@ -1008,7 +1010,7 @@ export class CampaignWorkspace {
         field: "reputation"
       });
       reputation.classList.add("nd-campaign-list-row__meta");
-      row.append(dot, button, reputation);
+      row.append(thumb, button, reputation);
       list.append(row);
     }
   }
@@ -1230,10 +1232,7 @@ export class CampaignWorkspace {
         row.classList.toggle("is-active", entity.uuid === CampaignWorkspace.#entityId);
 
         const entityKind = entity.kind === "scene" ? "location" : entity.kind;
-        const dot = document.createElement("span");
-        dot.className = "nd-entity-dot nd-campaign-list-row__dot";
-        dot.dataset.entityKind = entityKind;
-        dot.setAttribute("aria-hidden", "true");
+        row.prepend(CampaignWorkspace.#portraitThumb(entityKind, entity.uuid, entity.name));
 
         const button = document.createElement("button");
         button.type = "button";
@@ -1241,7 +1240,7 @@ export class CampaignWorkspace {
         button.dataset.campaignEntityId = entity.uuid;
         button.textContent = entity.name;
 
-        row.append(dot, button);
+        row.append(button);
         list.append(row);
       }
     }
@@ -1271,10 +1270,11 @@ export class CampaignWorkspace {
       const row = document.createElement("div");
       row.className = "nd-campaign-list-row nd-faction-nav-row";
 
-      const dot = document.createElement("span");
-      dot.className = "nd-entity-dot nd-campaign-list-row__dot";
-      dot.dataset.entityKind = "faction";
-      dot.setAttribute("aria-hidden", "true");
+      const thumb = CampaignWorkspace.#portraitThumb(
+        "faction",
+        faction.id,
+        faction.name?.trim() || "Untitled Faction"
+      );
 
       const button = document.createElement("button");
       button.type = "button";
@@ -1288,7 +1288,7 @@ export class CampaignWorkspace {
         field: "reputation"
       });
       reputation.classList.add("nd-campaign-list-row__meta");
-      row.append(dot, button, reputation);
+      row.append(thumb, button, reputation);
       list.append(row);
     }
   }
@@ -1318,6 +1318,7 @@ export class CampaignWorkspace {
       scene: "Location",
       item: "Item"
     };
+    const contextKind = entity.kind === "scene" ? "location" : entity.kind;
     const kindEl = view.querySelector("[data-campaign-entity-kind]");
     if (kindEl) kindEl.textContent = kindLabel[entity.kind] ?? "Entity";
     const title = view.querySelector("[data-campaign-entity-title]");
@@ -1325,15 +1326,31 @@ export class CampaignWorkspace {
       title.replaceChildren();
       title.append(document.createTextNode(entity.name));
     }
+    CampaignWorkspace.#paintEntityPortrait(view, contextKind, entity.uuid, entity.name);
 
-    const contextKind = entity.kind === "scene" ? "location" : entity.kind;
+    const docType = view.querySelector("[data-campaign-entity-doc-type]");
+    if (docType instanceof HTMLElement) {
+      const portrait = GraphService.getPortrait(contextKind, entity.uuid);
+      docType.textContent = portrait?.documentType
+        ? `Foundry ${kindLabel[entity.kind] ?? portrait.documentType}`
+        : `Foundry ${kindLabel[entity.kind] ?? "Document"}`;
+    }
+
     const statusKey = ContextEngine.currentStatusKey({
       kind: contextKind,
       id: entity.uuid
     });
     const statusEditor = view.querySelector("[data-campaign-entity-current-status]");
     const overview = view.querySelector("[data-campaign-entity-overview]");
+    const statusPill = view.querySelector("[data-campaign-entity-status-pill]");
     if (overview instanceof HTMLElement) overview.hidden = !statusKey;
+    if (statusPill instanceof HTMLElement) {
+      const plain = RichText.plainText(
+        CompanionStorage.getMemory(statusKey) || ""
+      ).trim();
+      statusPill.hidden = !plain;
+      statusPill.textContent = plain ? plain.slice(0, 80) : "";
+    }
     if (statusEditor instanceof HTMLElement) {
       if (statusKey) {
         LiveNotes.attach(statusEditor, statusKey, {
@@ -1358,6 +1375,54 @@ export class CampaignWorkspace {
         showHeader: false
       }
     );
+  }
+
+  /**
+   * Sidebar / header portrait from GraphService (Foundry img or initials).
+   * @param {string} type
+   * @param {string} id
+   * @param {string} name
+   * @returns {HTMLElement}
+   */
+  static #portraitThumb(type, id, name) {
+    const wrap = document.createElement("span");
+    wrap.className = "nd-portrait nd-portrait--thumb nd-campaign-list-row__portrait";
+    wrap.setAttribute("aria-hidden", "true");
+    const portrait = GraphService.getPortrait(type, id);
+    if (portrait?.img) {
+      const img = document.createElement("img");
+      img.src = portrait.img;
+      img.alt = "";
+      wrap.append(img);
+    } else {
+      wrap.classList.add("nd-portrait--initials");
+      wrap.textContent = GraphService.initials(name);
+    }
+    return wrap;
+  }
+
+  /**
+   * @param {HTMLElement} view
+   * @param {string} type
+   * @param {string} id
+   * @param {string} name
+   */
+  static #paintEntityPortrait(view, type, id, name) {
+    const host = view.querySelector("[data-campaign-entity-portrait]");
+    if (!(host instanceof HTMLElement)) return;
+    host.replaceChildren();
+    host.className = "nd-portrait nd-portrait--header";
+    const portrait = GraphService.getPortrait(type, id);
+    if (portrait?.img) {
+      host.classList.remove("nd-portrait--initials");
+      const img = document.createElement("img");
+      img.src = portrait.img;
+      img.alt = "";
+      host.append(img);
+    } else {
+      host.classList.add("nd-portrait--initials");
+      host.textContent = GraphService.initials(name);
+    }
   }
 
   static #paintMemoryList(panel) {
