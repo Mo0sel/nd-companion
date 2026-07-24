@@ -321,14 +321,12 @@ export class Playbook {
         : "nd-play-story-thread__active nd-play-story-thread__active--quiet";
       badge.textContent = isOwner ? "Current" : "Active";
       head.append(title, badge);
+      open.append(head);
 
       const state = document.createElement("p");
       state.className = "nd-play-story-thread__state";
       state.textContent =
         RichText.plainText(thread.currentState ?? "") || "No current state set.";
-
-      const meta = document.createElement("div");
-      meta.className = "nd-play-story-thread__meta";
 
       const actorRow = document.createElement("div");
       actorRow.className = "nd-play-story-thread__actors";
@@ -352,9 +350,6 @@ export class Playbook {
         emptyActors.textContent = "No linked actors";
         actorRow.append(emptyActors);
       }
-      meta.append(actorRow);
-
-      open.append(head, state, meta);
 
       const questList = document.createElement("div");
       questList.className = "nd-play-story-thread__quest-list";
@@ -399,7 +394,7 @@ export class Playbook {
         }
       }
 
-      threadCard.append(open, questList);
+      threadCard.append(open, state, actorRow, questList);
       list.append(threadCard);
     }
   }

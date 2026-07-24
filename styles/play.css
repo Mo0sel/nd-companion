@@ -300,12 +300,11 @@
   border-radius: 0 2px 2px 0;
   background: var(--nd-entity-story-thread-color);
   opacity: 0.45;
+  pointer-events: none;
 }
 
 .nd-play-story-thread__open {
-  display: grid;
-  grid-template-rows: auto auto auto;
-  gap: 6px;
+  display: block;
   flex: 0 0 auto;
   width: 100%;
   min-width: 0;
@@ -392,6 +391,7 @@
 }
 
 .nd-play-story-thread__state {
+  flex: 0 0 auto;
   margin: 0;
   min-width: 0;
   color: var(--nd-text-2);
@@ -402,20 +402,13 @@
   white-space: normal;
 }
 
-.nd-play-story-thread__meta {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
 .nd-play-story-thread__actors {
   display: flex;
-  flex-wrap: nowrap;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   min-width: 0;
-  overflow: hidden;
 }
 
 .nd-play-story-thread__actor,
@@ -442,8 +435,8 @@
 .nd-play-story-thread__quest-list {
   display: flex;
   flex-direction: column;
-  gap: 3px;
   flex: 0 0 auto;
+  gap: 3px;
   margin-top: auto;
   min-width: 0;
   padding-top: 8px;
