@@ -84,12 +84,14 @@ jobs:
           fi
 
           # Force versioned Release URLs in the published manifest
-          python3 << PY
+          export TAG VERSION STAGE
+          python3 <<'PY'
           import json
+          import os
           from pathlib import Path
-          tag = "${TAG}"
-          version = "${VERSION}"
-          path = Path(r"${STAGE}") / "module.json"
+          tag = os.environ["TAG"]
+          version = os.environ["VERSION"]
+          path = Path(os.environ["STAGE"]) / "module.json"
           data = json.loads(path.read_text(encoding="utf-8"))
           base = f"https://github.com/Mo0sel/nd-companion/releases/download/{tag}"
           data["manifest"] = f"{base}/module.json"
@@ -144,14 +146,21 @@ jobs:
           [[ -f "$CHECK/lang/en.json" ]] || fail "lang/en.json missing"
           [[ -f "$CHECK/scripts/nd-companion.js" ]] || fail "scripts/nd-companion.js missing"
 
-          python3 << PY
+          export VERSION TAG CHECK
+          python3 <<'PY'
           import json
+          import os
           from pathlib import Path
-          data = json.loads(Path(r"${CHECK}/module.json").read_text(encoding="utf-8"))
+          version_expected = os.environ["VERSION"]
+          tag = os.environ["TAG"]
+          check = Path(os.environ["CHECK"])
+          data = json.loads((check / "module.json").read_text(encoding="utf-8"))
           version = data.get("version")
-          if version != "${VERSION}":
-              raise SystemExit(f"zip module.json version {version!r} != tag version ${VERSION!r}")
-          expected_base = f"https://github.com/Mo0sel/nd-companion/releases/download/{TAG}"
+          if version != version_expected:
+              raise SystemExit(
+                  f"zip module.json version {version!r} != tag version {version_expected!r}"
+              )
+          expected_base = f"https://github.com/Mo0sel/nd-companion/releases/download/{tag}"
           if data.get("manifest") != f"{expected_base}/module.json":
               raise SystemExit(f"manifest URL incorrect: {data.get('manifest')}")
           if data.get("download") != f"{expected_base}/module.zip":
