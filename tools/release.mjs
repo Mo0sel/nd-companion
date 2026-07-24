@@ -16,8 +16,8 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -26,6 +26,8 @@ const REPO = "Mo0sel/nd-companion";
 const VERSION_RE = /^(\d+)\.(\d+)\.(\d+)$/;
 const ZIP_FILENAME = "module.zip";
 const MANIFEST_FILENAME = "module.json";
+/** Directories whose .js / .mjs / .cjs files must parse before any release mutation. */
+const SYNTAX_ROOTS = ["scripts", "tools"];
 
 function fail(message) {
   console.error(`\nRelease aborted: ${message}\n`);
@@ -208,6 +210,101 @@ function assertCleanTree() {
   }
 }
 
+function listJavaScriptFiles(dir, acc = []) {
+  let entries;
+  try {
+    entries = readdirSync(dir, { withFileTypes: true });
+  } catch (error) {
+    fail(`Cannot read ${posixPath(dir)}: ${error.message}`);
+  }
+  for (const entry of entries) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      listJavaScriptFiles(full, acc);
+      continue;
+    }
+    if (entry.isFile() && /\.(js|mjs|cjs)$/i.test(entry.name)) {
+      acc.push(full);
+    }
+  }
+  return acc;
+}
+
+function posixPath(absPath) {
+  return relative(ROOT, absPath).split("\\").join("/") || ".";
+}
+
+/**
+ * Fail closed: any parser error aborts before module.json writes, commits, tags, or pushes.
+ */
+function assertJavaScriptParses() {
+  console.log("Syntax gate: validating JavaScript under scripts/ and tools/…");
+
+  /** @type {string[]} */
+  const files = [];
+  for (const root of SYNTAX_ROOTS) {
+    const abs = join(ROOT, root);
+    try {
+      if (!statSync(abs).isDirectory()) {
+        fail(`Expected directory: ${root}/`);
+      }
+    } catch {
+      fail(`Missing required directory: ${root}/`);
+    }
+    listJavaScriptFiles(abs, files);
+  }
+
+  files.sort((a, b) => posixPath(a).localeCompare(posixPath(b)));
+  if (!files.length) {
+    fail("No JavaScript files found under scripts/ or tools/.");
+  }
+
+  /** @type {{ file: string, error: string }[]} */
+  const failures = [];
+  for (const file of files) {
+    const rel = posixPath(file);
+    try {
+      execFileSync(process.execPath, ["--check", file], {
+        cwd: ROOT,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"]
+      });
+    } catch (error) {
+      const detail = [
+        error.stderr?.toString?.().trim(),
+        error.stdout?.toString?.().trim()
+      ]
+        .filter(Boolean)
+        .join("\n")
+        .trim();
+      failures.push({
+        file: rel,
+        error: detail || error.message || "Unknown parser error"
+      });
+    }
+  }
+
+  if (failures.length) {
+    const report = failures
+      .map(
+        (item) =>
+          `  File: ${item.file}\n` +
+          item.error
+            .split("\n")
+            .map((line) => `    ${line}`)
+            .join("\n")
+      )
+      .join("\n\n");
+    fail(
+      `JavaScript syntax gate failed (${failures.length} file(s)).\n` +
+        "No commit, tag, or push was created.\n\n" +
+        report
+    );
+  }
+
+  console.log(`Syntax gate passed (${files.length} file(s)).`);
+}
+
 function assertTagAvailable(tag) {
   const local = git(["tag", "-l", tag]);
   if (local) fail(`Tag ${tag} already exists locally.`);
@@ -267,6 +364,8 @@ function main() {
 
   assertCleanTree();
   assertTagAvailable(tag);
+  // Before any mutation: refuse to release unparseable JS (Foundry load-breakers).
+  assertJavaScriptParses();
 
   const branch = git(["rev-parse", "--abbrev-ref", "HEAD"]);
   if (!branch || branch === "HEAD") {

@@ -385,6 +385,13 @@ export class GraphService {
     };
   }
 
+  /**
+   * Portrait image for UI avatars (Foundry img when linked).
+   * @param {string} type
+   * @param {string} id
+   * @returns {{ img: string, name: string, documentType: string }|null}
+   */
+  static getPortrait(type, id) {
     GraphService.#ensureFresh();
     const node = GraphService.getNode(type, id);
     if (!node) return null;

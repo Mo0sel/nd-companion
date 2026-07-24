@@ -11,6 +11,8 @@ Read version from module.json (source of truth)
         ↓
 Bump patch (or use -- X.Y.Z override)
         ↓
+Syntax gate: node --check every .js/.mjs under scripts/ and tools/
+        ↓
 Rewrite module.json version + manifest/download URLs
         ↓
 Validate: version ≡ tag ≡ URLs ≡ release title ≡ module.zip
@@ -44,17 +46,29 @@ No manual GitHub UI steps. The Action builds a **flat** `module.zip` containing 
 npm run release
 ```
 
-Example: `0.3.33` in `module.json` → releases `0.3.34` / tag `v0.3.34`.
+Example: `0.3.34` in `module.json` → releases `0.3.35` / tag `v0.3.35`.
 
 ### Explicit version (override)
 
 ```bash
-npm run release -- 0.3.34
+npm run release -- 0.3.35
 ```
 
 Use this for minor/major bumps, or to tag a version already written in `module.json`.
 
 ## What the script checks
+
+### Syntax gate (before any commit/tag/push)
+
+Every `.js` / `.mjs` / `.cjs` file under `scripts/` and `tools/` is parsed with `node --check`.
+
+If **any** file fails:
+
+- the filename and parser error are printed
+- the release **aborts**
+- **no** `module.json` write / commit / tag / push is performed
+
+### Version identity
 
 Before pushing, everything must agree on the same `X.Y.Z`:
 
