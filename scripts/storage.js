@@ -125,6 +125,34 @@ export class CompanionStorage {
       type: Object,
       default: {}
     });
+
+    game.settings.register(MODULE_ID, "autoCollapseEmptySections", {
+      name: "Auto Collapse Empty Sections",
+      hint: "On the Play Beat page, collapse cards that have no meaningful content. Turn off to keep every section expanded.",
+      scope: "client",
+      config: true,
+      type: Boolean,
+      default: true
+    });
+  }
+
+  /**
+   * Client preference: collapse empty Beat cards on Play.
+   * @returns {boolean}
+   */
+  static getAutoCollapseEmptySections() {
+    try {
+      return game.settings.get(MODULE_ID, "autoCollapseEmptySections") !== false;
+    } catch (_error) {
+      return true;
+    }
+  }
+
+  /**
+   * @param {boolean} value
+   */
+  static async setAutoCollapseEmptySections(value) {
+    return game.settings.set(MODULE_ID, "autoCollapseEmptySections", value === true);
   }
 
   /**

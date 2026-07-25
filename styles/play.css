@@ -536,27 +536,31 @@
   color: var(--nd-accent-response);
 }
 
-/* ── Entry card grid ─────────────────────────────────────────────────────── */
+/* ── Entry card grid (independent columns / masonry-style flow) ─────────── */
 
 .nd-play-entry-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  column-count: 2;
+  column-gap: 10px;
   margin-bottom: 18px;
-  align-items: start;
 }
 
 .nd-play-card {
+  display: inline-block;
+  width: 100%;
   min-width: 0;
+  margin: 0 0 10px;
   padding: 13px 15px;
   background: var(--nd-card-tint);
   border: 1px solid var(--nd-border);
   border-radius: var(--nd-radius-xl);
   box-sizing: border-box;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  vertical-align: top;
 }
 
 .nd-play-card--wide {
-  grid-column: 1 / -1;
+  column-span: all;
 }
 
 .nd-play-card__labelrow {
@@ -564,7 +568,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  margin-bottom: 7px;
+  margin-bottom: 0;
+  min-width: 0;
+  flex: 1;
 }
 
 .nd-play-card__label {
@@ -624,7 +630,6 @@
 }
 
 .nd-play-card__content {
-  min-height: 42px;
   max-height: 220px;
   overflow-y: auto;
   color: var(--nd-text-1);
@@ -635,7 +640,7 @@
 .nd-play-npcs {
   display: grid;
   gap: 6px;
-  margin-top: 8px;
+  margin-top: 0;
 }
 
 .nd-play-npc {
@@ -702,9 +707,9 @@
   content: "Not prepared.";
 }
 
-/* ── Collapsible Setup card ──────────────────────────────────────────────── */
+/* ── Collapsible Beat cards ──────────────────────────────────────────────── */
 
-.nd-play-card--setup > summary {
+.nd-play-card > summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -713,19 +718,21 @@
   list-style: none;
 }
 
-.nd-play-card--setup > summary::-webkit-details-marker {
+.nd-play-card > summary::-webkit-details-marker {
   display: none;
 }
 
-.nd-play-card--setup > summary .nd-play-card__labelrow {
-  margin-bottom: 0;
-}
-
-.nd-play-card--setup[open] > summary {
+.nd-play-card[open] > summary {
   margin-bottom: 7px;
 }
 
+.nd-play-card:not([open]) {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
 .nd-play-card__collapse-label {
+  flex-shrink: 0;
   color: var(--nd-text-3);
   font-family: var(--nd-font-mono);
   font-size: 0;
@@ -739,7 +746,7 @@
   font-size: 9.5px;
 }
 
-.nd-play-card--setup[open] .nd-play-card__collapse-label::after {
+.nd-play-card[open] > summary .nd-play-card__collapse-label::after {
   content: "Collapse";
 }
 
@@ -923,7 +930,10 @@
 /* ── Responsive Foundry window ───────────────────────────────────────────── */
 
 @container nd-companion (max-width: 700px) {
-  .nd-play-entry-grid,
+  .nd-play-entry-grid {
+    column-count: 1;
+  }
+
   .nd-play-session-strip {
     grid-template-columns: 1fr;
   }

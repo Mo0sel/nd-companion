@@ -183,10 +183,13 @@
         <h3 class="nd-play-section-title nd-play-section-title--scene-flow">Scene Flow</h3>
         <div class="nd-play-entry-grid nd-play-entry-grid--scene-flow">
 
-          <section class="nd-play-card" data-playbook-field-block="speechNotes">
-            <div class="nd-play-card__labelrow">
-              <span class="nd-play-card__label">Speech Notes</span>
-            </div>
+          <details class="nd-play-card" data-playbook-field-block="speechNotes" open>
+            <summary>
+              <span class="nd-play-card__labelrow">
+                <span class="nd-play-card__label">Speech Notes</span>
+              </span>
+              <span class="nd-play-card__collapse-label">Collapse</span>
+            </summary>
             <div
               class="nd-play-card__content nd-richtext nd-play-inline-editor"
               data-playbook="speechNotes"
@@ -194,7 +197,7 @@
               role="textbox"
               aria-label="Speech Notes"
             ></div>
-          </section>
+          </details>
 
           <details class="nd-play-card nd-play-card--setup" data-playbook-field-block="setup" open>
             <summary>
@@ -209,19 +212,25 @@
             </div>
           </details>
 
-          <section class="nd-play-card" data-playbook-field-block="npcs">
-            <div class="nd-play-card__labelrow">
-              <span class="nd-play-card__label">NPCs</span>
-            </div>
+          <details class="nd-play-card" data-playbook-field-block="npcs" open>
+            <summary>
+              <span class="nd-play-card__labelrow">
+                <span class="nd-play-card__label">NPCs</span>
+              </span>
+              <span class="nd-play-card__collapse-label">Collapse</span>
+            </summary>
             <div class="nd-play-npcs" data-play-npcs></div>
             <p class="nd-play-card__empty" data-play-npcs-empty>No NPCs linked to this Beat.</p>
-          </section>
+          </details>
 
-          <section class="nd-play-card" data-playbook-field-block="objective">
-            <div class="nd-play-card__labelrow">
-              <span class="nd-play-card__label">Objectives</span>
-              <button type="button" class="nd-play-card__action" data-objective-add aria-label="Add objective">+ Add</button>
-            </div>
+          <details class="nd-play-card" data-playbook-field-block="objective" open>
+            <summary>
+              <span class="nd-play-card__labelrow">
+                <span class="nd-play-card__label">Objectives</span>
+                <button type="button" class="nd-play-card__action" data-objective-add aria-label="Add objective">+ Add</button>
+              </span>
+              <span class="nd-play-card__collapse-label">Collapse</span>
+            </summary>
             <div
               class="nd-play-card__content nd-richtext nd-play-inline-editor nd-play-objectives"
               data-playbook="objective"
@@ -229,12 +238,15 @@
               role="textbox"
               aria-label="Objectives"
             ></div>
-          </section>
+          </details>
 
-          <section class="nd-play-card" data-playbook-field-block="experience">
-            <div class="nd-play-card__labelrow">
-              <span class="nd-play-card__label">Experience &amp; Reward</span>
-            </div>
+          <details class="nd-play-card" data-playbook-field-block="experience" open>
+            <summary>
+              <span class="nd-play-card__labelrow">
+                <span class="nd-play-card__label">Experience &amp; Reward</span>
+              </span>
+              <span class="nd-play-card__collapse-label">Collapse</span>
+            </summary>
             <div
               class="nd-play-card__content nd-richtext nd-play-inline-editor"
               data-playbook="experience"
@@ -242,32 +254,41 @@
               role="textbox"
               aria-label="Experience"
             ></div>
-          </section>
+          </details>
         </div>
 
         {{!-- Response & Notes group --}}
         <h3 class="nd-play-section-title nd-play-section-title--response">Response &amp; Notes</h3>
         <div class="nd-play-entry-grid nd-play-entry-grid--response">
 
-          <section class="nd-play-card" data-playbook-field-block="twist">
-            <div class="nd-play-card__labelrow">
-              <span class="nd-play-card__label">Twist</span>
-            </div>
+          <details class="nd-play-card" data-playbook-field-block="twist" open>
+            <summary>
+              <span class="nd-play-card__labelrow">
+                <span class="nd-play-card__label">Twist</span>
+              </span>
+              <span class="nd-play-card__collapse-label">Collapse</span>
+            </summary>
             <div class="nd-play-card__content nd-richtext" data-playbook="twist"></div>
-          </section>
+          </details>
 
-          <section class="nd-play-card" data-playbook-field-block="possibleOutcomes">
-            <div class="nd-play-card__labelrow">
-              <span class="nd-play-card__label">Possible Outcomes</span>
-            </div>
+          <details class="nd-play-card" data-playbook-field-block="possibleOutcomes" open>
+            <summary>
+              <span class="nd-play-card__labelrow">
+                <span class="nd-play-card__label">Possible Outcomes</span>
+              </span>
+              <span class="nd-play-card__collapse-label">Collapse</span>
+            </summary>
             <div class="nd-play-card__content nd-richtext" data-playbook="possibleOutcomes"></div>
-          </section>
+          </details>
 
-          <section class="nd-play-card nd-play-card--wide" data-playbook-field-block="gmNotes">
-            <div class="nd-play-card__labelrow">
-              <span class="nd-play-card__label">GM Notes</span>
-              <span class="nd-play-card__live-dot" aria-hidden="true"></span>
-            </div>
+          <details class="nd-play-card nd-play-card--wide" data-playbook-field-block="gmNotes" open>
+            <summary>
+              <span class="nd-play-card__labelrow">
+                <span class="nd-play-card__label">GM Notes</span>
+                <span class="nd-play-card__live-dot" aria-hidden="true"></span>
+              </span>
+              <span class="nd-play-card__collapse-label">Collapse</span>
+            </summary>
             <div
               class="nd-play-card__content nd-richtext nd-play-inline-editor"
               data-playbook="gmNotes"
@@ -275,7 +296,7 @@
               role="textbox"
               aria-label="Entry Notes"
             ></div>
-          </section>
+          </details>
         </div>
 
         {{!-- Session strip --}}

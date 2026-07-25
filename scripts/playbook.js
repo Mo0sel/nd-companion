@@ -9,6 +9,7 @@ import { RelationshipService } from "./relationship-service.js";
 import { RichText } from "./rich-text.js";
 import { SessionService } from "./session-service.js";
 import { StoryThreadService } from "./story-thread-service.js";
+import { CompanionStorage } from "./storage.js";
 
 /**
  * @typedef {import("./playbook-service.js").PlaybookBeat} PlaybookBeat
@@ -255,12 +256,89 @@ export class Playbook {
       Playbook.#paintEntities(panel, snapshot.beat);
     }
 
+    Playbook.#syncCollapsibleSections(panel, snapshot);
     Playbook.#paintStatus(panel, hasQuest ? status : "idle");
     Playbook.#paintRunControls(root);
     Playbook.#attachInlineEditors(root, snapshot);
     Playbook.#paintSessionNpcs(root, snapshot);
     const ownerQuestId = hasQuest ? (snapshot.beat?.sourceStoryEntryId || "") : "";
     Playbook.#paintStoryThreads(root, ownerThreadId, ownerQuestId);
+  }
+
+  /** Placeholder-only copy that should not keep a Beat card expanded. */
+  static #EMPTY_PLACEHOLDERS = new Set([
+    "not set",
+    "not set.",
+    "not prepared",
+    "not prepared.",
+    "no npcs linked",
+    "no npcs linked.",
+    "no npcs linked to this beat",
+    "no npcs linked to this beat.",
+    "add an objective...",
+    "dialogue, read-aloud text...",
+    "live gm notes for this entry..."
+  ]);
+
+  /**
+   * True when HTML has DM-authored text (not blank / placeholder fluff).
+   * @param {string} html
+   * @returns {boolean}
+   */
+  static #hasMeaningfulContent(html) {
+    const text = RichText.plainText(html ?? "").trim();
+    if (!text) return false;
+    return !Playbook.#EMPTY_PLACEHOLDERS.has(text.toLowerCase());
+  }
+
+  /**
+   * @param {PlaybookBeat|null|undefined} beat
+   * @returns {boolean}
+   */
+  static #setupHasReferences(beat) {
+    if (!beat) return false;
+    if (beat.sceneUuid) return true;
+    if ((beat.keyNpcUuids ?? []).length) return true;
+    if ((beat.relatedCharacterIds ?? []).length) return true;
+    if ((beat.relatedLocationIds ?? []).length) return true;
+    if ((beat.relatedItemIds ?? []).length) return true;
+    return false;
+  }
+
+  /**
+   * Expand sections with content; collapse empty ones when preference is on.
+   * @param {HTMLElement} panel
+   * @param {ReturnType<typeof Playbook.get>} snapshot
+   */
+  static #syncCollapsibleSections(panel, snapshot) {
+    const autoCollapse = CompanionStorage.getAutoCollapseEmptySections();
+    const hasQuest = snapshot.total > 0;
+    /** @type {Array<[string, boolean]>} */
+    const sections = [
+      ["speechNotes", hasQuest && Playbook.#hasMeaningfulContent(snapshot.beat?.speechNotes)],
+      [
+        "setup",
+        hasQuest && (
+          Playbook.#hasMeaningfulContent(snapshot.beat?.setup) ||
+          Playbook.#setupHasReferences(snapshot.beat)
+        )
+      ],
+      ["npcs", hasQuest && (snapshot.beat?.keyNpcUuids ?? []).length > 0],
+      ["objective", hasQuest && Playbook.#hasMeaningfulContent(snapshot.beat?.objective)],
+      ["experience", hasQuest && Playbook.#hasMeaningfulContent(snapshot.beat?.experience)],
+      ["twist", hasQuest && Playbook.#hasMeaningfulContent(snapshot.beat?.twist)],
+      [
+        "possibleOutcomes",
+        hasQuest && Playbook.#hasMeaningfulContent(snapshot.beat?.possibleOutcomes)
+      ],
+      ["gmNotes", hasQuest && Playbook.#hasMeaningfulContent(snapshot.beat?.gmNotes)]
+    ];
+
+    for (const [key, hasContent] of sections) {
+      const field = panel.querySelector(`[data-playbook-field-block="${key}"]`);
+      if (!(field instanceof HTMLDetailsElement)) continue;
+      field.open = autoCollapse ? hasContent : hasQuest;
+    }
   }
 
   /**
@@ -786,6 +864,10 @@ export class Playbook {
 
         const addObjective = target.closest("[data-objective-add]");
         if (addObjective) {
+          event.preventDefault();
+          event.stopPropagation();
+          const objectiveCard = panel.querySelector("[data-playbook-field-block=\"objective\"]");
+          if (objectiveCard instanceof HTMLDetailsElement) objectiveCard.open = true;
           const editor = panel.querySelector("[data-playbook=\"objective\"]");
           if (!(editor instanceof HTMLElement)) return;
           const objective = document.createElement("p");
