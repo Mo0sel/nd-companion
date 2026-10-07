@@ -6,6 +6,7 @@ import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
 import { RelationshipService } from "./relationship-service.js";
 import { RichText } from "./rich-text.js";
+import { QuestCards } from "./quest-cards.js";
 import { SessionService } from "./session-service.js";
 import { StoryThreadService } from "./story-thread-service.js";
 import { CompanionStorage } from "./storage.js";
@@ -149,6 +150,9 @@ export class ContextEngine {
       recentChronicleEvents: timeline.slice(0, 8),
       activeSessions: ContextEngine.#activeSessionNodes(),
       notes,
+      questCards: target.type === "quest"
+        ? QuestCards.forEntry(CampaignDocument.get().storyEntries.find(entry => entry.id === target.id) ?? {})
+        : [],
       status,
       timeline,
       graphSummary: {

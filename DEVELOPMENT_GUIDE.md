@@ -2,6 +2,9 @@
 
 Practical workflow for building and verifying this Foundry VTT v14 module. Pair with `ARCHITECTURE.md` for how the code is structured.
 
+For development in ChatGPT Work/Codex, browser regression checks, and the current
+Play-card smoke test, see [docs/WORKFLOW.md](docs/WORKFLOW.md) and `AGENTS.md`.
+
 ---
 
 ## Prerequisites

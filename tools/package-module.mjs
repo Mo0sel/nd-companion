@@ -3,7 +3,7 @@
  * Pure Node — no external zip binary required.
  */
 
-import { createWriteStream, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createWriteStream, mkdirSync, readFileSync, rmSync, writeFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { deflateRawSync } from "node:zlib";
 import {
@@ -152,14 +152,13 @@ export function collectPackageFiles() {
   for (const dir of PACKAGE_OPTIONAL_DIRS) {
     const abs = join(ROOT, dir);
     try {
-      for (const file of listFilesRecursive(abs)) {
-        files.push({
-          name: posixPath(file),
-          data: readFileSync(file)
-        });
-      }
-    } catch {
-      // optional
+      if (!statSync(abs).isDirectory()) fail(`Expected optional directory: ${dir}/`);
+    } catch (error) {
+      if (error.code === "ENOENT") continue;
+      throw error;
+    }
+    for (const file of listFilesRecursive(abs)) {
+      files.push({ name: posixPath(file), data: readFileSync(file) });
     }
   }
 

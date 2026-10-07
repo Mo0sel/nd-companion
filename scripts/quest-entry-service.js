@@ -1,3 +1,4 @@
+import { QuestCards } from "./quest-cards.js";
 import {
   CampaignDocument,
   QUEST_CATEGORIES,
@@ -88,6 +89,7 @@ export class QuestEntryService {
       if (!entry) return;
 
       if (typeof patch.title === "string") entry.title = patch.title;
+      if (Array.isArray(patch.cards)) entry.cards = QuestCards.normalize(patch.cards);
       if (patch.status && QUEST_ENTRY_STATUSES.includes(patch.status)) entry.status = patch.status;
       if (patch.category && QUEST_CATEGORIES.includes(patch.category)) {
         entry.category = patch.category;

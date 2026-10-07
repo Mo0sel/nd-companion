@@ -1,3 +1,4 @@
+import { QuestCards } from "./quest-cards.js";
 import { CompanionStorage } from "./storage.js";
 import { CampaignDocument } from "./campaign-document.js";
 import { EntityRegistry } from "./entity-registry.js";
@@ -19,6 +20,7 @@ import { SessionService } from "./session-service.js";
  * @property {string} gmNotes
  * @property {string} experience
  * @property {string} speechNotes
+ * @property {Array<{id:string,title:string,body:string,field:string|null,image:string,column:number}>|null} cards
  * @property {string} setup
  * @property {string} twist
  * @property {string} possibleOutcomes
@@ -338,6 +340,7 @@ export class PlaybookService {
       if (typeof patch.gmNotes === "string") questPatch.notes = patch.gmNotes;
       if (typeof patch.experience === "string") questPatch.reward = patch.experience;
       if (typeof patch.speechNotes === "string") questPatch.speechNotes = patch.speechNotes;
+      if (Array.isArray(patch.cards)) questPatch.cards = QuestCards.normalize(patch.cards);
       if (typeof patch.setup === "string") questPatch.setup = patch.setup;
       if (typeof patch.twist === "string") questPatch.twist = patch.twist;
       if (typeof patch.possibleOutcomes === "string") {
@@ -364,6 +367,7 @@ export class PlaybookService {
     if (typeof patch.gmNotes === "string") beat.gmNotes = patch.gmNotes;
     if (typeof patch.experience === "string") beat.experience = patch.experience;
     if (typeof patch.speechNotes === "string") beat.speechNotes = patch.speechNotes;
+    if (Array.isArray(patch.cards)) beat.cards = QuestCards.normalize(patch.cards);
     if (typeof patch.setup === "string") beat.setup = patch.setup;
     if (typeof patch.twist === "string") beat.twist = patch.twist;
     if (typeof patch.possibleOutcomes === "string") beat.possibleOutcomes = patch.possibleOutcomes;
@@ -379,6 +383,46 @@ export class PlaybookService {
     }
     await PlaybookService.#persist();
     return true;
+  }
+
+  /** Resolve at save time so playlist changes cannot send drafts to another beat. */
+  static async updateBeatById(id, patch) {
+    const index = PlaybookService.#doc.beats.findIndex((beat) => beat.id === id);
+    if (index < 0) throw new Error("The edited beat is no longer in the playlist.");
+    return PlaybookService.updateBeat(index, patch);
+  }
+
+  static #cardWrites = Promise.resolve();
+
+  /** Serialize card edits and resolve the quest afresh for every write. */
+  static mutateCards(beatId, mutate) {
+    const write = PlaybookService.#cardWrites.catch(() => {}).then(async () => {
+      const beat = PlaybookService.getDocument().beats.find(item => item.id === beatId);
+      if (!beat) throw new Error("This quest is no longer in the playlist.");
+      const before = QuestCards.forBeat(beat);
+      const cards = before.map(card => ({ ...card }));
+      mutate(cards);
+      const patch = {};
+      for (const card of cards) {
+        if (card.field && card.body !== before.find(item => item.id === card.id)?.body) {
+          patch[card.field] = card.body;
+        }
+      }
+      patch.cards = cards.map(card => ({ ...card, body: card.field ? "" : card.body }));
+      await PlaybookService.updateBeatById(beatId, patch);
+    });
+    PlaybookService.#cardWrites = write;
+    return write;
+  }
+
+  static updateCard(beatId, cardId, patch) {
+    return PlaybookService.mutateCards(beatId, cards => {
+      const card = cards.find(item => item.id === cardId);
+      if (!card) throw new Error("This card was removed. Your unsaved draft is still open.");
+      for (const key of ["title", "body", "image"]) {
+        if (typeof patch[key] === "string") card[key] = patch[key];
+      }
+    });
   }
 
   /**
@@ -583,6 +627,7 @@ export class PlaybookService {
     resolved.gmNotes = entry.notes ?? "";
     resolved.experience = entry.reward ?? "";
     resolved.speechNotes = entry.speechNotes ?? "";
+    resolved.cards = QuestCards.normalize(entry.cards);
     resolved.setup = entry.setup ?? "";
     resolved.twist = entry.twist ?? "";
     resolved.possibleOutcomes = entry.possibleOutcomes ?? "";
@@ -621,6 +666,7 @@ export class PlaybookService {
       if (typeof patch.notes === "string") entry.notes = patch.notes;
       if (typeof patch.reward === "string") entry.reward = patch.reward;
       if (typeof patch.speechNotes === "string") entry.speechNotes = patch.speechNotes;
+      if (Array.isArray(patch.cards)) entry.cards = QuestCards.normalize(patch.cards);
       if (typeof patch.setup === "string") entry.setup = patch.setup;
       if (typeof patch.twist === "string") entry.twist = patch.twist;
       if (typeof patch.possibleOutcomes === "string") {
@@ -728,6 +774,7 @@ export class PlaybookService {
       gmNotes: typeof beat?.gmNotes === "string" ? beat.gmNotes : "",
       experience: typeof beat?.experience === "string" ? beat.experience : "",
       speechNotes: typeof beat?.speechNotes === "string" ? beat.speechNotes : "",
+      cards: QuestCards.normalize(beat?.cards),
       setup: typeof beat?.setup === "string" ? beat.setup : "",
       twist: typeof beat?.twist === "string" ? beat.twist : "",
       possibleOutcomes:
@@ -762,6 +809,7 @@ export class PlaybookService {
       gmNotes: beat.gmNotes ?? "",
       experience: beat.experience ?? "",
       speechNotes: beat.speechNotes ?? "",
+      cards: QuestCards.normalize(beat.cards),
       setup: beat.setup ?? "",
       twist: beat.twist ?? "",
       possibleOutcomes: beat.possibleOutcomes ?? "",

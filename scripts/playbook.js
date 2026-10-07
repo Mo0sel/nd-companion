@@ -9,7 +9,7 @@ import { RelationshipService } from "./relationship-service.js";
 import { RichText } from "./rich-text.js";
 import { SessionService } from "./session-service.js";
 import { StoryThreadService } from "./story-thread-service.js";
-import { CompanionStorage } from "./storage.js";
+import { QuestCardPanel } from "./quest-card-panel.js";
 
 /**
  * @typedef {import("./playbook-service.js").PlaybookBeat} PlaybookBeat
@@ -27,6 +27,8 @@ import { CompanionStorage } from "./storage.js";
 export class Playbook {
   /** @type {WeakMap<HTMLElement, AbortController>} */
   static #listeners = new WeakMap();
+
+  static #pendingPaints = new WeakMap();
 
   /**
    * Last Story Thread focused from Play ST cards (Play-only UI hint).
@@ -199,146 +201,45 @@ export class Playbook {
     const panel = root.querySelector("[data-playbook]");
     if (!panel) return;
 
-    const setTextField = (key, value, { alwaysVisible = false } = {}) => {
-      const field = panel.querySelector(`[data-playbook-field-block="${key}"]`);
-      const renderer = panel.querySelector(`[data-playbook="${key}"]`);
-      const safeHtml = key === "objective"
-        ? Playbook.#objectiveHtml(value ?? "")
-        : RichText.sanitize(value ?? "");
-      const hasContent = RichText.hasContent(safeHtml);
-      if (field) field.hidden = !alwaysVisible && !hasContent;
-      if (renderer) renderer.innerHTML = safeHtml;
-    };
+    const beatId = snapshot.total > 0 ? snapshot.beat.id : "";
+    if (panel.dataset.playBeatId !== beatId &&
+        [...panel.querySelectorAll(".nd-play-inline-editor")].some(LiveNotes.hasPending)) {
+      if (!Playbook.#pendingPaints.has(panel)) {
+        const pending = Promise.resolve().then(() => LiveNotes.flushAll(panel));
+        Playbook.#pendingPaints.set(panel, pending);
+        void pending.then(() => {
+          Playbook.#pendingPaints.delete(panel);
+          if (root.isConnected) Playbook.paint(root, Playbook.get());
+        }).catch((error) => {
+          Playbook.#pendingPaints.delete(panel);
+          console.error("N&D Companion: could not save the previous beat", error);
+          ui.notifications.error("Could not save beat notes. Your draft is still open; retry before switching beats.");
+        });
+      }
+      return;
+    }
+    panel.dataset.playBeatId = beatId;
 
-    const status = snapshot.status;
-    panel.dataset.beatStatus = status;
-
-    const empty = panel.querySelector("[data-play-empty]");
-    const content = panel.querySelector("[data-play-content]");
     const hasQuest = snapshot.total > 0;
-
-    if (empty instanceof HTMLElement) empty.hidden = hasQuest;
-    if (content instanceof HTMLElement) content.classList.toggle("is-empty", !hasQuest);
-    panel.querySelectorAll(
-      ".nd-play-section-title, .nd-play-entry-grid, [data-playbook-field-block=\"npcs\"]"
-    ).forEach((el) => {
-      if (el instanceof HTMLElement) el.hidden = !hasQuest;
-    });
-
+    const status = snapshot.status;
     const ownerThreadId = hasQuest ? (snapshot.beat?.sourceStoryThreadId || "") : "";
     if (ownerThreadId) Playbook.#missionStoryThreadId = ownerThreadId;
-
-    if (!hasQuest) {
-      for (const field of [
-        "speechNotes",
-        "setup",
-        "objective",
-        "experience",
-        "twist",
-        "possibleOutcomes",
-        "gmNotes"
-      ]) {
-        setTextField(field, "");
-      }
-      Playbook.#paintEntities(panel, null);
-    } else {
-      for (const field of [
-        "speechNotes",
-        "setup",
-        "objective",
-        "experience",
-        "twist",
-        "possibleOutcomes",
-        "gmNotes"
-      ]) {
-        setTextField(field, snapshot.beat[field], { alwaysVisible: true });
-      }
-      Playbook.#paintEntities(panel, snapshot.beat);
-    }
-
-    Playbook.#syncCollapsibleSections(panel, snapshot);
+    panel.dataset.beatStatus = status;
+    const empty = panel.querySelector("[data-play-empty]");
+    if (empty) empty.hidden = hasQuest;
+    QuestCardPanel.paint(root, snapshot, () => Playbook.paint(root, Playbook.get()));
+    Playbook.#paintEntities(panel, hasQuest ? snapshot.beat : null);
+    const references = panel.querySelector("[data-quest-references]");
+    if (references) references.hidden = !hasQuest || !(
+      snapshot.beat.sceneUuid || (snapshot.beat.keyNpcUuids ?? []).length ||
+      (snapshot.beat.relatedCharacterIds ?? []).length || (snapshot.beat.relatedLocationIds ?? []).length ||
+      (snapshot.beat.relatedItemIds ?? []).length || (snapshot.beat.relatedBeatIds ?? []).length
+    );
     Playbook.#paintStatus(panel, hasQuest ? status : "idle");
     Playbook.#paintRunControls(root);
-    Playbook.#attachInlineEditors(root, snapshot);
     Playbook.#paintSessionNpcs(root, snapshot);
     const ownerQuestId = hasQuest ? (snapshot.beat?.sourceStoryEntryId || "") : "";
     Playbook.#paintStoryThreads(root, ownerThreadId, ownerQuestId);
-  }
-
-  /** Placeholder-only copy that should not keep a Beat card expanded. */
-  static #EMPTY_PLACEHOLDERS = new Set([
-    "not set",
-    "not set.",
-    "not prepared",
-    "not prepared.",
-    "no npcs linked",
-    "no npcs linked.",
-    "no npcs linked to this beat",
-    "no npcs linked to this beat.",
-    "add an objective...",
-    "dialogue, read-aloud text...",
-    "live gm notes for this entry..."
-  ]);
-
-  /**
-   * True when HTML has DM-authored text (not blank / placeholder fluff).
-   * @param {string} html
-   * @returns {boolean}
-   */
-  static #hasMeaningfulContent(html) {
-    const text = RichText.plainText(html ?? "").trim();
-    if (!text) return false;
-    return !Playbook.#EMPTY_PLACEHOLDERS.has(text.toLowerCase());
-  }
-
-  /**
-   * @param {PlaybookBeat|null|undefined} beat
-   * @returns {boolean}
-   */
-  static #setupHasReferences(beat) {
-    if (!beat) return false;
-    if (beat.sceneUuid) return true;
-    if ((beat.keyNpcUuids ?? []).length) return true;
-    if ((beat.relatedCharacterIds ?? []).length) return true;
-    if ((beat.relatedLocationIds ?? []).length) return true;
-    if ((beat.relatedItemIds ?? []).length) return true;
-    return false;
-  }
-
-  /**
-   * Expand sections with content; collapse empty ones when preference is on.
-   * @param {HTMLElement} panel
-   * @param {ReturnType<typeof Playbook.get>} snapshot
-   */
-  static #syncCollapsibleSections(panel, snapshot) {
-    const autoCollapse = CompanionStorage.getAutoCollapseEmptySections();
-    const hasQuest = snapshot.total > 0;
-    /** @type {Array<[string, boolean]>} */
-    const sections = [
-      ["speechNotes", hasQuest && Playbook.#hasMeaningfulContent(snapshot.beat?.speechNotes)],
-      [
-        "setup",
-        hasQuest && (
-          Playbook.#hasMeaningfulContent(snapshot.beat?.setup) ||
-          Playbook.#setupHasReferences(snapshot.beat)
-        )
-      ],
-      ["npcs", hasQuest && (snapshot.beat?.keyNpcUuids ?? []).length > 0],
-      ["objective", hasQuest && Playbook.#hasMeaningfulContent(snapshot.beat?.objective)],
-      ["experience", hasQuest && Playbook.#hasMeaningfulContent(snapshot.beat?.experience)],
-      ["twist", hasQuest && Playbook.#hasMeaningfulContent(snapshot.beat?.twist)],
-      [
-        "possibleOutcomes",
-        hasQuest && Playbook.#hasMeaningfulContent(snapshot.beat?.possibleOutcomes)
-      ],
-      ["gmNotes", hasQuest && Playbook.#hasMeaningfulContent(snapshot.beat?.gmNotes)]
-    ];
-
-    for (const [key, hasContent] of sections) {
-      const field = panel.querySelector(`[data-playbook-field-block="${key}"]`);
-      if (!(field instanceof HTMLDetailsElement)) continue;
-      field.open = autoCollapse ? hasContent : hasQuest;
-    }
   }
 
   /**
@@ -638,41 +539,6 @@ export class Playbook {
   }
 
   /**
-   * Objective and Experience are deliberately editable in PLAY.
-   * LiveNotes supplies the existing debounce/autosave behavior while
-   * PlaybookService remains the only persistence path.
-   * @param {HTMLElement} root
-   * @param {ReturnType<typeof Playbook.get>} snapshot
-   */
-  static #attachInlineEditors(root, snapshot) {
-    const editableFields = ["speechNotes", "objective", "experience", "gmNotes"];
-    const editors = editableFields
-      .map((field) => root.querySelector(`[data-playbook="${field}"]`))
-      .filter((element) => element instanceof HTMLElement);
-
-    if (snapshot.total <= 0) {
-      for (const editor of editors) LiveNotes.detach(editor);
-      return;
-    }
-
-    for (const field of editableFields) {
-      const editor = root.querySelector(`[data-playbook="${field}"]`);
-      if (!(editor instanceof HTMLElement)) continue;
-      LiveNotes.attach(editor, null, {
-        html: true,
-        sanitize: RichText.sanitize,
-        load: () =>
-          field === "objective"
-            ? Playbook.#objectiveHtml(snapshot.beat[field] ?? "")
-            : snapshot.beat[field] ?? "",
-        save: async (value) => {
-          await PlaybookService.updateBeat(snapshot.index, { [field]: value });
-        }
-      });
-    }
-  }
-
-  /**
    * @param {HTMLElement} panel
    * @param {PlaybookBeat|null} beat
    */
@@ -860,50 +726,6 @@ export class Playbook {
           const id = storyThread.getAttribute("data-play-story-thread-id");
           if (id) void Playbook.selectMission(id);
           return;
-        }
-
-        const addObjective = target.closest("[data-objective-add]");
-        if (addObjective) {
-          event.preventDefault();
-          event.stopPropagation();
-          const objectiveCard = panel.querySelector("[data-playbook-field-block=\"objective\"]");
-          if (objectiveCard instanceof HTMLDetailsElement) objectiveCard.open = true;
-          const editor = panel.querySelector("[data-playbook=\"objective\"]");
-          if (!(editor instanceof HTMLElement)) return;
-          const objective = document.createElement("p");
-          objective.textContent = "New objective";
-          editor.append(objective);
-          editor.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertParagraph" }));
-          const range = document.createRange();
-          range.selectNodeContents(objective);
-          const selection = window.getSelection();
-          selection?.removeAllRanges();
-          selection?.addRange(range);
-          editor.focus();
-          return;
-        }
-
-        const objectiveEditor = panel.querySelector("[data-playbook=\"objective\"]");
-        const objectiveLine = target.closest("p, li");
-        if (
-          objectiveEditor instanceof HTMLElement &&
-          objectiveLine instanceof HTMLElement &&
-          objectiveEditor.contains(objectiveLine)
-        ) {
-          const bounds = objectiveLine.getBoundingClientRect();
-          if (event.clientX <= bounds.left + 22) {
-            event.preventDefault();
-            objectiveLine.classList.toggle("nd-objective-complete");
-            objectiveEditor.dispatchEvent(
-              new InputEvent("input", { bubbles: true, inputType: "formatSetBlockTextDirection" })
-            );
-            const status = Playbook.#currentStatus({
-              ...Playbook.get().beat,
-              objective: objectiveEditor.innerHTML
-            });
-            Playbook.#paintStatus(panel, status);
-            return;
-          }
         }
 
         const chip = target.closest("[data-playbook-entity]");

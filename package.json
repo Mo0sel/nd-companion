@@ -6,7 +6,12 @@
   "scripts": {
     "validate": "node tools/validate.mjs",
     "dev-build": "node tools/dev-build.mjs",
+    "test:play": "node tools/test-play-ui.mjs",
+    "test:package": "node --test tools/package-module.test.mjs",
     "release": "node tools/release.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
   },
   "engines": {
     "node": ">=18"

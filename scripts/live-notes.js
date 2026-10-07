@@ -8,7 +8,7 @@ const SAVED_VISIBLE_MS = 1000;
  * Supports CompanionStorage keys or custom load/save callbacks (same debounce + status UX).
  */
 export class LiveNotes {
-  /** @type {WeakMap<HTMLElement, { flush: () => Promise<void> }>} */
+  /** @type {WeakMap<HTMLElement, { flush: () => Promise<void>, pending: () => boolean }>} */
   static #states = new WeakMap();
 
   /**
@@ -71,11 +71,9 @@ export class LiveNotes {
     let dirty = false;
     let saving = null;
     let revision = 0;
-    const statusEl = element
-      .closest("[data-live-notes-root], .nd-card")
-      ?.querySelector("[data-live-notes-status]");
-
     const setStatus = (text) => {
+      const statusEl = element.closest("[data-live-notes-root], .nd-card")
+        ?.querySelector("[data-live-notes-status]");
       if (!statusEl) return;
       statusEl.textContent = text;
       statusEl.hidden = !text;
@@ -91,14 +89,14 @@ export class LiveNotes {
       const value = useHtml ? sanitize(raw) : raw;
       const savingRevision = revision;
       setStatus("Saving...");
-      saving = Promise.resolve(write(value))
+      saving = Promise.resolve().then(() => write(value))
         .then(() => {
           dirty = revision !== savingRevision;
           clearTimeout(retryId);
           if (dirty) {
             retryId = setTimeout(() => {
               retryId = null;
-              void save();
+              void save().catch(() => {});
             }, 0);
           } else {
             setStatus("Saved");
@@ -113,7 +111,7 @@ export class LiveNotes {
           clearTimeout(retryId);
           retryId = setTimeout(() => {
             retryId = null;
-            void save();
+            void save().catch(() => {});
           }, 1500);
           throw err;
         })
@@ -147,13 +145,14 @@ export class LiveNotes {
         clearTimeout(debounceId);
         debounceId = null;
       }
-      if (!dirty) {
+      // An edit can arrive during a slow write. Flush means all revisions,
+      // especially before removing a card or binding the editor to a new quest.
+      while (dirty || saving) {
         if (saving) await saving;
-        return;
+        else await save();
       }
-      await save();
     };
-    LiveNotes.#states.set(element, { flush });
+    LiveNotes.#states.set(element, { flush, pending: () => dirty || saving !== null });
 
     element._ndLiveNotesCleanup = () => {
       clearTimeout(debounceId);
@@ -170,6 +169,16 @@ export class LiveNotes {
   static async flush(element) {
     const state = LiveNotes.#states.get(element);
     if (state) await state.flush();
+  }
+
+  /** True while edits are waiting for, or in the middle of, persistence. */
+  static hasPending(element) {
+    return LiveNotes.#states.get(element)?.pending() ?? false;
+  }
+
+  /** Avoid replacing draft text or a focused editor's selection during paint. */
+  static isProtected(element) {
+    return LiveNotes.hasPending(element) || element.contains(document.activeElement);
   }
 
   /** @param {HTMLElement} root */

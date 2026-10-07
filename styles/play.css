@@ -536,19 +536,139 @@
   color: var(--nd-accent-response);
 }
 
-/* ── Entry card grid (independent columns / masonry-style flow) ─────────── */
+/* Fixed stacks keep cards in place when their neighbours expand. */
+
+.nd-quest-cards__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.nd-quest-cards__header button,
+.nd-quest-card button {
+  border: 1px solid var(--nd-border);
+  border-radius: 5px;
+  background: var(--nd-surface);
+  color: var(--nd-text-2);
+  font-family: var(--nd-font-sans);
+  cursor: pointer;
+}
+
+.nd-quest-cards__header button:hover,
+.nd-quest-card button:hover {
+  border-color: var(--nd-blue);
+  color: var(--nd-blue);
+}
+
+.nd-quest-cards__header button:focus-visible,
+.nd-quest-card button:focus-visible,
+.nd-quest-cards__title:focus-visible,
+.nd-quest-card__title:focus-visible {
+  outline: 2px solid var(--nd-blue);
+  outline-offset: 3px;
+}
+
+.nd-quest-cards__title {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--nd-font-mono);
+  font-size: 10.5px;
+  font-weight: var(--nd-weight-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--nd-quest-title);
+  overflow-wrap: anywhere;
+}
+
+.nd-quest-cards__add {
+  flex: 0 0 34px;
+  height: 34px;
+  font-size: 22px;
+  color: var(--nd-blue);
+}
+
+.nd-quest-card__title {
+  flex: 1;
+  min-width: 0;
+  color: var(--nd-quest-card-title);
+  font-size: 9.5px;
+  font-weight: var(--nd-weight-bold);
+  font-family: var(--nd-font-mono);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+  cursor: text;
+}
+
+.nd-quest-cards__title:empty::before,
+.nd-quest-card__title:empty::before {
+  content: attr(data-placeholder);
+  color: inherit;
+  pointer-events: none;
+}
+
+.nd-quest-card summary button {
+  width: auto;
+  min-width: 24px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.nd-quest-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.nd-quest-card__actions button {
+  width: auto;
+  font-size: 11px;
+  padding: 4px 7px;
+}
+
+.nd-quest-card__image {
+  width: 100%;
+  max-height: 260px;
+  object-fit: contain;
+  margin-top: 10px;
+  border-radius: 6px;
+}
+
+.nd-quest-card__status,
+.nd-quest-cards__hint,
+.nd-quest-references {
+  color: var(--nd-text-3);
+  font-size: 12px;
+}
+
+.nd-quest-references { margin-bottom: 16px; }
+[data-quest-cards] [hidden] { display: none !important; }
+
+.nd-quest-card__toggle::after { content: "Expand"; font-size: 9.5px; }
+.nd-quest-card[open] .nd-quest-card__toggle::after { content: "Collapse"; }
 
 .nd-play-entry-grid {
-  column-count: 2;
-  column-gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 10px;
   margin-bottom: 18px;
+}
+
+.nd-play-entry-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
 }
 
 .nd-play-card {
   display: inline-block;
   width: 100%;
   min-width: 0;
-  margin: 0 0 10px;
+  margin: 0;
   padding: 13px 15px;
   background: var(--nd-card-tint);
   border: 1px solid var(--nd-border);
@@ -560,7 +680,7 @@
 }
 
 .nd-play-card--wide {
-  column-span: all;
+  grid-column: 1 / -1;
 }
 
 .nd-play-card__labelrow {
@@ -720,6 +840,12 @@
 
 .nd-play-card > summary::-webkit-details-marker {
   display: none;
+}
+
+.nd-play-card > summary:focus-visible {
+  outline: 2px solid var(--nd-blue);
+  outline-offset: 4px;
+  border-radius: 3px;
 }
 
 .nd-play-card[open] > summary {
@@ -931,7 +1057,7 @@
 
 @container nd-companion (max-width: 700px) {
   .nd-play-entry-grid {
-    column-count: 1;
+    grid-template-columns: 1fr;
   }
 
   .nd-play-session-strip {

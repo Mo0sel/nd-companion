@@ -44,6 +44,8 @@
   --nd-accent-response: rgba(180, 130, 75, 1);
   --nd-accent-response-soft: rgba(180, 130, 75, 0.7);
   --nd-accent-session: rgba(110, 164, 68, 0.72);
+  --nd-quest-title: #fb923c;
+  --nd-quest-card-title: #facc15;
   /* PLAY card tinted surface */
   --nd-card-tint: rgba(91, 142, 255, 0.045);
 

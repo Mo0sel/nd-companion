@@ -61,6 +61,9 @@ export class ContextSerializer {
         ["Current Entity", ContextSerializer.#entityBlock(packet)],
         ["Status", ContextSerializer.#plain(packet?.status)],
         ["Notes", ContextSerializer.#plain(packet?.notes)],
+        ["Quest Cards", (packet?.questCards ?? []).map(card =>
+          `${card.title || "Untitled card"}: ${ContextSerializer.#plain(card.body)}`
+        ).join("\n\n")],
         ["Timeline", ContextSerializer.#timeline(packet?.timeline ?? packet?.recentChronicleEvents)],
         ["Connected Knowledge", ContextSerializer.#nodeList(packet?.connectedKnowledge)],
         [

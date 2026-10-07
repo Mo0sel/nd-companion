@@ -1,3 +1,4 @@
+import { QuestCards } from "./quest-cards.js";
 import { CompanionStorage } from "./storage.js";
 
 /** @typedef {"planned"|"active"|"completed"} SessionStatus */
@@ -57,6 +58,7 @@ import { CompanionStorage } from "./storage.js";
  * @property {QuestEntryStatus} status
  * @property {QuestCategory} category
  * @property {string} speechNotes
+ * @property {Array<{id:string,title:string,body:string,field:string|null,image:string,column:number}>|null} cards
  * @property {string} objective
  * @property {string} setup
  * @property {string} twist
@@ -575,6 +577,7 @@ export class CampaignDocument {
       status,
       category,
       speechNotes: typeof entry?.speechNotes === "string" ? entry.speechNotes : "",
+      cards: QuestCards.normalize(entry?.cards),
       objective: typeof entry?.objective === "string" ? entry.objective : "",
       setup: typeof entry?.setup === "string" ? entry.setup : "",
       twist: typeof entry?.twist === "string" ? entry.twist : "",

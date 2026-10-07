@@ -8,6 +8,7 @@ import { CampaignMemoryService } from "./campaign-memory-service.js";
 import { ContextEngine } from "./context-engine.js";
 import { EntityRegistry } from "./entity-registry.js";
 import { QuestEntryService } from "./quest-entry-service.js";
+import { QuestCards } from "./quest-cards.js";
 import { SessionService } from "./session-service.js";
 import { StoryThreadService } from "./story-thread-service.js";
 import { CompanionStorage } from "./storage.js";
@@ -116,7 +117,8 @@ export class SessionCollector {
         storyThreadId: entry.storyThreadId,
         title: entry.title,
         status: entry.status,
-        objective: entry.objective
+        objective: entry.objective,
+        cards: QuestCards.forEntry(entry).map(card => ({ title: card.title, body: card.body }))
       })),
       recentActivity: CampaignActivityService.list({ limit: 40 }),
       chronicle: CampaignMemoryService.list()

@@ -179,125 +179,14 @@
           <div class="nd-play-story-threads__list" data-play-story-thread-list></div>
         </details>
 
-        {{!-- Scene Flow group --}}
-        <h3 class="nd-play-section-title nd-play-section-title--scene-flow">Scene Flow</h3>
-        <div class="nd-play-entry-grid nd-play-entry-grid--scene-flow">
-
-          <details class="nd-play-card" data-playbook-field-block="speechNotes" open>
-            <summary>
-              <span class="nd-play-card__labelrow">
-                <span class="nd-play-card__label">Speech Notes</span>
-              </span>
-              <span class="nd-play-card__collapse-label">Collapse</span>
-            </summary>
-            <div
-              class="nd-play-card__content nd-richtext nd-play-inline-editor"
-              data-playbook="speechNotes"
-              data-placeholder="Dialogue, read-aloud text..."
-              role="textbox"
-              aria-label="Speech Notes"
-            ></div>
-          </details>
-
-          <details class="nd-play-card nd-play-card--setup" data-playbook-field-block="setup" open>
-            <summary>
-              <span class="nd-play-card__labelrow">
-                <span class="nd-play-card__label">Setup</span>
-              </span>
-              <span class="nd-play-card__collapse-label">Collapse</span>
-            </summary>
-            <div class="nd-play-card__content nd-richtext" data-playbook="setup"></div>
-            <div class="nd-play-card__references" data-playbook-field-block="entities">
-              <div class="nd-playbook-card__chips" data-playbook="entities"></div>
-            </div>
-          </details>
-
-          <details class="nd-play-card" data-playbook-field-block="npcs" open>
-            <summary>
-              <span class="nd-play-card__labelrow">
-                <span class="nd-play-card__label">NPCs</span>
-              </span>
-              <span class="nd-play-card__collapse-label">Collapse</span>
-            </summary>
-            <div class="nd-play-npcs" data-play-npcs></div>
-            <p class="nd-play-card__empty" data-play-npcs-empty>No NPCs linked to this Beat.</p>
-          </details>
-
-          <details class="nd-play-card" data-playbook-field-block="objective" open>
-            <summary>
-              <span class="nd-play-card__labelrow">
-                <span class="nd-play-card__label">Objectives</span>
-                <button type="button" class="nd-play-card__action" data-objective-add aria-label="Add objective">+ Add</button>
-              </span>
-              <span class="nd-play-card__collapse-label">Collapse</span>
-            </summary>
-            <div
-              class="nd-play-card__content nd-richtext nd-play-inline-editor nd-play-objectives"
-              data-playbook="objective"
-              data-placeholder="Add an objective..."
-              role="textbox"
-              aria-label="Objectives"
-            ></div>
-          </details>
-
-          <details class="nd-play-card" data-playbook-field-block="experience" open>
-            <summary>
-              <span class="nd-play-card__labelrow">
-                <span class="nd-play-card__label">Experience &amp; Reward</span>
-              </span>
-              <span class="nd-play-card__collapse-label">Collapse</span>
-            </summary>
-            <div
-              class="nd-play-card__content nd-richtext nd-play-inline-editor"
-              data-playbook="experience"
-              data-placeholder="Not set."
-              role="textbox"
-              aria-label="Experience"
-            ></div>
-          </details>
-        </div>
-
-        {{!-- Response & Notes group --}}
-        <h3 class="nd-play-section-title nd-play-section-title--response">Response &amp; Notes</h3>
-        <div class="nd-play-entry-grid nd-play-entry-grid--response">
-
-          <details class="nd-play-card" data-playbook-field-block="twist" open>
-            <summary>
-              <span class="nd-play-card__labelrow">
-                <span class="nd-play-card__label">Twist</span>
-              </span>
-              <span class="nd-play-card__collapse-label">Collapse</span>
-            </summary>
-            <div class="nd-play-card__content nd-richtext" data-playbook="twist"></div>
-          </details>
-
-          <details class="nd-play-card" data-playbook-field-block="possibleOutcomes" open>
-            <summary>
-              <span class="nd-play-card__labelrow">
-                <span class="nd-play-card__label">Possible Outcomes</span>
-              </span>
-              <span class="nd-play-card__collapse-label">Collapse</span>
-            </summary>
-            <div class="nd-play-card__content nd-richtext" data-playbook="possibleOutcomes"></div>
-          </details>
-
-          <details class="nd-play-card nd-play-card--wide" data-playbook-field-block="gmNotes" open>
-            <summary>
-              <span class="nd-play-card__labelrow">
-                <span class="nd-play-card__label">GM Notes</span>
-                <span class="nd-play-card__live-dot" aria-hidden="true"></span>
-              </span>
-              <span class="nd-play-card__collapse-label">Collapse</span>
-            </summary>
-            <div
-              class="nd-play-card__content nd-richtext nd-play-inline-editor"
-              data-playbook="gmNotes"
-              data-placeholder="Live GM notes for this entry..."
-              role="textbox"
-              aria-label="Entry Notes"
-            ></div>
-          </details>
-        </div>
+        {{!-- Editable quest cards --}}
+        <div data-quest-cards></div>
+        <details class="nd-quest-references" data-quest-references>
+          <summary>Linked references</summary>
+          <div data-playbook-field-block="entities"><div class="nd-playbook-card__chips" data-playbook="entities"></div></div>
+          <div class="nd-play-npcs" data-play-npcs></div>
+          <p data-play-npcs-empty hidden>No NPCs linked to this quest.</p>
+        </details>
 
         {{!-- Session strip --}}
         <div class="nd-play-session-strip">
