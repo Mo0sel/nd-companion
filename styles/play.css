@@ -1110,3 +1110,94 @@
 .nd-play-end-session__button:hover {
   background: rgba(91, 142, 255, 0.85);
 }
+/* Cool charcoal refresh: compact headings and calm, discoverable controls. */
+.nd-quest-cards__header {
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 0 14px;
+  border-bottom: 1px solid var(--nd-border);
+}
+.nd-quest-cards__title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  flex-basis: 180px;
+}
+.nd-quest-card__title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  line-height: 1.5;
+}
+.nd-quest-cards__header button {
+  flex: 0 0 auto;
+  width: auto;
+  min-height: 30px;
+  height: auto;
+  margin: 0;
+  padding: 5px 10px;
+  font-size: 11px;
+}
+.nd-quest-cards__header .nd-quest-cards__add {
+  color: var(--nd-quest-title);
+  border-color: var(--nd-entity-quest-border);
+  background: var(--nd-entity-quest-bg);
+}
+.nd-play-entry-grid, .nd-play-entry-column { gap: 14px; }
+.nd-quest-card {
+  padding: 14px 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14);
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+.nd-quest-card:hover, .nd-quest-card:focus-within {
+  border-color: color-mix(in srgb, var(--nd-quest-card-title) 32%, var(--nd-border));
+}
+.nd-quest-card[open] > summary {
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--nd-border);
+}
+.nd-quest-card:not([open]) { padding-top: 12px; padding-bottom: 12px; }
+.nd-quest-card summary .nd-quest-card__toggle {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  min-height: 26px;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--nd-text-2);
+}
+.nd-quest-card .nd-quest-card__toggle::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 140ms ease;
+}
+.nd-quest-card[open] > summary .nd-quest-card__toggle::after { content: ""; transform: rotate(45deg); }
+.nd-quest-card summary [data-card-remove] {
+  border-color: transparent;
+  background: transparent;
+  font-size: 18px;
+  min-height: 26px;
+}
+.nd-quest-card__actions { padding-top: 10px; border-top: 1px solid var(--nd-border); }
+.nd-quest-card__actions button { background: transparent; border-color: transparent; }
+.nd-quest-card__actions [data-card-share] {
+  border-color: color-mix(in srgb, var(--nd-quest-card-title) 35%, transparent);
+  color: var(--nd-quest-card-title);
+}
+.nd-quest-card__image { background: var(--nd-bg); border: 1px solid var(--nd-border); }
+.nd-play-story-thread__quest-title { color: var(--nd-quest-title); }
+@media (hover: hover) and (pointer: fine) {
+  .nd-quest-card summary [data-card-remove] { opacity: 0.35; }
+  .nd-quest-card:hover summary [data-card-remove],
+  .nd-quest-card:focus-within summary [data-card-remove] { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nd-quest-card, .nd-quest-card .nd-quest-card__toggle::after { transition: none; }
+}

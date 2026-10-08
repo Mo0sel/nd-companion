@@ -12,20 +12,20 @@
 #nd-companion-app,
 .nd-companion__shell {
   /* ── Color: surfaces ───────────────────────────────────────────────────── */
-  --nd-bg: #0d0d0f;
-  --nd-surface: #131316;
-  --nd-surface-2: #1a1a20;
-  --nd-surface-3: #18181e;
+  --nd-bg: #141619;
+  --nd-surface: #1b1e23;
+  --nd-surface-2: #24282e;
+  --nd-surface-3: #20242a;
   --nd-surface-inset: rgba(255, 255, 255, 0.03);
 
   /* ── Color: text ───────────────────────────────────────────────────────── */
-  --nd-text-1: #e4e4eb;
-  --nd-text-2: #a0a0b0;
-  --nd-text-3: #6b6b7e;
+  --nd-text-1: #e1e6ee;
+  --nd-text-2: #b1bac8;
+  --nd-text-3: #939dac;
 
   /* ── Color: accent ─────────────────────────────────────────────────────── */
   --nd-blue: #5b8eff;
-  --nd-purple: #a78bfa;
+  --nd-purple: #b99afa;
   --nd-blue-dim: rgba(91, 142, 255, 0.08);
   --nd-blue-tint: rgba(91, 142, 255, 0.05);
   --nd-blue-border: rgba(91, 142, 255, 0.15);
@@ -39,27 +39,27 @@
   /* Field/card labels default — muted gray (PLAY sections override locally) */
   --nd-tertiary-accent: var(--nd-text-3);
   /* PLAY section group accents (design/current PlayWorkspace) */
-  --nd-accent-scene-flow: rgba(175, 100, 100, 1);
-  --nd-accent-scene-flow-soft: rgba(175, 100, 100, 0.7);
-  --nd-accent-response: rgba(180, 130, 75, 1);
-  --nd-accent-response-soft: rgba(180, 130, 75, 0.7);
-  --nd-accent-session: rgba(110, 164, 68, 0.72);
-  --nd-quest-title: #fb923c;
-  --nd-quest-card-title: #facc15;
+  --nd-accent-scene-flow: var(--nd-quest-title);
+  --nd-accent-scene-flow-soft: var(--nd-quest-card-title);
+  --nd-accent-response: var(--nd-quest-title);
+  --nd-accent-response-soft: var(--nd-quest-card-title);
+  --nd-accent-session: #68c69f;
+  --nd-quest-title: #b99afa;
+  --nd-quest-card-title: #7dd4e8;
   /* PLAY card tinted surface */
-  --nd-card-tint: rgba(91, 142, 255, 0.045);
+  --nd-card-tint: #24282e;
 
   /* ── Color: semantic ───────────────────────────────────────────────────── */
   --nd-danger: #ef4444;
   --nd-danger-bg: rgba(239, 68, 68, 0.1);
   --nd-danger-border: rgba(239, 68, 68, 0.25);
-  --nd-success: #22c55e;
+  --nd-success: #68c69f;
   --nd-success-bg: rgba(34, 197, 94, 0.1);
   --nd-warning: #f59e0b;
   --nd-warning-bg: rgba(245, 158, 11, 0.1);
 
   /* ── Color: borders ────────────────────────────────────────────────────── */
-  --nd-border: #1e1e26;
+  --nd-border: #353b44;
   --nd-border-2: rgba(255, 255, 255, 0.06);
 
   /* ── Status only (design/current): planned gray, active blue, done green ── */
@@ -84,9 +84,9 @@
   --nd-entity-story-thread-bg: rgba(125, 211, 252, 0.12);
   --nd-entity-story-thread-border: rgba(125, 211, 252, 0.3);
 
-  --nd-entity-quest-color: #fbbf24;
-  --nd-entity-quest-bg: rgba(251, 191, 36, 0.12);
-  --nd-entity-quest-border: rgba(251, 191, 36, 0.3);
+  --nd-entity-quest-color: var(--nd-quest-title);
+  --nd-entity-quest-bg: rgba(185, 154, 250, 0.12);
+  --nd-entity-quest-border: rgba(185, 154, 250, 0.3);
 
   --nd-entity-actor-color: #a78bfa;
   --nd-entity-actor-bg: rgba(167, 139, 250, 0.12);

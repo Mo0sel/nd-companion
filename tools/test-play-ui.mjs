@@ -217,6 +217,13 @@ try {
   assert.equal(after.x, before.x); assert.equal(after.y, before.y);
   await card(source).locator('[data-card-toggle]').click();
   const shots = process.env.ND_TEST_SCREENSHOTS;
+  await page.locator('[data-cards-collapse]').click();
+  assert.equal(await page.locator('.nd-quest-card[open]').count(), 0);
+  await page.evaluate(() => paint());
+  assert.equal(await page.locator('.nd-quest-card[open]').count(), 0, "collapse all survives repaint");
+  await page.locator('[data-cards-expand]').click();
+  assert.equal(await page.locator('.nd-quest-card[open]').count(), await page.locator('.nd-quest-card').count());
+  assert.equal(await page.locator('[data-card-toggle]').first().evaluate(el => getComputedStyle(el, '::after').content), '\"\"', "chevron must not retain the old Collapse label");
   if (shots) { mkdirSync(shots, { recursive: true }); await page.screenshot({ path: join(shots, "quest-cards-wide.png"), fullPage: true }); }
   await page.setViewportSize({ width: 520, height: 1050 });
   assert.equal((await card(source).boundingBox()).x, (await card(rightId).boundingBox()).x);

@@ -34,7 +34,7 @@ export class QuestCardPanel {
       LiveNotes.attach(title, null, { load: () => beat.title, save: value => PlaybookService.updateBeatById(beat.id, { title: value }) });
       this.#plainTitle(title);
       state.title = title;
-      const add = this.#button("+", "Add card", () => this.#run(host, state, async () => {
+      const add = this.#button("+ Add card", "Add card", () => this.#run(host, state, async () => {
         const id = foundry.utils.randomID();
         await PlaybookService.mutateCards(beat.id, cards => {
           const count = cards.filter(card => card.column === 0).length;
@@ -54,7 +54,15 @@ export class QuestCardPanel {
         refresh();
       }));
       state.undo.hidden = true;
-      header.append(title, this.#status(), state.undo, add);
+      const expand = this.#button("Expand all", "Expand all cards", () => {
+        for (const id of state.nodes.keys()) PlayCardState.setOpen(host, id, true);
+      });
+      const collapse = this.#button("Collapse all", "Collapse all cards", () => {
+        for (const id of state.nodes.keys()) PlayCardState.setOpen(host, id, false);
+      });
+      expand.dataset.cardsExpand = "";
+      collapse.dataset.cardsCollapse = "";
+      header.append(title, this.#status(), state.undo, expand, collapse, add);
       const grid = document.createElement("div");
       grid.className = "nd-play-entry-grid";
       state.columns = [0, 1].map(() => {
@@ -132,7 +140,7 @@ export class QuestCardPanel {
       state.removed = removed; state.refresh();
     }));
     remove.dataset.cardRemove = "";
-    summary.append(title, toggle, remove);
+    summary.append(toggle, title, remove);
     const body = document.createElement("div");
     body.className = "nd-play-card__content nd-richtext nd-play-inline-editor";
     body.dataset.cardBody = ""; body.dataset.playBeatId = state.beatId;
