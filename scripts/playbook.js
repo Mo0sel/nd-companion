@@ -237,6 +237,7 @@ export class Playbook {
     );
     Playbook.#paintStatus(panel, hasQuest ? status : "idle");
     Playbook.#paintRunControls(root);
+    Playbook.#paintQuestList(root, snapshot);
     Playbook.#paintSessionNpcs(root, snapshot);
     const ownerQuestId = hasQuest ? (snapshot.beat?.sourceStoryEntryId || "") : "";
     Playbook.#paintStoryThreads(root, ownerThreadId, ownerQuestId);
@@ -398,6 +399,28 @@ export class Playbook {
     const text = String(name ?? "").trim();
     if (!text) return "Actor";
     return text.split(/\s+/)[0];
+  }
+
+  static #paintQuestList(root, snapshot) {
+    const list = root.querySelector('[data-play-quest-list]');
+    if (!list) return;
+    const entries = PlaybookService.listBeats();
+    const signature = JSON.stringify([entries, snapshot.beat?.id]);
+    if (list.dataset.signature === signature) return;
+    list.dataset.signature = signature;
+    const focusedId = list.contains(document.activeElement) ? document.activeElement.dataset.playBeatId : null;
+    list.replaceChildren();
+    for (const entry of entries) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.playBeatId = PlaybookService.getBeat(entry.index)?.id ?? '';
+      button.className = 'nd-play-quest-row';
+      button.textContent = entry.title || 'Untitled quest';
+      button.classList.toggle('is-current', entry.index === snapshot.index);
+      button.setAttribute('aria-current', entry.index === snapshot.index ? 'true' : 'false');
+      list.append(button);
+      if (button.dataset.playBeatId === focusedId) button.focus();
+    }
   }
 
   static #paintRunControls(root) {
@@ -706,6 +729,30 @@ export class Playbook {
       (event) => {
         const target = event.target;
         if (!(target instanceof Element)) return;
+
+        const beatButton = target.closest('button[data-play-beat-id]');
+        if (beatButton || target.closest('[data-play-add-quest]')) {
+          if (panel.dataset.questNavigationBusy === 'true') return;
+          panel.dataset.questNavigationBusy = 'true';
+          void (async () => {
+            try {
+              await LiveNotes.flushAll(panel);
+              const index = beatButton
+                ? PlaybookService.getDocument().beats.findIndex(beat => beat.id === beatButton.dataset.playBeatId)
+                : await PlaybookService.addBeat();
+              if (index < 0) return;
+              await PlaybookService.setCurrentIndex(index);
+              Playbook.adoptMissionFromCurrentBeat();
+              Playbook.paint(root, Playbook.get());
+              if (!beatButton) panel.querySelector('[data-quest-title]')?.focus();
+            } catch (error) {
+              ui.notifications.error(`Could not open quest: ${error.message}`);
+            } finally {
+              delete panel.dataset.questNavigationBusy;
+            }
+          })();
+          return;
+        }
 
         if (target.closest("[data-end-session]")) {
           void Promise.resolve(options.onEndSession?.());

@@ -100,3 +100,22 @@ explicitly for testing.
 Publishing requires an explicit release request. RELEASE.md remains the release
 procedure. The stable-manifest update and GitHub validation improvements identified
 in the review are separate follow-up work and are not included in this sprint.
+
+## Desktop visual layout
+
+Play uses a dedicated quest rail beside the app navigation. Quest rows select
+existing session beats by stable ID; the plus button adds a blank quest to the
+session. Navigation flushes pending edits and stays on the draft if saving fails.
+Session context and Active Story Threads remain available in expandable sections
+of that rail. The main pane begins with the selected quest and its cards.
+
+The final scoped nd-desktop.css layer supplies the charcoal shell, gray cards,
+compact monospaced headings, system body typography, lavender selection, and cyan
+card titles. Inline SVG icons do not require a host icon font. Card headers offer
+image selection, edit, and removal; More contains splitting and image unlinking.
+Image preview and explicit sharing remain available below attached images.
+
+The Play browser check renders the real header, navigation, and complete Play
+markup, rather than just the isolated card region. It exercises sidebar draft
+handling and responsive layout. Foundry/Forge theme interaction still needs a
+live-world check after installing the release.

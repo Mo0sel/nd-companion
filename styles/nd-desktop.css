@@ -1,0 +1,105 @@
+/* Reference-led desktop shell. Scoped explicitly against host theme rules. */
+#nd-companion-app .nd-companion__shell {
+  --nd-bg: #141619 !important;
+  --nd-surface: #191c20 !important;
+  --nd-surface-2: #22262c !important;
+  --nd-surface-3: #20242a !important;
+  --nd-card-tint: #20252a !important;
+  --nd-border: #343a42 !important;
+  --nd-font-sans: "Segoe UI", Arial, sans-serif !important;
+  --nd-font-mono: "Cascadia Code", Consolas, monospace !important;
+  font-family: var(--nd-font-sans) !important;
+  font-weight: 400;
+  color-scheme: dark;
+}
+#nd-companion-app .nd-companion__shell :is(button, input, select, textarea) {
+  font-family: var(--nd-font-sans);
+  font-weight: 400;
+  text-shadow: none;
+  box-shadow: none;
+}
+#nd-companion-app .nd-companion__shell button:focus-visible {
+  outline: 2px solid var(--nd-quest-title);
+  outline-offset: 2px;
+}
+#nd-companion-app .nd-global-header { min-height: 60px; background: var(--nd-bg); }
+#nd-companion-app .nd-global-header__logo { background: none; box-shadow: none; font-size: 27px; color: var(--nd-quest-title); }
+#nd-companion-app .nd-global-header__title { font: 600 15px var(--nd-font-mono); text-transform: uppercase; letter-spacing: 0.1em; }
+#nd-companion-app .nd-global-header__subtitle { display: none; }
+#nd-companion-app .nd-global-search { max-width: 260px; }
+#nd-companion-app .nd-global-search input { background: transparent; border-color: transparent; font-size: 12px; }
+#nd-companion-app .nd-session-badge { background: transparent; border: 0; font-size: 12px; font-weight: 400; color: var(--nd-text-2); }
+#nd-companion-app .nd-session-badge__dot { box-shadow: none; }
+#nd-companion-app .nd-app-nav { width: 170px; padding: 14px 8px; gap: 6px; background: var(--nd-bg); }
+#nd-companion-app .nd-app-nav__button { padding: 13px 12px; min-height: 44px; color: var(--nd-text-2); font-size: 14px; font-weight: 400; background: transparent; border: 0; justify-content: flex-start; }
+#nd-companion-app .nd-app-nav__button.is-active { color: var(--nd-text-1); background: var(--nd-entity-quest-bg); box-shadow: inset 3px 0 var(--nd-quest-title); }
+#nd-companion-app .nd-app-nav__icon { width: 20px; font-size: 17px; opacity: 0.9; }
+#nd-companion-app .nd-app-nav__button:last-child { border-top: 1px solid var(--nd-border); border-radius: 0; padding-top: 20px; }
+#nd-companion-app .nd-workspace-region { min-width: 0; }
+#nd-companion-app .nd-play { flex-direction: row; background: var(--nd-bg); }
+#nd-companion-app .nd-play[hidden] { display: none; }
+#nd-companion-app .nd-play-rail { flex: 0 0 225px; min-width: 0; padding: 18px 10px; overflow-y: auto; border-right: 1px solid var(--nd-border); background: var(--nd-bg); }
+#nd-companion-app .nd-play-rail__heading { display: flex; align-items: center; justify-content: space-between; margin: 0 6px 14px; font: 600 13px var(--nd-font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
+#nd-companion-app .nd-play-rail__heading button { width: 28px; height: 28px; padding: 0; background: transparent; border: 1px solid var(--nd-border); border-radius: 5px; color: var(--nd-text-2); font-size: 20px; }
+#nd-companion-app .nd-play-quest-list { display: flex; flex-direction: column; gap: 3px; }
+#nd-companion-app .nd-play-quest-row { position: relative; margin: 0; padding: 14px 16px; width: 100%; height: auto; min-height: 46px; text-align: left; white-space: normal; overflow-wrap: anywhere; font-size: 13px; line-height: 1.45; color: var(--nd-quest-title); background: transparent; border: 1px solid transparent; border-radius: 5px; }
+#nd-companion-app .nd-play-quest-row:hover { background: var(--nd-surface); }
+#nd-companion-app .nd-play-quest-row.is-current { background: var(--nd-entity-quest-bg); box-shadow: inset 3px 0 var(--nd-quest-title); }
+#nd-companion-app .nd-play-run-menu { margin: 22px 6px 10px; color: var(--nd-text-3); font-size: 11px; }
+#nd-companion-app .nd-play-run-menu > summary { cursor: pointer; padding: 8px 0; }
+#nd-companion-app .nd-play-run-controls { padding: 10px 0; display: flex; flex-direction: column; align-items: stretch; gap: 10px; background: transparent; border: 0; }
+#nd-companion-app .nd-play-run-controls label { width: 100%; min-width: 0; }
+#nd-companion-app .nd-play-run-controls select { width: 100%; max-width: 100%; min-width: 0; background: var(--nd-surface); font-size: 12px; }
+#nd-companion-app .nd-play-run-controls__arrow { display: none; }
+#nd-companion-app .nd-play-story-threads { margin: 12px 0; padding: 8px; background: transparent; border: 0; }
+#nd-companion-app .nd-play-story-threads__list { display: flex; flex-direction: column; gap: 8px; }
+#nd-companion-app .nd-play-story-thread { width: 100%; min-width: 0; min-height: 0; height: auto; padding: 10px; background: var(--nd-surface); }
+#nd-companion-app .nd-play-story-thread__head { flex-wrap: wrap; }
+#nd-companion-app .nd-play-story-thread__quest { white-space: normal; }
+#nd-companion-app .nd-play-story-thread__quest-title { white-space: normal; }
+#nd-companion-app .nd-play-content { min-width: 0; padding: 24px; container: quest-pane / inline-size; }
+#nd-companion-app .nd-quest-cards__header { padding: 0 0 18px; border: 0; gap: 8px; margin-bottom: 8px; }
+#nd-companion-app .nd-quest-cards__title { font: 500 18px/1.4 var(--nd-font-mono); letter-spacing: 0.07em; }
+#nd-companion-app .nd-quest-cards__header button { background: transparent; color: var(--nd-text-2); border: 1px solid var(--nd-border); font-size: 11px; padding: 6px 10px; }
+#nd-companion-app .nd-quest-card { background: var(--nd-card-tint); border: 1px solid var(--nd-border); padding: 0; border-radius: 7px; box-shadow: 0 2px 8px #0002; overflow: hidden; }
+#nd-companion-app .nd-quest-card > summary { padding: 12px 14px; margin: 0; gap: 8px; }
+#nd-companion-app .nd-quest-card[open] > summary { border-bottom: 1px solid var(--nd-border); }
+#nd-companion-app .nd-quest-card__title { font: 500 11px/1.5 var(--nd-font-mono); letter-spacing: 0.07em; }
+#nd-companion-app .nd-quest-card .nd-play-card__content { padding: 14px 16px; max-height: none; font: 400 14px/1.65 var(--nd-font-sans); }
+#nd-companion-app .nd-quest-card .nd-play-card__content :is(p,ul,ol,li) { font-family: inherit; font-weight: inherit; }
+#nd-companion-app .nd-quest-card .nd-play-card__content p:last-child { margin-bottom: 0; }
+#nd-companion-app .nd-quest-card__image { display: block; width: calc(100% - 28px); margin: 0 14px 12px; max-height: 320px; border-radius: 5px; }
+#nd-companion-app .nd-quest-card__actions { margin: 0; padding: 8px 12px; gap: 5px; border-top: 0; }
+#nd-companion-app .nd-quest-card__actions button { font-size: 10px; padding: 4px 6px; }
+#nd-companion-app .nd-quest-card__status:not([hidden]) { display: block; padding: 0 16px 8px; font-size: 10px; }
+#nd-companion-app .nd-quest-card__edit { background: transparent; border: 0; color: var(--nd-text-2); width: 26px; height: 26px; }
+#nd-companion-app .nd-quest-card__tools { position: relative; margin-left: auto; }
+#nd-companion-app .nd-quest-card__tools > summary { cursor: pointer; padding: 3px 8px; list-style: none; color: var(--nd-text-3); }
+#nd-companion-app .nd-quest-card__tools[open] { flex-basis: 100%; }
+#nd-companion-app .nd-quest-card__tools button { display: inline-block; }
+#nd-companion-app .nd-play-session-strip { margin-top: 24px; }
+#nd-companion-app .nd-play-end-session { padding: 16px 0; }
+#nd-companion-app .nd-play-content, #nd-companion-app .nd-play-rail { scrollbar-color: #46505c transparent; scrollbar-width: thin; }
+@container quest-pane (max-width: 640px) { #nd-companion-app .nd-play-entry-grid { grid-template-columns: 1fr; } }
+@container nd-companion (max-width: 1000px) {
+  #nd-companion-app .nd-app-nav { width: 132px; }
+  #nd-companion-app .nd-app-nav__button { font-size: 12px; padding: 10px 8px; }
+  #nd-companion-app .nd-play-rail { flex-basis: 175px; }
+  #nd-companion-app .nd-play-content { padding: 18px; }
+  #nd-companion-app .nd-global-search { max-width: 190px; }
+}
+@container nd-companion (max-width: 720px) {
+  #nd-companion-app .nd-app-nav { width: auto; flex-direction: row; padding: 5px; gap: 2px; }
+  #nd-companion-app .nd-app-nav__button:last-child { border: 0; padding: 10px; }
+  #nd-companion-app .nd-play { flex-direction: column; }
+  #nd-companion-app .nd-play-rail { flex: 0 0 auto; max-height: 160px; border-right: 0; border-bottom: 1px solid var(--nd-border); padding: 10px; }
+  #nd-companion-app .nd-play-quest-list { flex-direction: row; overflow-x: auto; }
+  #nd-companion-app .nd-play-quest-row { min-width: 140px; }
+  #nd-companion-app .nd-global-header__title { font-size: 12px; }
+  #nd-companion-app .nd-global-search { max-width: 130px; }
+  #nd-companion-app .nd-global-search kbd { display: none; }
+}
+#nd-companion-app .nd-app-nav__icon { display: inline-flex; align-items: center; }
+#nd-companion-app .nd-quest-card__edit svg { width: 15px; height: 15px; vertical-align: middle; }
+#nd-companion-app .nd-global-header__logo svg { width: 30px; height: 30px; }
+#nd-companion-app .nd-quest-card__actions:has([data-card-share][hidden]) { padding-top: 0; padding-bottom: 5px; }

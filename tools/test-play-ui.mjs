@@ -7,12 +7,15 @@ import { createRequire } from "node:module";
 import { ROOT } from "./project-utils.mjs";
 const { chromium } = createRequire(import.meta.url)("playwright");
 const template = readFileSync(join(ROOT, "templates/companion.hbs"), "utf8");
-const cards = template.slice(template.indexOf("{{!-- Editable quest cards --}}"), template.indexOf("{{!-- Session strip --}}"))
-  .replace(/{{!--[\s\S]*?--}}/g, "");
+const shellStart = template.slice(0, template.indexOf('{{!-- DASHBOARD'));
+const playStart = template.indexOf('<section class="nd-workspace nd-play"');
+const playEnd = template.indexOf('{{!-- CAMPAIGN —', playStart);
+const playMarkup = template.slice(playStart, playEnd).replace('aria-label="Play workspace" hidden', 'aria-label="Play workspace"');
+const shell = (shellStart + playMarkup + '</div></div></div>').replace(/{{!--[\s\S]*?--}}/g, '');
 const styles = JSON.parse(readFileSync(join(ROOT, "module.json"))).styles;
 const html = `<!doctype html><html><head><meta charset="utf-8">${styles.map(s => `<link rel="stylesheet" href="/${s}">`).join("")}
-<style>body{margin:0;background:#11151d}#fixture{container:nd-companion / inline-size;width:900px;max-width:100%;margin:auto;color:var(--nd-text-1);font-family:var(--nd-font-sans)}header{padding:20px;font:16px sans-serif}section{padding:20px;box-sizing:border-box}</style></head>
-<body><main id="fixture" class="nd-companion"><header>Play cards · Ravnica sample · browser test preview</header><section data-playbook data-workspace-panel="play">${cards}</section></main></body></html>`;
+<style>body{margin:0;background:#141619}#nd-companion-app{height:100vh}#fixture{height:100%}.nd-workspace-region{min-width:0}</style></head>
+<body><div id="nd-companion-app"><main id="fixture" class="nd-companion">${shell}</main></div></body></html>`;
 const server = createServer((req, res) => {
   if (req.url === "/test-relay.svg") {
     res.setHeader("Content-Type", "image/svg+xml");
@@ -30,7 +33,7 @@ await new Promise(r => server.listen(0, "127.0.0.1", r));
 let browser;
 try {
   browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) });
-  const page = await browser.newPage({ viewport: { width: 1060, height: 1000 } });
+  const page = await browser.newPage({ viewport: { width: 1500, height: 1000 } });
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
   await page.goto(`http://127.0.0.1:${server.address().port}`);
@@ -73,6 +76,10 @@ try {
     };
     CompanionStorage.getAutoCollapseEmptySections = () => window.autoCollapse !== false;
     SessionService.syncActiveBeatIds = async () => {};
+    SessionService.getActive = () => null;
+    SessionService.list = () => [];
+    const { ContextEngine } = await import('/scripts/context-engine.js');
+    ContextEngine.getPlayContext = () => ({ activeStoryThreads: [] });
     CampaignActivityService.edited = () => {};
     const content = '<ul><li>Professor Fiznap sends Frikka to investigate a damaged Izzet relay.</li><li>Spells cast nearby are being stored and randomly discharged later.</li><li>Objective:<ul><li>Stabilize the relay</li><li>Recover the resonance core</li></ul></li><li>Reward:<ul><li>Renown</li><li>Access to a useful Izzet component</li></ul></li><li>Good for showing Frikka can solve problems instead of merely creating municipal ones.</li></ul>';
     await CampaignDocument.update(doc => { doc.storyEntries = [CampaignDocument.normalizeQuestEntry({ id: "quest-a", title: "Resonance Leak", speechNotes: content })]; });
@@ -81,6 +88,10 @@ try {
     window.paint = () => Playbook.paint(root, Playbook.get());
     window.select = async index => { await PlaybookService.setCurrentIndex(index); paint(); };
     window.flush = () => LiveNotes.flushAll(root);
+    root.querySelector('[data-workspace="dashboard"]').classList.remove('is-active');
+    root.querySelector('[data-workspace="dashboard"]').setAttribute('aria-pressed', 'false');
+    root.querySelector('[data-workspace="play"]').classList.add('is-active');
+    root.querySelector('[data-workspace="play"]').setAttribute('aria-pressed', 'true');
     Playbook.attach(root); paint();
   });
   const card = id => page.locator(`details[data-playbook-field-block="${id}"]`);
@@ -97,6 +108,7 @@ try {
   assert.equal(await page.evaluate(() => campaignStored.storyEntries[0].cards[0].title), "Professor Fiznap’s request");
   assert.equal(await page.evaluate(() => campaignStored.storyEntries[0].cards[0].body), "", "legacy body is linked, not duplicated");
 
+  await card(source).locator('.nd-quest-card__tools > summary').click();
   await card(source).locator('[data-card-split]').click();
   await page.waitForFunction(() => document.querySelectorAll('.nd-quest-card').length === 5);
   assert.equal(await page.evaluate(() => testApi.QuestCards.forBeat(testApi.Playbook.get().beat)[2].body.includes("Stabilize the relay")), true);
@@ -134,7 +146,7 @@ try {
   assert.equal(await open(added), false);
   await page.evaluate(() => select(1)); await page.evaluate(() => select(0));
   assert.equal(await open(added), false, "choice restored across quests");
-  await card(added).locator('summary').focus(); await page.keyboard.press("Enter");
+  await card(added).locator(':scope > summary').focus(); await page.keyboard.press("Enter");
   assert.equal(await open(added), true, "keyboard expands card");
   await page.keyboard.press("Space"); assert.equal(await open(added), false);
   await card(added).locator('[data-card-toggle]').click();
@@ -224,6 +236,35 @@ try {
   await page.locator('[data-cards-expand]').click();
   assert.equal(await page.locator('.nd-quest-card[open]').count(), await page.locator('.nd-quest-card').count());
   assert.equal(await page.locator('[data-card-toggle]').first().evaluate(el => getComputedStyle(el, '::after').content), '\"\"', "chevron must not retain the old Collapse label");
+  // Exercise the real sidebar, including the save boundary before navigation.
+  await card(added).locator('[data-card-body]').fill('Sidebar navigation draft');
+  await page.locator('button[data-play-beat-id="b"]').click();
+  await page.waitForFunction(() => testApi.Playbook.get().beat.id === 'b');
+  await page.locator('button[data-play-beat-id="a"]').click();
+  await page.waitForFunction(() => testApi.Playbook.get().beat.id === 'a');
+  assert.equal(await card(added).locator('[data-card-body]').textContent(), 'Sidebar navigation draft');
+  await page.evaluate(() => { window.failSave = true; });
+  await card(added).locator('[data-card-body]').fill('Unsaved sidebar draft');
+  await page.locator('button[data-play-beat-id="b"]').click();
+  await page.waitForFunction(() => !document.querySelector('[data-playbook]').dataset.questNavigationBusy);
+  assert.equal(await page.evaluate(() => testApi.Playbook.get().beat.id), 'a', 'failed save blocks sidebar navigation');
+  assert.equal(await card(added).locator('[data-card-body]').textContent(), 'Unsaved sidebar draft');
+  await page.evaluate(async () => { window.failSave = false; await flush(); });
+  await card(added).locator('[data-card-body]').fill('A reference image to show when the party reaches the relay.');
+  await page.evaluate(() => flush());
+  await page.locator('[data-play-add-quest]').click();
+  await page.waitForFunction(() => testApi.Playbook.get().total === 3);
+  assert.equal(await page.locator('.nd-play-quest-row').count(), 3);
+  await page.locator('button[data-play-beat-id="a"]').click();
+  await page.waitForFunction(() => testApi.Playbook.get().beat.id === 'a');
+  const layout = await page.evaluate(() => ({
+    nav: document.querySelector('.nd-app-nav').getBoundingClientRect().right,
+    rail: document.querySelector('.nd-play-rail').getBoundingClientRect().right,
+    main: document.querySelector('.nd-play-content').getBoundingClientRect().left,
+    background: getComputedStyle(document.querySelector('.nd-play')).backgroundColor
+  }));
+  assert.ok(layout.nav < layout.rail && layout.rail <= layout.main, 'three-column desktop layout');
+  assert.equal(layout.background, 'rgb(20, 22, 25)');
   if (shots) { mkdirSync(shots, { recursive: true }); await page.screenshot({ path: join(shots, "quest-cards-wide.png"), fullPage: true }); }
   await page.setViewportSize({ width: 520, height: 1050 });
   assert.equal((await card(source).boundingBox()).x, (await card(rightId).boundingBox()).x);

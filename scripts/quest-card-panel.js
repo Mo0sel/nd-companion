@@ -150,6 +150,13 @@ export class QuestCardPanel {
     LiveNotes.attach(body, null, { html: true, sanitize: RichText.sanitize, load: () => card.body,
       save: value => PlaybookService.updateCard(state.beatId, card.id, { body: value }) });
     body.addEventListener("paste", event => { event.preventDefault(); RichText.paste(body, event); });
+    const edit = this.#button("", "Edit card content", () => {
+      PlayCardState.setOpen(host, card.id, true);
+      body.focus();
+    });
+    edit.className = "nd-quest-card__edit";
+    edit.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 4 5 5M4 20l4-1L21 6a2 2 0 0 0-5-3L3 16z"/></svg>';
+    summary.insertBefore(edit, remove);
     const image = document.createElement("img");
     image.className = "nd-quest-card__image"; image.alt = "Quest image"; image.hidden = true;
     const imageError = document.createElement("p"); imageError.dataset.imageError = ""; imageError.hidden = true;
@@ -164,6 +171,10 @@ export class QuestCardPanel {
       });
     }));
     choose.dataset.cardImage = "";
+    choose.textContent = "";
+    choose.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="1"/><path d="m3 17 6-6 4 4 3-3 5 5"/></svg>';
+    choose.className = "nd-quest-card__edit";
+    summary.insertBefore(choose, edit);
     const preview = this.#button("Preview", "Preview image privately", () => this.#run(host, state, () => QuestImages.preview(current()?.image)));
     preview.dataset.needsImage = "";
     const share = this.#button("Show to players", "Show image to connected players", () => this.#run(host, state, () => QuestImages.share(current()?.image)));
@@ -191,7 +202,13 @@ export class QuestCardPanel {
       }); state.refresh();
     }));
     split.dataset.cardSplit = "";
-    actions.append(choose, preview, share, unlink, split);
+    const tools = document.createElement("details");
+    tools.className = "nd-quest-card__tools";
+    const toolsLabel = document.createElement("summary");
+    toolsLabel.textContent = "More";
+    toolsLabel.setAttribute("aria-label", "More card actions");
+    tools.append(toolsLabel, unlink, split);
+    actions.append(preview, share, tools);
     node.append(summary, body, image, imageError, actions, this.#status());
     return node;
   }

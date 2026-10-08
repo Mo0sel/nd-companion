@@ -2,10 +2,10 @@
 
   <header class="nd-global-header">
     <div class="nd-global-header__brand">
-      <div class="nd-global-header__logo" aria-hidden="true">N</div>
+      <div class="nd-global-header__logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 22 8v9l-10 5L2 17V8zM12 2 7 9l5 10 5-10zM2 8l5 1 10 0 5-1M2 17l10 2 10-2M12 22v-3"/></svg></div>
       <div class="nd-global-header__brand-text">
         <div class="nd-global-header__title">N&amp;D Companion</div>
-        <div class="nd-global-header__subtitle">Foundry VTT · GM Tools</div>
+        <div class="nd-global-header__subtitle">Campaign companion</div>
       </div>
     </div>
     <div class="nd-global-header__divider" aria-hidden="true"></div>
@@ -66,25 +66,25 @@
   <div class="nd-companion__body">
   <nav class="nd-app-nav" aria-label="Companion navigation">
     <button type="button" class="nd-app-nav__button is-active" data-action="setWorkspace" data-workspace="dashboard" aria-pressed="true">
-      <span class="nd-app-nav__icon" aria-hidden="true">▣</span>Dashboard
+      <span class="nd-app-nav__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>Dashboard
     </button>
     <button type="button" class="nd-app-nav__button" data-action="setWorkspace" data-workspace="play" aria-pressed="false">
-      <span class="nd-app-nav__icon" aria-hidden="true">▶</span>Play
+      <span class="nd-app-nav__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 4 13 8-13 8z"/></svg></span>Play
     </button>
     <button type="button" class="nd-app-nav__button" data-action="setWorkspace" data-workspace="campaign" aria-pressed="false">
-      <span class="nd-app-nav__icon" aria-hidden="true">⬡</span>Campaign
+      <span class="nd-app-nav__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v16M3 4c4-1 6 0 9 1 3-1 5-2 9-1v15c-4-1-6 0-9 2-3-2-5-3-9-2z"/></svg></span>Campaign
     </button>
     <button type="button" class="nd-app-nav__button" data-action="setWorkspace" data-workspace="copilot" aria-pressed="false">
-      <span class="nd-app-nav__icon" aria-hidden="true">✦</span>Copilot
+      <span class="nd-app-nav__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/></svg></span>Copilot
     </button>
     <button type="button" class="nd-app-nav__button" data-action="setWorkspace" data-workspace="npcs" aria-pressed="false">
-      <span class="nd-app-nav__icon" aria-hidden="true">◎</span>NPCs
+      <span class="nd-app-nav__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M17 5a3 3 0 0 1 0 6m1 4a5 5 0 0 1 3 5"/></svg></span>NPCs
     </button>
     <button type="button" class="nd-app-nav__button" data-action="setWorkspace" data-workspace="locations" aria-pressed="false">
-      <span class="nd-app-nav__icon" aria-hidden="true">⌖</span>Locations
+      <span class="nd-app-nav__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg></span>Locations
     </button>
     <button type="button" class="nd-app-nav__button" data-action="setWorkspace" data-workspace="sessions" aria-pressed="false">
-      <span class="nd-app-nav__icon" aria-hidden="true">☰</span>Sessions
+      <span class="nd-app-nav__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M7 2v6m10-6v6"/></svg></span>Sessions
     </button>
     <div class="nd-app-nav__spacer" aria-hidden="true"></div>
     <button type="button" class="nd-app-nav__button" data-action="setWorkspace" data-workspace="ai-settings" aria-pressed="false">
@@ -140,8 +140,10 @@
     {{!-- PLAY — stable live-session dashboard (design/current PlayWorkspace) --}}
     <section class="nd-workspace nd-play" data-workspace-panel="play" data-playbook aria-label="Play workspace" hidden>
 
-      {{!-- Run controls: choose today's campaign context without leaving PLAY --}}
-      <div class="nd-play-context nd-play-run-controls" aria-label="Current run">
+      <aside class="nd-play-rail" aria-label="Quest navigation">
+        <header class="nd-play-rail__heading"><span>Quests</span><button type="button" data-play-add-quest aria-label="Add quest" title="Add quest">+</button></header>
+        <nav class="nd-play-quest-list" data-play-quest-list aria-label="Session quests"></nav>
+        <details class="nd-play-run-menu"><summary>Session context</summary>      <div class="nd-play-context nd-play-run-controls" aria-label="Current run">
         <label>
           <span>Campaign</span>
           <select data-play-campaign-select disabled></select>
@@ -163,15 +165,8 @@
         </div>
       </div>
 
-      <div class="nd-play-empty" data-play-empty hidden>
-        <h3>No Quest Loaded</h3>
-        <p>Select a Quest from the Campaign Explorer to begin running the session.</p>
-      </div>
-
-      {{!-- Scrollable dashboard content --}}
-      <div class="nd-play-content" data-play-content>
-
-        <details class="nd-play-story-threads" data-play-story-threads hidden open>
+</details>
+        <details class="nd-play-story-threads" data-play-story-threads hidden>
           <summary>
             <span class="nd-play-card__label">Active Story Threads</span>
             <span class="nd-play-story-threads__count" data-play-story-thread-count></span>
@@ -179,6 +174,10 @@
           <div class="nd-play-story-threads__list" data-play-story-thread-list></div>
         </details>
 
+
+      </aside>
+      <div class="nd-play-content" data-play-content>
+        <div class="nd-play-empty" data-play-empty hidden><h3>No quest loaded</h3><p>Add a quest or choose one from your story threads.</p></div>
         {{!-- Editable quest cards --}}
         <div data-quest-cards></div>
         <details class="nd-quest-references" data-quest-references>
