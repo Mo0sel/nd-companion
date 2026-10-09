@@ -274,34 +274,34 @@ try {
   await page.evaluate(async () => {
     const { EntityRegistry } = await import('/scripts/entity-registry.js');
     window.openedDocuments = [];
-    const entities = ['actor', 'scene', 'journal'].map((kind, index) => ({
+    const entities = ['actor', 'scene', 'journal', 'item'].map((kind, index) => ({
       kind, id: `ref${index}`, uuid: `${kind}.ref${index}`, name: `Reference ${kind}`, img: '',
-      document: { testUserPermission: () => !window.denyReference, sheet: { render: async () => openedDocuments.push(kind) } }
+      document: { testUserPermission: () => !window.denyReference, view: async () => openedDocuments.push('scene-view'), sheet: { render: async () => openedDocuments.push(kind) } }
     }));
     EntityRegistry.all = kind => entities.filter(entity => entity.kind === kind);
     EntityRegistry.findByUUID = uuid => window.missingReference ? null : entities.find(entity => entity.uuid === uuid);
   });
   const mentionBody = card(added).locator('[data-card-body]');
   await mentionBody.fill('Visit ');
-  for (const kind of ['actor', 'scene', 'journal']) {
+  for (const kind of ['actor', 'scene', 'journal', 'item']) {
     await mentionBody.pressSequentially(`@Reference ${kind}`);
     assert.equal(await page.locator('.nd-mention-popup:not([hidden]) [role="option"]').count(), 1);
     await mentionBody.press('Enter');
   }
   await page.evaluate(() => flush());
-  assert.equal(await mentionBody.locator('[data-nd-mention]').count(), 3);
+  assert.equal(await mentionBody.locator('[data-nd-mention]').count(), 4);
   await page.locator('button[data-play-beat-id="b"]').click();
   await page.waitForFunction(() => testApi.Playbook.get().beat.id === 'b');
   await page.locator('button[data-play-beat-id="a"]').click();
   await page.waitForFunction(() => testApi.Playbook.get().beat.id === 'a');
-  assert.equal(await mentionBody.locator('[data-nd-mention]').count(), 3, 'tags survive saves and quest changes');
-  for (const kind of ['actor', 'scene', 'journal']) {
+  assert.equal(await mentionBody.locator('[data-nd-mention]').count(), 4, 'tags survive saves and quest changes');
+  for (const kind of ['actor', 'scene', 'journal', 'item']) {
     await mentionBody.locator(`[data-mention-kind="${kind}"]`).click();
   }
-  assert.deepEqual(await page.evaluate(() => openedDocuments), ['actor', 'scene', 'journal']);
+  assert.deepEqual(await page.evaluate(() => openedDocuments), ['actor', 'scene-view', 'journal', 'item']);
   await mentionBody.locator('[data-mention-kind="actor"]').focus();
   await mentionBody.locator('[data-mention-kind="actor"]').press('Enter');
-  assert.equal(await page.evaluate(() => openedDocuments.length), 4);
+  assert.equal(await page.evaluate(() => openedDocuments.length), 5);
   await page.evaluate(() => { window.denyReference = true; });
   await mentionBody.locator('[data-mention-kind="journal"]').click();
   assert.match(await page.evaluate(() => lastNotice), /permission/);

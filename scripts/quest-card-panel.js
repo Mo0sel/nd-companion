@@ -153,7 +153,7 @@ export class QuestCardPanel {
     const body = document.createElement("div");
     body.className = "nd-play-card__content nd-richtext nd-play-inline-editor";
     body.dataset.cardBody = ""; body.dataset.playBeatId = state.beatId;
-    body.dataset.placeholder = "Add notes… Type @ to tag an actor, scene/location, or journal.";
+    body.dataset.placeholder = "Add notes… Type @ to tag an actor, item, scene/location, or journal.";
     body.setAttribute("role", "textbox"); body.setAttribute("aria-label", "Card content");
     body.setAttribute("aria-multiline", "true");
     LiveNotes.attach(body, null, { html: true, sanitize: RichText.sanitize, load: () => card.body,
