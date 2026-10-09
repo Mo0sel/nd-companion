@@ -270,6 +270,27 @@ try {
   assert.equal((await card(source).boundingBox()).x, (await card(rightId).boundingBox()).x);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   if (shots) await page.screenshot({ path: join(shots, "quest-cards-narrow.png"), fullPage: true });
+  await page.setViewportSize({ width: 1500, height: 1000 });
+  await page.evaluate(() => document.activeElement?.blur());
+  await page.mouse.move(1490, 10);
+  const removeA = page.locator('[data-play-remove-beat-id="a"]');
+  assert.equal(await removeA.evaluate(el => getComputedStyle(el).opacity), '0');
+  await page.locator('button[data-play-beat-id="a"]').hover();
+  assert.equal(await removeA.evaluate(el => getComputedStyle(el).opacity), '1');
+  await card(added).locator('[data-card-body]').fill('Saved before removing quest');
+  await page.locator('button[data-play-beat-id="a"]').hover();
+  await removeA.click();
+  await page.waitForFunction(() => testApi.Playbook.get().total === 2);
+  assert.equal(await page.evaluate(() => campaignStored.storyEntries[0].cards.at(-1).body), 'Saved before removing quest');
+  assert.equal(await page.evaluate(() => campaignStored.storyEntries[0].id), 'quest-a', 'campaign quest retained');
+  assert.equal(await page.evaluate(() => testApi.Playbook.get().beat.id), 'b');
+  await page.locator('[data-play-remove-beat-id="b"]').focus();
+  await page.locator('[data-play-remove-beat-id="b"]').press('Enter');
+  await page.waitForFunction(() => testApi.Playbook.get().total === 1);
+  await page.locator('.nd-play-quest-row').hover();
+  await page.locator('[data-play-remove-beat-id]').click();
+  await page.waitForFunction(() => testApi.Playbook.get().total === 0);
+  assert.equal(await page.locator('[data-play-empty]').isVisible(), true);
   assert.deepEqual(errors, []);
   console.log("PASS: legacy links; editable quest/card titles; split nested bullets; blank cards; autosave; beat/workspace switches; caret; keyboard; removal/undo; image picker, preview and explicit sharing; GM/recipient checks; failed/delayed saves; normalization; responsive stable stacks.");
 } finally {

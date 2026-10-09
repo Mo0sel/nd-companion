@@ -103,3 +103,19 @@
 #nd-companion-app .nd-quest-card__edit svg { width: 15px; height: 15px; vertical-align: middle; }
 #nd-companion-app .nd-global-header__logo svg { width: 30px; height: 30px; }
 #nd-companion-app .nd-quest-card__actions:has([data-card-share][hidden]) { padding-top: 0; padding-bottom: 5px; }
+/* The session removal control remains available to keyboard and touch users. */
+#nd-companion-app .nd-play-quest-item { position: relative; min-width: 0; flex-shrink: 0; }
+#nd-companion-app .nd-play-quest-item .nd-play-quest-row { padding-right: 42px; }
+#nd-companion-app .nd-play-quest-remove {
+  position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
+  width: 28px; height: 28px; min-height: 28px; padding: 0; margin: 0;
+  border: 1px solid transparent; border-radius: 4px;
+  background: transparent; color: var(--nd-text-2); font-size: 20px;
+  cursor: pointer;
+}
+#nd-companion-app .nd-play-quest-remove:hover { color: var(--nd-danger); background: var(--nd-danger-bg); }
+@media (hover: hover) and (pointer: fine) {
+  #nd-companion-app .nd-play-quest-remove { opacity: 0; pointer-events: none; }
+  #nd-companion-app .nd-play-quest-item:hover .nd-play-quest-remove,
+  #nd-companion-app .nd-play-quest-item:focus-within .nd-play-quest-remove { opacity: 1; pointer-events: auto; }
+}

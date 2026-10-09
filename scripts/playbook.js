@@ -418,7 +418,17 @@ export class Playbook {
       button.textContent = entry.title || 'Untitled quest';
       button.classList.toggle('is-current', entry.index === snapshot.index);
       button.setAttribute('aria-current', entry.index === snapshot.index ? 'true' : 'false');
-      list.append(button);
+      const row = document.createElement('div');
+      row.className = 'nd-play-quest-item';
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'nd-play-quest-remove';
+      remove.dataset.playRemoveBeatId = button.dataset.playBeatId;
+      remove.textContent = '−';
+      remove.title = 'Remove quest from this session';
+      remove.setAttribute('aria-label', `Remove ${entry.title || 'untitled quest'} from this session`);
+      row.append(button, remove);
+      list.append(row);
       if (button.dataset.playBeatId === focusedId) button.focus();
     }
   }
@@ -731,12 +741,22 @@ export class Playbook {
         if (!(target instanceof Element)) return;
 
         const beatButton = target.closest('button[data-play-beat-id]');
-        if (beatButton || target.closest('[data-play-add-quest]')) {
+        const removeButton = target.closest('[data-play-remove-beat-id]');
+        if (beatButton || removeButton || target.closest('[data-play-add-quest]')) {
           if (panel.dataset.questNavigationBusy === 'true') return;
           panel.dataset.questNavigationBusy = 'true';
           void (async () => {
             try {
               await LiveNotes.flushAll(panel);
+              if (removeButton) {
+                const index = PlaybookService.getDocument().beats.findIndex(beat => beat.id === removeButton.dataset.playRemoveBeatId);
+                if (index < 0) return;
+                await PlaybookService.deleteBeat(index);
+                Playbook.adoptMissionFromCurrentBeat();
+                Playbook.paint(root, Playbook.get());
+                panel.querySelector('.nd-play-quest-row.is-current')?.focus();
+                return;
+              }
               const index = beatButton
                 ? PlaybookService.getDocument().beats.findIndex(beat => beat.id === beatButton.dataset.playBeatId)
                 : await PlaybookService.addBeat();
@@ -746,7 +766,7 @@ export class Playbook {
               Playbook.paint(root, Playbook.get());
               if (!beatButton) panel.querySelector('[data-quest-title]')?.focus();
             } catch (error) {
-              ui.notifications.error(`Could not open quest: ${error.message}`);
+              ui.notifications.error(`Could not ${removeButton ? 'remove' : 'open'} quest: ${error.message}`);
             } finally {
               delete panel.dataset.questNavigationBusy;
             }
