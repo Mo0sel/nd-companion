@@ -119,3 +119,10 @@
   #nd-companion-app .nd-play-quest-item:hover .nd-play-quest-remove,
   #nd-companion-app .nd-play-quest-item:focus-within .nd-play-quest-remove { opacity: 1; pointer-events: auto; }
 }
+#nd-companion-app .nd-quest-card [data-nd-mention] {
+  color: var(--nd-quest-card-title); background: rgba(125, 212, 232, 0.08);
+  border: 1px solid rgba(125, 212, 232, 0.25); border-radius: 4px;
+  padding: 1px 5px; cursor: pointer; white-space: normal;
+}
+#nd-companion-app .nd-quest-card [data-nd-mention]:hover { border-color: var(--nd-quest-card-title); }
+#nd-companion-app .nd-quest-card [data-nd-mention]:focus-visible { outline: 2px solid var(--nd-quest-title); outline-offset: 2px; }

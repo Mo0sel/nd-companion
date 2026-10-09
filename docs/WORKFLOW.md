@@ -119,3 +119,13 @@ The Play browser check renders the real header, navigation, and complete Play
 markup, rather than just the isolated card region. It exercises sidebar draft
 handling and responsive layout. Foundry/Forge theme interaction still needs a
 live-world check after installing the release.
+
+## Foundry tags in quest cards
+
+Type @ followed by a name in a card body. Choose an actor, scene/location, or
+journal from the existing mention picker with the mouse or arrow keys and Enter.
+Tags save with the card and open the referenced Foundry sheet on click or keyboard
+activation. Scene tags open the sheet without activating a scene for players.
+Missing documents and permission failures show a notification. This uses world
+registry documents; Locations are represented by Foundry Scenes as elsewhere in
+the Companion. Compendium entries and individual journal pages are not indexed.

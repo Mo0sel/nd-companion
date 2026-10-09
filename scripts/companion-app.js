@@ -17,6 +17,7 @@ import { Navigation } from "./navigation.js";
 import { NavigationHistory } from "./navigation-history.js";
 import { PanelResizer } from "./panel-resizer.js";
 import { Playbook } from "./playbook.js";
+import { QuestCardMentions } from "./quest-card-mentions.js";
 import { PlaybookService } from "./playbook-service.js";
 import { PromptPreviewPanel } from "./prompt-preview-panel.js";
 import { QuickEdit } from "./quick-edit.js";
@@ -969,6 +970,7 @@ export class CompanionApp extends HandlebarsApplicationMixin(ApplicationV2) {
         return this;
       }
     }
+    QuestCardMentions.detach(this.element);
     return super.close(options);
   }
 

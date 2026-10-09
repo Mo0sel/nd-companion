@@ -4,9 +4,9 @@ import { PlaybookService } from "./playbook-service.js";
 import { QuestEntryService } from "./quest-entry-service.js";
 
 const GROUP_LABELS = Object.freeze({
-  actor: "Characters",
+  actor: "Actors / Characters",
   item: "Items",
-  scene: "Locations",
+  scene: "Scenes / Locations",
   journal: "Journals",
   rollTable: "Roll Tables",
   beat: "Quests",

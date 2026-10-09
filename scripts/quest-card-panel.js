@@ -5,6 +5,7 @@ import { LiveNotes } from "./live-notes.js";
 import { RichText } from "./rich-text.js";
 import { PlayCardState } from "./play-card-state.js";
 import { CompanionStorage } from "./storage.js";
+import { QuestCardMentions } from "./quest-card-mentions.js";
 
 export class QuestCardPanel {
   static #states = new WeakMap();
@@ -13,10 +14,16 @@ export class QuestCardPanel {
     const host = root.querySelector("[data-quest-cards]");
     if (!host) return;
     host.hidden = snapshot.total === 0;
-    if (snapshot.total === 0) return;
+    if (snapshot.total === 0) {
+      QuestCardMentions.detach(host);
+      host.replaceChildren();
+      this.#states.delete(host);
+      return;
+    }
     const beat = snapshot.beat;
     let state = this.#states.get(host);
     if (!state || state.beatId !== beat.id) {
+      QuestCardMentions.detach(host);
       host.querySelectorAll('[contenteditable="true"]').forEach(el => LiveNotes.detach(el));
       host.replaceChildren();
       state = { beatId: beat.id, nodes: new Map(), refresh, busy: false, removed: null };
@@ -81,6 +88,7 @@ export class QuestCardPanel {
     for (const [id, node] of state.nodes) {
       if (cards.some(card => card.id === id)) continue;
       if ([...node.querySelectorAll('[contenteditable="true"]')].some(LiveNotes.hasPending)) continue;
+      QuestCardMentions.detach(node);
       node.querySelectorAll('[contenteditable="true"]').forEach(el => LiveNotes.detach(el));
       node.remove(); state.nodes.delete(id);
     }
@@ -100,6 +108,7 @@ export class QuestCardPanel {
       if (!LiveNotes.isProtected(title) && title.textContent !== card.title) title.textContent = card.title;
       const safe = RichText.sanitize(card.body);
       if (!LiveNotes.isProtected(body) && body.innerHTML !== safe) body.innerHTML = safe;
+      QuestCardMentions.decorate(body);
       const image = node.querySelector("img");
       if (card.image && image.getAttribute("src") !== card.image) {
         delete image.dataset.failed;
@@ -144,12 +153,14 @@ export class QuestCardPanel {
     const body = document.createElement("div");
     body.className = "nd-play-card__content nd-richtext nd-play-inline-editor";
     body.dataset.cardBody = ""; body.dataset.playBeatId = state.beatId;
-    body.dataset.placeholder = "Add a step, clue, objective, or notes…";
+    body.dataset.placeholder = "Add notes… Type @ to tag an actor, scene/location, or journal.";
     body.setAttribute("role", "textbox"); body.setAttribute("aria-label", "Card content");
     body.setAttribute("aria-multiline", "true");
     LiveNotes.attach(body, null, { html: true, sanitize: RichText.sanitize, load: () => card.body,
       save: value => PlaybookService.updateCard(state.beatId, card.id, { body: value }) });
     body.addEventListener("paste", event => { event.preventDefault(); RichText.paste(body, event); });
+    QuestCardMentions.attach(body);
+    body.addEventListener("input", () => QuestCardMentions.decorate(body));
     const edit = this.#button("", "Edit card content", () => {
       PlayCardState.setOpen(host, card.id, true);
       body.focus();

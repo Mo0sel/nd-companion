@@ -12,7 +12,7 @@ export class EntityMentions {
   /**
    * @param {HTMLElement} editor
    */
-  static attach(editor) {
+  static attach(editor, { kinds = null } = {}) {
     if (!(editor instanceof HTMLElement)) return;
     EntityMentions.detach(editor);
 
@@ -31,6 +31,7 @@ export class EntityMentions {
       activeIndex: 0,
       replaceRange: null
     };
+    state.kinds = kinds;
     EntityMentions.#states.set(editor, state);
 
     editor.addEventListener("input", () => EntityMentions.#update(editor, state), {
@@ -117,7 +118,9 @@ export class EntityMentions {
       return;
     }
 
-    const groups = MentionProvider.search(trigger.query);
+    const groups = MentionProvider.search(trigger.query)
+      .map(group => ({ ...group, entries: group.entries.filter(entry => !state.kinds || state.kinds.includes(entry.kind)) }))
+      .filter(group => group.entries.length);
     state.entries = groups.flatMap((group) => group.entries);
     state.activeIndex = 0;
     state.replaceRange = trigger.range;
