@@ -3,7 +3,7 @@
   "type": "module",
   "title": "N&D Companion",
   "description": "DM Companion for Foundry VTT",
-  "version": "0.3.42",
+  "version": "0.3.43",
   "authors": [
     {
       "name": "Mo0sel"
@@ -37,7 +37,7 @@
       "path": "lang/en.json"
     }
   ],
-  "manifest": "https://github.com/Mo0sel/nd-companion/releases/download/v0.3.42/module.json",
-  "download": "https://github.com/Mo0sel/nd-companion/releases/download/v0.3.42/module.zip",
+  "manifest": "https://github.com/Mo0sel/nd-companion/releases/download/v0.3.43/module.json",
+  "download": "https://github.com/Mo0sel/nd-companion/releases/download/v0.3.43/module.zip",
   "url": "https://github.com/Mo0sel/nd-companion"
 }
